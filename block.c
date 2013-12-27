@@ -43,19 +43,19 @@ block_newAtFrom(int track, int sector, uint8_t data[256])
 }
 
 int
-Block_track(const Block *this)
+block_track(const Block *this)
 {
     return this->track;
 }
 
 int
-Block_sector(const Block *this)
+block_sector(const Block *this)
 {
     return this->sector;
 }
 
 uint8_t *
-Block_data(const Block *this)
+block_data(const Block *this)
 {
     uint8_t *data = malloc(256);
     memcpy(data, &(this->data), 256);
@@ -63,7 +63,7 @@ Block_data(const Block *this)
 }
 
 int
-Block_setPosition(Block *this, int track, int sector)
+block_setPosition(Block *this, int track, int sector)
 {
     this->track = track;
     this->sector = sector;
@@ -71,7 +71,7 @@ Block_setPosition(Block *this, int track, int sector)
 }
 
 int
-Block_setData(Block *this, uint8_t data[256])
+block_setData(Block *this, uint8_t data[256])
 {
     memcpy(&(this->data), data, 256);
     return 1;
