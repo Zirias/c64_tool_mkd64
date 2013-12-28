@@ -16,6 +16,8 @@ int main(int argc, char **argv)
         const char *arg = cmdline_arg(cl);
         printf("%c: %s\n", opt, arg?arg:noarg);
     }
+
+    cmdline_delete(cl);
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4
