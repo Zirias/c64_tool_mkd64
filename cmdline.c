@@ -28,7 +28,7 @@ clear(Cmdline *this)
     free(this->opts);
     this->opts = 0;
     this->count = 0;
-    this->pos = 0;
+    this->pos = -1;
 }
 
 Cmdline *
@@ -80,12 +80,14 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
 char
 cmdline_opt(const Cmdline *this)
 {
+    if (this->pos < 0) return '\0';
     return this->opts[this->pos];
 }
 
 const char *
 cmdline_arg(const Cmdline *this)
 {
+    if (this->pos < 0) return 0;
     return this->args[this->pos];
 }
 
@@ -95,7 +97,7 @@ cmdline_moveNext(Cmdline *this)
     ++(this->pos);
     if (this->pos == this->count)
     {
-        this->pos = 0;
+        this->pos = -1;
         return 0;
     }
     return 1;
