@@ -35,6 +35,7 @@ Cmdline *
 cmdline_new(void)
 {
     Cmdline *this = calloc(1, sizeof(Cmdline));
+    this->pos = -1;
     return this;
 }
 
