@@ -5,49 +5,66 @@
 
 #include "track.h"
 #include "block.h"
+#include "blckstat.h"
 
-#define TRACK_DATA_SIZE(x) (256 * x)
-#define TRACK_SIZE(x) (sizeof(Track) - 1 + TRACK_DATA_SIZE(x))
+#define TRACK_SIZE(x) (sizeof(Track) + (x - 1) * sizeof(Block *))
 
 struct track
 {
     size_t num_sectors;
-    uint8_t data[1];
+    Block *sectors[1];
 };
 
 Track *
 track_new(size_t num_sectors)
 {
+    int i;
     Track *this = malloc(TRACK_SIZE(num_sectors));
     this->num_sectors = num_sectors;
-    memset(&(this->data), 0, TRACK_DATA_SIZE(num_sectors));
+    for (i = 0; i < num_sectors; ++i)
+    {
+        this->sectors[i] = block_new();
+    }
     return this;
 }
 
 void
 track_delete(Track *this)
 {
+    int i;
+    for (i = 0; i < this->num_sectors; ++i)
+    {
+        block_delete(this->sectors[i]);
+    }
     free(this);
 }
 
-int
-track_readBlock(const Track *this, Block *block)
+BlockStatus
+track_blockStatus(const Track *this, int sector)
 {
-    int sector = block_sector(block);
-    if (sector < 1 || sector > this->num_sectors) return 0;
-    uint8_t *ptr = &data[(sector-1) * 256];
-    block_setData(block, ptr);
-    return 1;
+    if (sector < 1 || sector > this->num_sectors) return (BlockStatus) -1;
+    return block_status(this->sectors[sector-1]);
 }
 
 int
-track_writeBlock(Track *this, const Block *block)
+track_reserveBlock(Track *this, int sector)
 {
-    int sector = block_sector(block);
     if (sector < 1 || sector > this->num_sectors) return 0;
-    uint8_t *ptr = &data[(sector-1) * 256];
-    memcpy(ptr, block_data(block), 256);
-    return 1;
+    return block_reserve(this->sectors[sector-1]);
+}
+
+int
+track_allocateBlock(Track *this, int sector)
+{
+    if (sector < 1 || sector > this->num_sectors) return 0;
+    return block_allocate(this->sectors[sector-1]);
+}
+
+Block *
+track_block(Track *this, int sector)
+{
+    if (sector < 1 || sector > this->num_sectors) return 0;
+    return this->sectors[sector-1];
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4

@@ -1,14 +1,14 @@
 
+#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "block.h"
+#include "blckstat.h"
 
 struct block
 {
-    int track;
-    int sector;
-    uint8_t data[256];
+    BlockStatus status;
+    uint8_t data[BLOCK_RAWSIZE];
 };
 
 Block *
@@ -18,63 +18,82 @@ block_new(void)
     return this;
 }
 
-Block *
-block_newAt(int track, int sector)
+void
+block_delete(Block *this)
 {
-    Block *this = block_new();
-    block_setPosition(this, track, sector);
-    return this;
+    free(this);
 }
 
-Block *
-block_newFrom(uint8_t data[256])
+BlockStatus
+block_status(const Block *this)
 {
-    Block *this = block_new();
-    block_setData(this, data);
-    return this;
+    return this->status;
 }
 
-Block *
-block_newAtFrom(int track, int sector, uint8_t data[256])
+uint8_t
+block_nextTrack(const Block *this)
 {
-    Block *this = block_newAt(track, sector);
-    block_setData(this, data);
-    return this;
+    return this->data[0];
+}
+
+uint8_t
+block_nextSector(const Block *this)
+{
+    return this->data[1];
+}
+
+void
+block_nextPosition(const Block *this, BlockPosition *pos)
+{
+    pos->track = this->data[0];
+    pos->sector = this->data[1];
+}
+
+void
+block_setNextTrack(Block *this, uint8_t nextTrack)
+{
+    this->data[0] = nextTrack;
+}
+
+void
+block_setNextSector(Block *this, uint8_t nextSector)
+{
+    this->data[1] = nextSector;
+}
+
+void
+block_setNextPosition(Block *this, const BlockPosition *pos)
+{
+    this->data[0] = pos->track;
+    this->data[1] = pos->sector;
 }
 
 int
-block_track(const Block *this)
+block_reserve(Block *this)
 {
-    return this->track;
+    if (this->status & BS_RESERVED) return 0;
+    this->status |= BS_RESERVED;
+    return 1;
 }
 
 int
-block_sector(const Block *this)
+block_allocate(Block *this)
 {
-    return this->sector;
+    if (this->status & BS_ALLOCATED) return 0;
+    this->status |= BS_ALLOCATED;
+    return 1;
 }
 
 uint8_t *
-block_data(const Block *this)
+block_data(Block *this)
 {
-    uint8_t *data = malloc(256);
-    memcpy(data, &(this->data), 256);
-    return data;
+    return &(this->data[2]);
 }
 
-int
-block_setPosition(Block *this, int track, int sector)
+uint8_t *
+block_rawData(Block *this)
 {
-    this->track = track;
-    this->sector = sector;
-    return 1;
-}
-
-int
-block_setData(Block *this, uint8_t data[256])
-{
-    memcpy(&(this->data), data, 256);
-    return 1;
+    return this->data;
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4

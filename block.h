@@ -3,22 +3,38 @@
 
 #include <stdint.h>
 
+#include "blckstat.h"
+
+#define BLOCK_SIZE 254
+#define BLOCK_RAWSIZE 256
+
 struct block;
 typedef struct block Block;
+
+typedef struct
+{
+    uint8_t track;
+    uint8_t sector;
+} BlockPosition;
 
 Block *block_new();
 void block_delete(Block *this);
 
-Block *block_newAt(int track, int sector);
-Block *block_newFrom(uint8_t data[256]);
-Block *block_newAtFrom(int track, int sector, uint8_t data[256]);
+BlockStatus block_status(const Block *this);
 
-int block_track(const Block *this);
-int block_sector(const Block *this);
-uint8_t *block_data(const Block *this);
+uint8_t block_nextTrack(const Block *this);
+uint8_t block_nextSector(const Block *this);
+void block_nextPosition(const Block *this, BlockPosition *pos);
 
-int block_setPosition(Block *this, int track, int sector);
-int block_setData(Block *this, uint8_t data[256]);
+void block_setNextTrack(Block *this, uint8_t nextTrack);
+void block_setNextSector(Block *this, uint8_t nextSector);
+void block_setNextPosition(Block *this, const BlockPosition *pos);
+
+int block_reserve(Block *this);
+int block_allocate(Block *this);
+
+uint8_t *block_data(Block *this);
+uint8_t *block_rawData(Block *this);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

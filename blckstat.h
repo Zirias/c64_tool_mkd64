@@ -1,7 +1,7 @@
 #ifndef MKD64_BLCKSTAT_H
 #define MKD64_BLCKSTAT_H
 
-enum
+typedef enum
 {
     BS_NONE = 0,
     BS_ALLOCATED = 1,
