@@ -162,6 +162,7 @@ modrepo_delete(Modrepo *this)
 IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
+    if (!this) return 0;
     Modrepo *found = findModule(this, id);
     if (!found) return 0;
     return found->instance();
@@ -170,6 +171,7 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
 void
 modrepo_deleteInstance(Modrepo *this, IModule *instance)
 {
+    if (!this) return;
     Modrepo *found = findModule(this, instance->id());
     if (found) found->delete(instance);
 }
