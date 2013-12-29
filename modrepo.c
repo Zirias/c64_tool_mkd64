@@ -15,6 +15,7 @@
 struct modrepo
 {
     Modrepo *next;
+    void *so;
     const char *id;
     IModule *(*instance)(void);
     void (*delete)(IModule *instance);
@@ -67,16 +68,29 @@ modrepo_new(const char *exe)
         if (!modso) continue;
 
         modid = dlsym(modso, "id");
-        if (!modid) continue;
+        if (!modid)
+        {
+            dlclose(modso);
+            continue;
+        }
 
         modinst = dlsym(modso, "instance");
-        if (!modinst) continue;
+        if (!modid)
+        {
+            dlclose(modso);
+            continue;
+        }
 
         moddel = dlsym(modso, "delete");
-        if (!moddel) continue;
+        if (!modid)
+        {
+            dlclose(modso);
+            continue;
+        }
 
         next = malloc(sizeof(Modrepo));
         next->next = 0;
+        next->so = modso;
         next->id = ((const char *(*)(void))modid)();
         next->instance = (IModule *(*)(void))modinst;
         next->delete = (void (*)(IModule *))moddel;
@@ -111,6 +125,13 @@ modrepo_delete(Modrepo *this)
     {
         tmp = current;
         current = current->next;
+#ifdef WIN32
+
+#else
+
+        dlclose(tmp->so);
+
+#endif
         free(tmp);
     }
 }
