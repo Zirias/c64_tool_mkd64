@@ -196,6 +196,8 @@ modrepo_delete(Modrepo *this)
         current = current->next;
 #ifdef WIN32
 
+        FreeLibrary(tmp->so);
+
 #else
 
         dlclose(tmp->so);

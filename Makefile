@@ -17,6 +17,7 @@ CATOUT =
 
 CFLAGS += -DWIN32=1
 dl_LDFLAGS = -lshlwapi
+mod_CFLAGS =
 
 else
 
@@ -36,6 +37,7 @@ CATADD =
 CATOUT = >
 
 dl_LDFLAGS = -ldl
+mod_CFLAGS = -fPIC
 
 endif
 
@@ -59,7 +61,7 @@ modules:	$(MODULES)
 
 clean:
 	$(RMF) *.o
-	$(RMF) *.so
+	$(RMF) *$(SO)
 	$(RMF) modules$(PSEP)*.o
 	$(RMF) cmdtest$(EXE)
 	$(RMF) mkd64$(EXE)
@@ -71,7 +73,7 @@ cmdtest$(EXE):	$(cmdtest_OBJS)
 	$(CC) -o$@ $^ $(cmdtest_LDFLAGS)
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c
-	$(CC) -o$@ -c -fPIC $(CFLAGS) $<
+	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $<
 
 %.o:	%.c
 	$(CC) -o$@ -c $(CFLAGS) $<
