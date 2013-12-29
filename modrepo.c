@@ -5,12 +5,16 @@
 #ifdef WIN32
 #include <windows.h>
 #include <shlwapi.h>
+#define GET_MOD_METHOD(so, name) GetProcAddress(so, name)
+#define UNLOAD_MOD(so) FreeLibrary(so)
 #else
 #include <glob.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <dlfcn.h>
+#define GET_MOD_METHOD(so, name) dlsym(so, name)
+#define UNLOAD_MOD(so) dlclose(so)
 #endif
 
 struct modrepo
@@ -45,7 +49,6 @@ modrepo_new(const char *exe)
     Modrepo *next;
 
 #ifdef WIN32
-
     HANDLE findHdl;
     HMODULE modso;
     FARPROC modid, modinst, moddel;
@@ -66,56 +69,7 @@ modrepo_new(const char *exe)
     do
     {
         modso = LoadLibrary(findData.cFileName);
-
-        if (!modso) continue;
-
-        modid = GetProcAddress(modso, "id");
-        if (!modid)
-        {
-            FreeLibrary(modso);
-            continue;
-        }
-
-        modinst = GetProcAddress(modso, "instance");
-        if (!modinst)
-        {
-            FreeLibrary(modso);
-            continue;
-        }
-
-        moddel = GetProcAddress(modso, "delete");
-        if (!moddel)
-        {
-            FreeLibrary(modso);
-            continue;
-        }
-
-        next = malloc(sizeof(Modrepo));
-        next->next = 0;
-        next->so = modso;
-        next->id = ((const char *(*)(void))modid)();
-        next->instance = (IModule *(*)(void))modinst;
-        next->delete = (void (*)(IModule *))moddel;
-
-        if (current)
-        {
-            current->next = next;
-        }
-        else
-        {
-            this = next;
-        }
-        current = next;
-
-        fprintf(stderr, "Found module: %s\n", current->id);
-
-    } while (FindNextFile(findHdl, &findData) != 0);
-
-    FindClose(findHdl);
-    free(modpat);
-
 #else
-
     glob_t glb;
     char **pathvp;
     char *modpat;
@@ -133,27 +87,27 @@ modrepo_new(const char *exe)
     for (pathvp = glb.gl_pathv; pathvp && *pathvp; ++pathvp)
     {
         modso = dlopen(*pathvp, RTLD_NOW);
-
+#endif
         if (!modso) continue;
 
-        modid = dlsym(modso, "id");
+        modid = GET_MOD_METHOD(modso, "id");
         if (!modid)
         {
-            dlclose(modso);
+            UNLOAD_MOD(modso);
             continue;
         }
 
-        modinst = dlsym(modso, "instance");
+        modinst = GET_MOD_METHOD(modso, "instance");
         if (!modinst)
         {
-            dlclose(modso);
+            UNLOAD_MOD(modso);
             continue;
         }
 
-        moddel = dlsym(modso, "delete");
+        moddel = GET_MOD_METHOD(modso, "delete");
         if (!moddel)
         {
-            dlclose(modso);
+            UNLOAD_MOD(modso);
             continue;
         }
 
@@ -175,10 +129,16 @@ modrepo_new(const char *exe)
         current = next;
 
         fprintf(stderr, "Found module: %s\n", current->id);
+
+#ifdef WIN32
+    } while (FindNextFile(findHdl, &findData) != 0);
+
+    FindClose(findHdl);
+    free(modpat);
+#else
     }
 
     globfree(&glb);
-
 #endif
 
     return this;
@@ -194,15 +154,7 @@ modrepo_delete(Modrepo *this)
     {
         tmp = current;
         current = current->next;
-#ifdef WIN32
-
-        FreeLibrary(tmp->so);
-
-#else
-
-        dlclose(tmp->so);
-
-#endif
+        UNLOAD_MOD(tmp->so);
         free(tmp);
     }
 }
