@@ -10,6 +10,7 @@ struct cmdline
     int pos;
     char *opts;
     char **args;
+    char *exe;
 };
 
 static void
@@ -53,6 +54,7 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
 
     clear(this);
 
+    this->exe = *argv;
     this->opts = malloc(argc * sizeof(char));
     this->args = malloc(argc * sizeof(char *));
 
@@ -102,6 +104,12 @@ cmdline_moveNext(Cmdline *this)
         return 0;
     }
     return 1;
+}
+
+const char *
+cmdline_exe(const Cmdline *this)
+{
+    return this->exe;
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4

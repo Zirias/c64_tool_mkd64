@@ -1,5 +1,6 @@
 
 #include "cmdline.h"
+#include "modrepo.h"
 
 #include <stdio.h>
 
@@ -16,6 +17,9 @@ int main(int argc, char **argv)
         const char *arg = cmdline_arg(cl);
         printf("%c: %s\n", opt, arg?arg:noarg);
     }
+
+    Modrepo *mr = modrepo_new(cmdline_exe(cl));
+    modrepo_delete(mr);
 
     cmdline_delete(cl);
 }
