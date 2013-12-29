@@ -1,6 +1,10 @@
 .*.swp
+*~
 *.o
 *.so
+*.dll
 cmdtest
+cmdtest.exe
 mkd64
+mkd64.exe
 

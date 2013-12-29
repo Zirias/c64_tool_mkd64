@@ -16,6 +16,7 @@ CATADD = +
 CATOUT =
 
 CFLAGS += -DWIN32=1
+dl_LDFLAGS = -lshlwapi
 
 else
 
@@ -34,6 +35,8 @@ CATIN = cat
 CATADD = 
 CATOUT = >
 
+dl_LDFLAGS = -ldl
+
 endif
 
 CC = gcc
@@ -41,10 +44,10 @@ CC = gcc
 mkd64_CLASSES = image.o track.o block.o diskfile.o cmdline.o modrepo.o
 
 mkd64_OBJS = mkd64.o $(mkd64_CLASSES)
-mkd64_LDFLAGS = -ldl
+mkd64_LDFLAGS = $(dl_LDFLAGS)
 
 cmdtest_OBJS = cmdtest.o $(mkd64_CLASSES)
-cmdtest_LDFLAGS = -ldl
+cmdtest_LDFLAGS = $(dl_LDFLAGS)
 
 MODULES = cbmdos$(SO)
 
@@ -62,10 +65,10 @@ clean:
 	$(RMF) mkd64$(EXE)
 
 mkd64$(EXE):	$(mkd64_OBJS)
-	$(CC) -o$@ $(mkd64_LDFLAGS) $^
+	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
 
 cmdtest$(EXE):	$(cmdtest_OBJS)
-	$(CC) -o$@ $(cmdtest_LDFLAGS) $^
+	$(CC) -o$@ $^ $(cmdtest_LDFLAGS)
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c
 	$(CC) -o$@ -c -fPIC $(CFLAGS) $<

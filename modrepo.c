@@ -4,6 +4,7 @@
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
+#include <shlwapi.h>
 #else
 #include <glob.h>
 #include <limits.h>
@@ -41,8 +42,77 @@ modrepo_new(const char *exe)
 {
     Modrepo *this = 0;
     Modrepo *current = 0;
+    Modrepo *next;
 
 #ifdef WIN32
+
+    HANDLE findHdl;
+    HMODULE modso;
+    FARPROC modid, modinst, moddel;
+    WIN32_FIND_DATA findData;
+
+    char *modpat = malloc(4096);
+    GetModuleFileName(GetModuleHandle(0), modpat, 4096);
+    PathRemoveFileSpec(modpat);
+    strcat(modpat, "\\*.dll");
+
+    findHdl = FindFirstFile(modpat, &findData);
+    if (findHdl == INVALID_HANDLE_VALUE)
+    {
+        free(modpat);
+        return this;
+    }
+
+    do
+    {
+        modso = LoadLibrary(findData.cFileName);
+
+        if (!modso) continue;
+
+        modid = GetProcAddress(modso, "id");
+        if (!modid)
+        {
+            FreeLibrary(modso);
+            continue;
+        }
+
+        modinst = GetProcAddress(modso, "instance");
+        if (!modinst)
+        {
+            FreeLibrary(modso);
+            continue;
+        }
+
+        moddel = GetProcAddress(modso, "delete");
+        if (!moddel)
+        {
+            FreeLibrary(modso);
+            continue;
+        }
+
+        next = malloc(sizeof(Modrepo));
+        next->next = 0;
+        next->so = modso;
+        next->id = ((const char *(*)(void))modid)();
+        next->instance = (IModule *(*)(void))modinst;
+        next->delete = (void (*)(IModule *))moddel;
+
+        if (current)
+        {
+            current->next = next;
+        }
+        else
+        {
+            this = next;
+        }
+        current = next;
+
+        fprintf(stderr, "Found module: %s\n", current->id);
+
+    } while (FindNextFile(findHdl, &findData) != 0);
+
+    FindClose(findHdl);
+    free(modpat);
 
 #else
 
@@ -50,7 +120,6 @@ modrepo_new(const char *exe)
     char **pathvp;
     char *modpat;
     void *modso, *modid, *modinst, *moddel;
-    Modrepo *next;
 
     char *exefullpath = realpath(exe, 0);
     char *dir = dirname(exefullpath);
@@ -75,14 +144,14 @@ modrepo_new(const char *exe)
         }
 
         modinst = dlsym(modso, "instance");
-        if (!modid)
+        if (!modinst)
         {
             dlclose(modso);
             continue;
         }
 
         moddel = dlsym(modso, "delete");
-        if (!modid)
+        if (!moddel)
         {
             dlclose(modso);
             continue;
