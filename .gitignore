@@ -1,2 +1,6 @@
 .*.swp
 *.o
+*.so
+cmdtest
+mkd64
+
