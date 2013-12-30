@@ -21,9 +21,14 @@ struct modrepo
 {
     Modrepo *next;
     void *so;
+    IModule *mod;
     const char *id;
     IModule *(*instance)(void);
     void (*delete)(IModule *instance);
+    const char **depends;
+    const char **conflicts;
+    const char *(*help)(void);
+    const char *(*helpFile)(void);
 };
 
 static Modrepo *
@@ -41,6 +46,13 @@ findModule(Modrepo *this, const char *id)
     return 0;
 }
 
+static int
+createInstanceHere(Modrepo *entry)
+{
+    /* TODO: check dependencies */
+    entry->mod = entry->instance();
+}
+
 Modrepo *
 modrepo_new(const char *exe)
 {
@@ -51,7 +63,7 @@ modrepo_new(const char *exe)
 #ifdef WIN32
     HANDLE findHdl;
     HMODULE modso;
-    FARPROC modid, modinst, moddel;
+    FARPROC modid, modinst, moddel, modopt;
     WIN32_FIND_DATA findData;
 
     char *modpat = malloc(4096);
@@ -73,7 +85,7 @@ modrepo_new(const char *exe)
     glob_t glb;
     char **pathvp;
     char *modpat;
-    void *modso, *modid, *modinst, *moddel;
+    void *modso, *modid, *modinst, *moddel, *modopt;
 
     char *exefullpath = realpath(exe, 0);
     char *dir = dirname(exefullpath);
@@ -114,9 +126,22 @@ modrepo_new(const char *exe)
         next = malloc(sizeof(Modrepo));
         next->next = 0;
         next->so = modso;
+        next->mod = 0;
         next->id = ((const char *(*)(void))modid)();
         next->instance = (IModule *(*)(void))modinst;
         next->delete = (void (*)(IModule *))moddel;
+
+        modopt = GET_MOD_METHOD(modso, "depends");
+        next->depends = modopt ? ((const char **(*)(void))modopt)() : 0;
+
+        modopt = GET_MOD_METHOD(modso, "conflicts");
+        next->conflicts = modopt ? ((const char **(*)(void))modopt)() : 0;
+
+        modopt = GET_MOD_METHOD(modso, "help");
+        next->help = modopt ? (const char *(*)(void))modopt : 0;
+
+        modopt = GET_MOD_METHOD(modso, "helpFile");
+        next->helpFile = modopt ? (const char *(*)(void))modopt : 0;
 
         if (current)
         {
@@ -154,6 +179,7 @@ modrepo_delete(Modrepo *this)
     {
         tmp = current;
         current = current->next;
+        tmp->delete(tmp->mod);
         UNLOAD_MOD(tmp->so);
         free(tmp);
     }
@@ -165,15 +191,73 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
     if (!this) return 0;
     Modrepo *found = findModule(this, id);
     if (!found) return 0;
-    return found->instance();
+    if (!found->mod) createInstanceHere(found);
+    return found->mod;
 }
 
-void
-modrepo_deleteInstance(Modrepo *this, IModule *instance)
+int
+modrepo_createInstance(Modrepo *this, const char *id)
 {
-    if (!this) return;
-    Modrepo *found = findModule(this, instance->id());
-    if (found) found->delete(instance);
+    if (!this) return 0;
+    Modrepo *found = findModule(this, id);
+    if (!found) return 0;
+    if (found->mod) return 1;
+    createInstanceHere(found);
+    return found->mod ? 1 : 0;
+}
+
+int
+modrepo_deleteInstance(Modrepo *this, const char *id)
+{
+    if (!this) return 0;
+    Modrepo *found = findModule(this, id);
+    if (!found) return 0;
+    found->delete(found->mod);
+    found->mod = 0;
+    return 1;
+}
+
+int
+modrepo_isActive(Modrepo *this, const char *id)
+{
+    if (!this) return 0;
+    Modrepo *found = findModule(this, id);
+    return (found && found->mod) ? 1 : 0;
+}
+
+char *
+modrepo_getHelp(Modrepo *this, const char *id)
+{
+    static const char *mainHelpHeader = "* Module `%s':\n";
+    static const char *fileHelpHeader = "\n* File options:\n";
+    char *helpText;
+    size_t helpLen;
+    const char *mainHelp, *fileHelp;
+    Modrepo *found;
+
+    if (!this) return 0;
+    found = findModule(this, id);
+    if (!found) return 0;
+    mainHelp = found->help ? found->help() : 0;
+    fileHelp = found->helpFile ? found->helpFile() : 0;
+
+    if (!mainHelp && !fileHelp) return 0;
+
+    helpLen = strlen(mainHelpHeader) + strlen(id) - 1;
+
+    if (mainHelp) helpLen += strlen(mainHelp);
+    if (fileHelp) helpLen += strlen(fileHelpHeader) + strlen(fileHelp);
+
+    helpText = malloc(helpLen);
+    sprintf(helpText, mainHelpHeader, id);
+    if (mainHelp) strcat(helpText, mainHelp);
+    if (fileHelp)
+    {
+        strcat(helpText, fileHelpHeader);
+        strcat(helpText, fileHelp);
+    }
+
+    return helpText;
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4
