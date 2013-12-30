@@ -5,25 +5,45 @@
 
 #include "track.h"
 #include "block.h"
-#include "blckstat.h"
 
 #define TRACK_SIZE(x) (sizeof(Track) + (x - 1) * sizeof(Block *))
 
 struct track
 {
+    int tracknum;
     size_t num_sectors;
+    int free_sectors;
     Block *sectors[1];
 };
 
+static void
+blockStatusChanged(void *owner, Block *block,
+        BlockStatus oldStatus, BlockStatus newStatus)
+{
+    Track *this = (Track *) owner;
+
+    if (oldStatus == BS_NONE && newStatus != BS_NONE)
+        --(this->free_sectors);
+    else if (oldStatus != BS_NONE && newStatus == BS_NONE)
+        ++(this->free_sectors);
+}
+
 Track *
-track_new(size_t num_sectors)
+track_new(int tracknum, size_t num_sectors)
 {
     int i;
+    BlockPosition pos;
+
     Track *this = malloc(TRACK_SIZE(num_sectors));
+    this->tracknum = tracknum;
     this->num_sectors = num_sectors;
+    this->free_sectors = num_sectors;
+
+    pos.track = tracknum;
     for (i = 0; i < num_sectors; ++i)
     {
-        this->sectors[i] = block_new();
+        pos.sector = i+1;
+        this->sectors[i] = block_new(this, &pos, &blockStatusChanged);
     }
     return this;
 }

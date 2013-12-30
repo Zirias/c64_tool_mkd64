@@ -3,18 +3,25 @@
 #include <stdlib.h>
 
 #include "block.h"
-#include "blckstat.h"
 
 struct block
 {
+    void *owner;
     BlockStatus status;
+    BlockPosition pos;
+    BlockStatusChangedHandler handler;
     uint8_t data[BLOCK_RAWSIZE];
 };
 
 Block *
-block_new(void)
+block_new(void *owner,
+        const BlockPosition *pos, BlockStatusChangedHandler handler)
 {
     Block *this = calloc(1, sizeof(Block));
+    this->owner = owner;
+    this->pos.track = pos->track;
+    this->pos.sector = pos->sector;
+    this->handler = handler;
     return this;
 }
 
@@ -71,16 +78,30 @@ block_setNextPosition(Block *this, const BlockPosition *pos)
 int
 block_reserve(Block *this)
 {
+    BlockStatus old;
+
     if (this->status & BS_RESERVED) return 0;
+    old = this->status;
     this->status |= BS_RESERVED;
+    if (this->handler)
+    {
+        this->handler(this->owner, this, old, this->status);
+    }
     return 1;
 }
 
 int
 block_allocate(Block *this)
 {
+    BlockStatus old;
+
     if (this->status & BS_ALLOCATED) return 0;
+    old = this->status;
     this->status |= BS_ALLOCATED;
+    if (this->handler)
+    {
+        this->handler(this->owner, this, old, this->status);
+    }
     return 1;
 }
 

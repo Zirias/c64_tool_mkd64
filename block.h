@@ -3,8 +3,6 @@
 
 #include "stdintrp.h"
 
-#include "blckstat.h"
-
 #define BLOCK_SIZE 254
 #define BLOCK_RAWSIZE 256
 
@@ -17,7 +15,19 @@ typedef struct
     uint8_t sector;
 } BlockPosition;
 
-Block *block_new();
+typedef enum
+{
+    BS_NONE = 0,
+    BS_ALLOCATED = 1,
+    BS_RESERVED = 1 << 1,
+} BlockStatus;
+
+typedef void (*BlockStatusChangedHandler)(void *owner, Block *block,
+        BlockStatus oldStatus, BlockStatus newStatus);
+
+Block *block_new(void *owner,
+        const BlockPosition *pos, BlockStatusChangedHandler handler);
+
 void block_delete(Block *this);
 
 BlockStatus block_status(const Block *this);

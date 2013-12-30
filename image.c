@@ -4,7 +4,6 @@
 #include "image.h"
 #include "track.h"
 #include "block.h"
-#include "blckstat.h"
 
 #define IMAGE_NUM_TRACKS 35
 
@@ -37,7 +36,7 @@ image_new(void)
     Image *this = malloc(sizeof(Image));
     for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
     {
-        this->tracks[i] = track_new(num_sectors[i]);
+        this->tracks[i] = track_new(i+1, num_sectors[i]);
     }
     this->num_tracks = IMAGE_NUM_TRACKS;
     return this;

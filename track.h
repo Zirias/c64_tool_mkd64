@@ -4,12 +4,11 @@
 #include <stdlib.h>
 
 #include "block.h"
-#include "blckstat.h"
 
 struct track;
 typedef struct track Track;
 
-Track *track_new(size_t num_sectors);
+Track *track_new(int tracknum, size_t num_sectors);
 void track_delete(Track *this);
 
 BlockStatus track_blockStatus(const Track *this, int sector);
