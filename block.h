@@ -1,7 +1,7 @@
 #ifndef MKD64_BLOCK_H
 #define MKD64_BLOCK_H
 
-#include <stdint.h>
+#include "stdintrp.h"
 
 #include "blckstat.h"
 

@@ -2,7 +2,7 @@
 #include "diskfile.h"
 
 #include <stdlib.h>
-#include <stdint.h>
+#include "stdintrp.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef WIN32

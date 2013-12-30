@@ -1,5 +1,5 @@
 
-#include <stdint.h>
+#include "stdintrp.h"
 #include <stdlib.h>
 
 #include "block.h"

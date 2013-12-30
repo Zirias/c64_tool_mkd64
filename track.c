@@ -1,6 +1,6 @@
 
 #include <stdlib.h>
-#include <stdint.h>
+#include "stdintrp.h"
 #include <string.h>
 
 #include "track.h"
