@@ -20,7 +20,7 @@ struct iModule
     void (*fileOption)(IModule *this,
             Diskfile *file, char opt, const char *arg);
 
-    Track *(*getTrack)(IModule *this, Image *image, int track);
+    Track *(*getTrack)(IModule *this, int track);
 
     void (*fileWritten)(IModule *this, Diskfile *file);
 

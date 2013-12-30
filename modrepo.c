@@ -269,5 +269,78 @@ modrepo_getHelp(Modrepo *this, const char *id)
     return helpText;
 }
 
+void
+modrepo_allInitImage(Modrepo *this, Image *image)
+{
+    Modrepo *current;
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->initImage)
+            current->mod->initImage(current->mod, image);
+    }
+}
+
+void
+modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
+{
+    Modrepo *current;
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->globalOption)
+            current->mod->globalOption(current->mod, opt, arg);
+    }
+}
+
+void
+modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
+{
+    Modrepo *current;
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->fileOption)
+            current->mod->fileOption(current->mod, file, opt, arg);
+    }
+}
+
+Track *
+modrepo_firstGetTrack(Modrepo *this, int track)
+{
+    Track *t;
+    Modrepo *current;
+
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->getTrack)
+        {
+            t = current->mod->getTrack(current->mod, track);
+            if (t) break;
+        }
+    }
+
+    return t;
+}
+
+void
+modrepo_allFileWritten(Modrepo *this, Diskfile *file)
+{
+    Modrepo *current;
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->fileWritten)
+            current->mod->fileWritten(current->mod, file);
+    }
+}
+
+void
+modrepo_allStatusChanged(Modrepo *this, BlockPosition *pos)
+{
+    Modrepo *current;
+    for (current = this; current; current = current->next)
+    {
+        if (current->mod && current->mod->statusChanged)
+            current->mod->statusChanged(current->mod, pos);
+    }
+}
+
 /* vim: et:si:ts=4:sts=4:sw=4
 */
