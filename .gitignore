@@ -10,8 +10,9 @@ mkd64.exe
 Debug/*
 Release/*
 ipch/*
-*.vcxproj.user
+*.user
 *.suo
 *.sdf
+*.ncb
 *.opensdf
 

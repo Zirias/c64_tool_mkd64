@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmdtest", "cmdtest.vcproj", "{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{565D3A0A-B403-4815-9E4A-9EDE511ACC8B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cbmdos", "cbmdos.vcproj", "{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}.Debug|Win32.Build.0 = Debug|Win32
+		{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}.Release|Win32.ActiveCfg = Release|Win32
+		{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}.Release|Win32.Build.0 = Release|Win32
+		{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}.Debug|Win32.Build.0 = Debug|Win32
+		{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}.Release|Win32.ActiveCfg = Release|Win32
+		{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD} = {565D3A0A-B403-4815-9E4A-9EDE511ACC8B}
+	EndGlobalSection
+EndGlobal
