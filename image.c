@@ -71,5 +71,5 @@ image_block(Image *this, BlockPosition *pos)
     return track_block(t, pos->sector);
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

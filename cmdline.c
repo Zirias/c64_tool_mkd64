@@ -112,5 +112,5 @@ cmdline_exe(const Cmdline *this)
     return this->exe;
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

@@ -8,7 +8,9 @@ const char *noarg = "<EMPTY>";
 
 int main(int argc, char **argv)
 {
+    Modrepo *mr;
     Cmdline *cl = cmdline_new();
+
     cmdline_parse(cl, argc, argv);
 
     while (cmdline_moveNext(cl))
@@ -18,11 +20,11 @@ int main(int argc, char **argv)
         printf("%c: %s\n", opt, arg?arg:noarg);
     }
 
-    Modrepo *mr = modrepo_new(cmdline_exe(cl));
+    mr = modrepo_new(cmdline_exe(cl));
     modrepo_delete(mr);
 
     cmdline_delete(cl);
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

@@ -5,7 +5,9 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <stdio.h>
 
 struct diskfile
@@ -92,5 +94,5 @@ diskfile_setInterleave(Diskfile *this, int interleave)
     this->interleave = interleave;
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

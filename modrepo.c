@@ -51,6 +51,7 @@ createInstanceHere(Modrepo *entry)
 {
     /* TODO: check dependencies */
     entry->mod = entry->instance();
+    return 1;
 }
 
 Modrepo *
@@ -188,8 +189,10 @@ modrepo_delete(Modrepo *this)
 IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
+    Modrepo *found;
+
     if (!this) return 0;
-    Modrepo *found = findModule(this, id);
+    found = findModule(this, id);
     if (!found) return 0;
     if (!found->mod) createInstanceHere(found);
     return found->mod;
@@ -198,8 +201,10 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
 int
 modrepo_createInstance(Modrepo *this, const char *id)
 {
+    Modrepo *found;
+
     if (!this) return 0;
-    Modrepo *found = findModule(this, id);
+    found = findModule(this, id);
     if (!found) return 0;
     if (found->mod) return 1;
     createInstanceHere(found);
@@ -209,8 +214,10 @@ modrepo_createInstance(Modrepo *this, const char *id)
 int
 modrepo_deleteInstance(Modrepo *this, const char *id)
 {
+    Modrepo *found;
+
     if (!this) return 0;
-    Modrepo *found = findModule(this, id);
+    found = findModule(this, id);
     if (!found) return 0;
     found->delete(found->mod);
     found->mod = 0;
@@ -220,8 +227,10 @@ modrepo_deleteInstance(Modrepo *this, const char *id)
 int
 modrepo_isActive(Modrepo *this, const char *id)
 {
+    Modrepo *found;
+
     if (!this) return 0;
-    Modrepo *found = findModule(this, id);
+    found = findModule(this, id);
     return (found && found->mod) ? 1 : 0;
 }
 
@@ -260,5 +269,5 @@ modrepo_getHelp(Modrepo *this, const char *id)
     return helpText;
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

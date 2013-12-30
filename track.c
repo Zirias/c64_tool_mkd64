@@ -67,5 +67,5 @@ track_block(Track *this, int sector)
     return this->sectors[sector-1];
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

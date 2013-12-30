@@ -7,4 +7,11 @@ cmdtest
 cmdtest.exe
 mkd64
 mkd64.exe
+Debug/*
+Release/*
+ipch/*
+*.vcxproj.user
+*.suo
+*.sdf
+*.opensdf
 

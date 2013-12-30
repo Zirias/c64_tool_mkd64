@@ -96,5 +96,5 @@ block_rawData(Block *this)
     return this->data;
 }
 
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */

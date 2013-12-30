@@ -37,5 +37,5 @@ uint8_t *block_data(Block *this);
 uint8_t *block_rawData(Block *this);
 
 #endif
-/* vim: et:si:ts=8:sts=4:sw=4
+/* vim: et:si:ts=4:sts=4:sw=4
 */
