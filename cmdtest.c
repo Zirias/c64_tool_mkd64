@@ -8,6 +8,7 @@ const char *noarg = "<EMPTY>";
 
 int main(int argc, char **argv)
 {
+    Image *img;
     Modrepo *mr;
     Cmdline *cl = cmdline_new();
 
@@ -21,6 +22,8 @@ int main(int argc, char **argv)
     }
 
     mr = modrepo_new(cmdline_exe(cl));
+    img = image_new();
+    image_delete(img);
     modrepo_delete(mr);
 
     cmdline_delete(cl);

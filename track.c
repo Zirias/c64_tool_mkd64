@@ -66,6 +66,18 @@ track_blockStatus(const Track *this, int sector)
     return block_status(this->sectors[sector-1]);
 }
 
+size_t
+track_numSectors(const Track *this)
+{
+    return this->num_sectors;
+}
+
+int
+track_freeSectors(const Track *this)
+{
+    return this->free_sectors;
+}
+
 int
 track_reserveBlock(Track *this, int sector)
 {
