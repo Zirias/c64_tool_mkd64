@@ -143,6 +143,7 @@ diskfile_write(Diskfile *this, Image *image,
     image_nextFileBlock(image, this->interleave, &current);
     start.track = current.track;
     start.sector = current.sector;
+    this->blocks = 1;
 
     do
     {
@@ -163,6 +164,7 @@ diskfile_write(Diskfile *this, Image *image,
             block_setNextTrack(block, current.track);
             block_setNextSector(block, current.sector);
             contentPos += blockWrite;
+            ++(this->blocks);
         }
         else
         {
