@@ -31,6 +31,7 @@ Block *block_new(void *owner,
 void block_delete(Block *this);
 
 BlockStatus block_status(const Block *this);
+const BlockPosition *block_position(const Block *this);
 
 uint8_t block_nextTrack(const Block *this);
 uint8_t block_nextSector(const Block *this);

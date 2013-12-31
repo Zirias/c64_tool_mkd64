@@ -28,7 +28,7 @@ void modrepo_allFileOption(Modrepo *this,
 Track *modrepo_firstGetTrack(Modrepo *this, int track);
 void modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start);
-void modrepo_allStatusChanged(Modrepo *this, BlockPosition *pos);
+void modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

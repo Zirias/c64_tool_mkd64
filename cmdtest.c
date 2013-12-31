@@ -1,5 +1,6 @@
 
 #include "mkd64.h"
+#include "modrepo.h"
 
 #include <stdio.h>
 
@@ -13,6 +14,8 @@ int main(int argc, char **argv)
     BlockPosition pos = {0,0};
 
     mkd64_init(argc, argv);
+
+    modrepo_createInstance(mkd64_modrepo(), "cbmdos");
 
     cl = mkd64_cmdline();
     while (cmdline_moveNext(cl))

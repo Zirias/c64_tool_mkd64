@@ -1,6 +1,7 @@
 
 #include "../module.h"
 #include "../imodule.h"
+#include "../debug.h"
 
 static const char *modid = "cbmdos";
 
@@ -27,11 +28,13 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 static void
 fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 {
+    DBGd2("cbmdos: fileWritten", start->track, start->sector);
 }
 
 static void
-statusChanged(IModule *this, BlockPosition *block)
+statusChanged(IModule *this, const BlockPosition *pos)
 {
+    DBGd2("cbmdos: statusChanged", pos->track, pos->sector);
 }
 
 const char *

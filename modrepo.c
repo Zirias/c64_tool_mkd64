@@ -333,7 +333,7 @@ modrepo_allFileWritten(Modrepo *this,
 }
 
 void
-modrepo_allStatusChanged(Modrepo *this, BlockPosition *pos)
+modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
 {
     Modrepo *current;
     for (current = this; current; current = current->next)

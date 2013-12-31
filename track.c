@@ -5,6 +5,8 @@
 
 #include "track.h"
 #include "block.h"
+#include "modrepo.h"
+#include "mkd64.h"
 
 #define TRACK_SIZE(x) (sizeof(Track) + (x - 1) * sizeof(Block *))
 
@@ -21,11 +23,14 @@ blockStatusChanged(void *owner, Block *block,
         BlockStatus oldStatus, BlockStatus newStatus)
 {
     Track *this = (Track *) owner;
+    Modrepo *mr = mkd64_modrepo();
 
     if (oldStatus == BS_NONE && newStatus != BS_NONE)
         --(this->free_sectors);
     else if (oldStatus != BS_NONE && newStatus == BS_NONE)
         ++(this->free_sectors);
+
+    modrepo_allStatusChanged(mr, block_position(block));
 }
 
 Track *

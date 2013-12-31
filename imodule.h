@@ -25,7 +25,7 @@ struct iModule
     void (*fileWritten)(IModule *this,
             Diskfile *file, const BlockPosition *start);
 
-    void (*statusChanged)(IModule *this, BlockPosition *pos);
+    void (*statusChanged)(IModule *this, const BlockPosition *pos);
 };
 
 #endif

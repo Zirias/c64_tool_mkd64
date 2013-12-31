@@ -37,6 +37,12 @@ block_status(const Block *this)
     return this->status;
 }
 
+const BlockPosition *
+block_position(const Block *this)
+{
+    return &(this->pos);
+}
+
 uint8_t
 block_nextTrack(const Block *this)
 {

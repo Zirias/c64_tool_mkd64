@@ -3,6 +3,8 @@
 #include "image.h"
 #include "block.h"
 #include "debug.h"
+#include "modrepo.h"
+#include "mkd64.h"
 
 #include <stdlib.h>
 #include "stdintrp.h"
@@ -174,6 +176,8 @@ diskfile_write(Diskfile *this, Image *image,
     } while (toWrite);
 
     filemap_add(image_filemap(image), this, &start);
+
+    modrepo_allFileWritten(mkd64_modrepo(), this, &start);
 
     return 1;
 }
