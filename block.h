@@ -41,7 +41,9 @@ void block_setNextSector(Block *this, uint8_t nextSector);
 void block_setNextPosition(Block *this, const BlockPosition *pos);
 
 int block_reserve(Block *this);
+int block_unReserve(Block *this);
 int block_allocate(Block *this);
+int block_free(Block *this);
 
 uint8_t *block_data(Block *this);
 uint8_t *block_rawData(Block *this);

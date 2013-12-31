@@ -321,13 +321,14 @@ modrepo_firstGetTrack(Modrepo *this, int track)
 }
 
 void
-modrepo_allFileWritten(Modrepo *this, Diskfile *file)
+modrepo_allFileWritten(Modrepo *this,
+        Diskfile *file, const BlockPosition *start)
 {
     Modrepo *current;
     for (current = this; current; current = current->next)
     {
         if (current->mod && current->mod->fileWritten)
-            current->mod->fileWritten(current->mod, file);
+            current->mod->fileWritten(current->mod, file, start);
     }
 }
 

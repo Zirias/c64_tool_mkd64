@@ -8,6 +8,9 @@ const char *noarg = "<EMPTY>";
 int main(int argc, char **argv)
 {
     Cmdline *cl;
+    Image *i;
+    FILE *f;
+    BlockPosition pos = {0,0};
 
     mkd64_init(argc, argv);
 
@@ -17,6 +20,19 @@ int main(int argc, char **argv)
         char opt = cmdline_opt(cl);
         const char *arg = cmdline_arg(cl);
         printf("%c: %s\n", opt, arg?arg:noarg);
+    }
+
+    Diskfile *testFile = diskfile_new();
+    diskfile_setName(testFile, "testFile");
+    diskfile_setInterleave(testFile, 10);
+    
+    f = fopen("modrepo.c", "r");
+    if (f)
+    {
+        i = mkd64_image();
+        diskfile_readFromHost(testFile, f);
+        diskfile_write(testFile, i, &pos);
+        filemap_dump(image_filemap(i), stderr);
     }
 
     mkd64_done();

@@ -91,6 +91,21 @@ block_reserve(Block *this)
 }
 
 int
+block_unReserve(Block *this)
+{
+    BlockStatus old;
+
+    if (!(this->status & BS_RESERVED)) return 0;
+    old = this->status;
+    this->status &= ~BS_RESERVED;
+    if (this->handler)
+    {
+        this->handler(this->owner, this, old, this->status);
+    }
+    return 1;
+}
+
+int
 block_allocate(Block *this)
 {
     BlockStatus old;
@@ -98,6 +113,21 @@ block_allocate(Block *this)
     if (this->status & BS_ALLOCATED) return 0;
     old = this->status;
     this->status |= BS_ALLOCATED;
+    if (this->handler)
+    {
+        this->handler(this->owner, this, old, this->status);
+    }
+    return 1;
+}
+
+int
+block_free(Block *this)
+{
+    BlockStatus old;
+
+    if (!(this->status & BS_ALLOCATED)) return 0;
+    old = this->status;
+    this->status &= ~BS_ALLOCATED;
     if (this->handler)
     {
         this->handler(this->owner, this, old, this->status);

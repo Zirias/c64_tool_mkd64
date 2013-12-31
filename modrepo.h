@@ -26,7 +26,8 @@ void modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg);
 void modrepo_allFileOption(Modrepo *this,
         Diskfile *file, char opt, const char *arg);
 Track *modrepo_firstGetTrack(Modrepo *this, int track);
-void modrepo_allFileWritten(Modrepo *this, Diskfile *file);
+void modrepo_allFileWritten(Modrepo *this,
+        Diskfile *file, const BlockPosition *start);
 void modrepo_allStatusChanged(Modrepo *this, BlockPosition *pos);
 
 #endif

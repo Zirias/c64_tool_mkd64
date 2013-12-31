@@ -15,7 +15,7 @@ CATIN = copy /b
 CATADD = +
 CATOUT =
 
-CFLAGS += -DWIN32=1
+CFLAGS += -DWIN32
 dl_LDFLAGS = -lshlwapi
 mod_CFLAGS =
 
@@ -39,6 +39,10 @@ CATOUT = >
 dl_LDFLAGS = -ldl
 mod_CFLAGS = -fPIC
 
+endif
+
+ifdef DEBUG
+CFLAGS += -DDEBUG
 endif
 
 CC = gcc

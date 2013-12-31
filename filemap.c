@@ -12,7 +12,7 @@ typedef struct filemapEntry FilemapEntry;
 struct filemapEntry
 {
     FilemapEntry *next;
-    const Diskfile *file;
+    Diskfile *file;
     BlockPosition *startPosition;
 };
 
@@ -36,6 +36,7 @@ filemap_delete(Filemap *this)
     for (current = this->first; current; current = next)
     {
         next = current->next;
+        diskfile_delete(current->file);
         free(current->startPosition);
         free(current);
     }
@@ -43,7 +44,7 @@ filemap_delete(Filemap *this)
 }
 
 void
-filemap_add(Filemap *this, const Diskfile *file, const BlockPosition *pos)
+filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
 {
     FilemapEntry *current;
 

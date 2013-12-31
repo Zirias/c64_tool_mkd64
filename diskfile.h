@@ -1,14 +1,14 @@
 #ifndef MKD64_DISKFILE_H
 #define MKD64_DISKFILE_H
 
-#include "image.h"
-#include "block.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 
 struct diskfile;
 typedef struct diskfile Diskfile;
+
+#include "image.h"
+#include "block.h"
 
 Diskfile *diskfile_new(void);
 void diskfile_delete(Diskfile *this);

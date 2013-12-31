@@ -2,6 +2,7 @@
 #include "diskfile.h"
 #include "image.h"
 #include "block.h"
+#include "debug.h"
 
 #include <stdlib.h>
 #include "stdintrp.h"
@@ -11,6 +12,7 @@
 #include <unistd.h>
 #endif
 #include <stdio.h>
+#include <string.h>
 
 struct diskfile
 {
@@ -101,24 +103,77 @@ diskfile_name(const Diskfile *this)
     return this->name;
 }
 
+static void
+_rollbackWrite(Diskfile *this, Image *image, BlockPosition *pos)
+{
+    Block *block;
+
+    while (pos->track)
+    {
+        block = image_block(image, pos);
+        block_free(block);
+        pos->track = block_nextTrack(block);
+        pos->sector = block_nextSector(block);
+    }
+}
+
 int
 diskfile_write(Diskfile *this, Image *image,
         const BlockPosition *startPosition)
 {
     BlockPosition start = {0,0};
     BlockPosition current = {0,0};
-    Block *block;
-    uint8_t *contentPos;
+    uint8_t *contentPos = this->content;
+    size_t toWrite = this->size;
 
-    contentPos = this->content;
+    uint8_t *blockData;
+    Block *block;
+    size_t blockWrite;
 
     if (startPosition && startPosition->track > 0)
     {
-        start.track = current.track = startPosition->track;
-        start.sector = current.sector = startPosition->sector;
+        if (image_blockStatus(image, startPosition) != BS_NONE)
+        {
+            return 0;
+        }
+        current.track = startPosition->track;
+        current.sector = startPosition->sector;
     }
 
-    if (!image_nextFileBlock(image, this->interleave, &current)) return 0;
+    image_nextFileBlock(image, this->interleave, &current);
+    start.track = current.track;
+    start.sector = current.sector;
+
+    do
+    {
+        block = image_block(image, &current);
+        blockWrite = (toWrite > BLOCK_SIZE) ? BLOCK_SIZE : toWrite;
+        toWrite -= blockWrite;
+        blockData = block_data(block);
+        DBGd2("writing file", current.track, current.sector);
+        memcpy(blockData, contentPos, blockWrite);
+        if (toWrite)
+        {
+            if (!image_nextFileBlock(image, this->interleave, &current))
+            {
+                block_setNextTrack(block, 0);
+                _rollbackWrite(this, image, &start);
+                return 0;
+            }
+            block_setNextTrack(block, current.track);
+            block_setNextSector(block, current.sector);
+            contentPos += blockWrite;
+        }
+        else
+        {
+            block_setNextTrack(block, 0);
+            block_setNextSector(block, blockWrite);
+        }
+    } while (toWrite);
+
+    filemap_add(image_filemap(image), this, &start);
+
+    return 1;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

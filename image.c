@@ -32,8 +32,11 @@ _nextFileBlock(void *this, const Image *image,
     else
     {
         t = image_track(image, pos->track);
-        pos->sector = ((pos->sector - 1 + interleave)
-            % track_numSectors(t)) + 1;
+        if (track_blockStatus(t, pos->sector) != BS_NONE)
+        {
+            pos->sector = ((pos->sector - 1 + interleave)
+                % track_numSectors(t)) + 1;
+        }
     }
 
     while (t && !track_freeSectors(t))
@@ -111,11 +114,11 @@ image_delete(Image *this)
 }
 
 BlockStatus
-image_blockStatus(const Image *this, int track, int sector)
+image_blockStatus(const Image *this, const BlockPosition *pos)
 {
-    Track *t = image_track(this, track);
+    Track *t = image_track(this, pos->track);
     if (!t) return (BlockStatus) -1;
-    return track_blockStatus(t, sector);
+    return track_blockStatus(t, pos->sector);
 }
 
 Track *
@@ -131,6 +134,12 @@ image_block(const Image *this, BlockPosition *pos)
     Track *t = image_track(this, pos->track);
     if (!t) return 0;
     return track_block(t, pos->sector);
+}
+
+Filemap *
+image_filemap(const Image *this)
+{
+    return this->map;
 }
 
 void
