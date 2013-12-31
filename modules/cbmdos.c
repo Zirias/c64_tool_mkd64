@@ -25,7 +25,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 }
 
 static void
-fileWritten(IModule *this, Diskfile *file)
+fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 {
 }
 

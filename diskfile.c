@@ -1,5 +1,7 @@
 
 #include "diskfile.h"
+#include "image.h"
+#include "block.h"
 
 #include <stdlib.h>
 #include "stdintrp.h"
@@ -97,6 +99,26 @@ const char *
 diskfile_name(const Diskfile *this)
 {
     return this->name;
+}
+
+int
+diskfile_write(Diskfile *this, Image *image,
+        const BlockPosition *startPosition)
+{
+    BlockPosition start = {0,0};
+    BlockPosition current = {0,0};
+    Block *block;
+    uint8_t *contentPos;
+
+    contentPos = this->content;
+
+    if (startPosition && startPosition->track > 0)
+    {
+        start.track = current.track = startPosition->track;
+        start.sector = current.sector = startPosition->sector;
+    }
+
+    if (!image_nextFileBlock(image, this->interleave, &current)) return 0;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

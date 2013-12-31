@@ -22,7 +22,8 @@ struct iModule
 
     Track *(*getTrack)(IModule *this, int track);
 
-    void (*fileWritten)(IModule *this, Diskfile *file);
+    void (*fileWritten)(IModule *this,
+            Diskfile *file, const BlockPosition *start);
 
     void (*statusChanged)(IModule *this, BlockPosition *pos);
 };

@@ -1,6 +1,9 @@
 #ifndef MKD64_DISKFILE_H
 #define MKD64_DISKFILE_H
 
+#include "image.h"
+#include "block.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -20,6 +23,9 @@ int diskfile_interleave(const Diskfile *this);
 
 void diskfile_setName(Diskfile *this, const char *name);
 const char *diskfile_name(const Diskfile *this);
+
+int diskfile_write(Diskfile *this, Image *image,
+        const BlockPosition *startPosition);
 
 #endif
 
