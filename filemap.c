@@ -70,14 +70,17 @@ void
 filemap_dump(const Filemap *this, FILE *out)
 {
     static const char *unnamed = "[UNNAMED]";
+    const char *name;
     FilemapEntry *current;
 
     for (current = this->first; current; current = current->next)
     {
+        name = diskfile_name(current->file);
+        if (!name) name = unnamed;
         fprintf(out, "%hhu;%hhu;%s\n",
                 current->startPosition->track,
                 current->startPosition->sector,
-                diskfile_name(current->file));
+                name);
     }
 }
 
