@@ -43,9 +43,9 @@ endif
 
 CC = gcc
 
-mkd64_CLASSES = image.o track.o block.o diskfile.o cmdline.o modrepo.o
+mkd64_CLASSES = mkd64.o image.o track.o block.o diskfile.o cmdline.o modrepo.o
 
-mkd64_OBJS = mkd64.o $(mkd64_CLASSES)
+mkd64_OBJS = main.o $(mkd64_CLASSES)
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 
 cmdtest_OBJS = cmdtest.o $(mkd64_CLASSES)
