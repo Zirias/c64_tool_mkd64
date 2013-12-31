@@ -42,7 +42,7 @@ mod_CFLAGS = -fPIC
 endif
 
 ifdef DEBUG
-CFLAGS += -DDEBUG
+CFLAGS += -DDEBUG -g3 -O0
 endif
 
 CC = gcc
