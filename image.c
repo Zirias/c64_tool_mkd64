@@ -4,6 +4,7 @@
 #include "image.h"
 #include "track.h"
 #include "block.h"
+#include "filemap.h"
 
 #define IMAGE_NUM_TRACKS 35
 
@@ -76,6 +77,7 @@ struct image
 {
     size_t num_tracks;
     IAllocateStrategy *allocator;
+    Filemap *map;
     Track *tracks[IMAGE_NUM_TRACKS];
 };
 
@@ -91,6 +93,7 @@ image_new(void)
     }
     this->num_tracks = IMAGE_NUM_TRACKS;
     this->allocator = &_defaultAllocator;
+    this->map = filemap_new();
     return this;
 }
 
@@ -103,6 +106,7 @@ image_delete(Image *this)
     {
         track_delete(this->tracks[i]);
     }
+    filemap_delete(this->map);
     free(this);
 }
 

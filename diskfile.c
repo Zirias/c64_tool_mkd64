@@ -12,11 +12,10 @@
 
 struct diskfile
 {
+    const char *name;
     size_t size;
     size_t blocks;
     int interleave;
-    int startTrack;
-    int startSector;
 
     uint8_t *content;
 
@@ -76,22 +75,28 @@ diskfile_blocks(const Diskfile *this)
     return this->blocks;
 }
 
-int
-diskfile_startTrack(const Diskfile *this)
-{
-    return this->startTrack;
-}
-
-int
-diskfile_startSector(const Diskfile *this)
-{
-    return this->startSector;
-}
-
 void
 diskfile_setInterleave(Diskfile *this, int interleave)
 {
     this->interleave = interleave;
+}
+
+int
+diskfile_interleave(const Diskfile *this)
+{
+    return this->interleave;
+}
+
+void
+diskfile_setName(Diskfile *this, const char *name)
+{
+    this->name = name;
+}
+
+const char *
+diskfile_name(const Diskfile *this)
+{
+    return this->name;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

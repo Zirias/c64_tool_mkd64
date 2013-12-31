@@ -14,10 +14,12 @@ int diskfile_readFromHost(Diskfile *this, FILE *hostfile);
 
 size_t diskfile_size(const Diskfile *this);
 size_t diskfile_blocks(const Diskfile *this);
-int diskfile_startTrack(const Diskfile *this);
-int diskfile_startSector(const Diskfile *this);
 
 void diskfile_setInterleave(Diskfile *this, int interleave);
+int diskfile_interleave(const Diskfile *this);
+
+void diskfile_setName(Diskfile *this, const char *name);
+const char *diskfile_name(const Diskfile *this);
 
 #endif
 
