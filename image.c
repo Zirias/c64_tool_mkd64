@@ -27,7 +27,7 @@ _nextFileBlock(void *this, const Image *image,
     if (pos->track == 0)
     {
         pos->track = 17;
-        pos->sector = 1;
+        pos->sector = 0;
         t = image_track(image, pos->track);
     }
     else
@@ -35,8 +35,7 @@ _nextFileBlock(void *this, const Image *image,
         t = image_track(image, pos->track);
         if (track_blockStatus(t, pos->sector) != BS_NONE)
         {
-            pos->sector = ((pos->sector - 1 + interleave)
-                % track_numSectors(t)) + 1;
+            pos->sector = (pos->sector + interleave) % track_numSectors(t);
         }
     }
 
@@ -64,7 +63,7 @@ _nextFileBlock(void *this, const Image *image,
     while (track_blockStatus(t, pos->sector) != BS_NONE)
     {
         ++(pos->sector);
-        if (pos->sector > sectors) pos->sector = 1;
+        if (pos->sector >= sectors) pos->sector = 0;
     }
 
     track_allocateBlock(t, pos->sector);
@@ -168,7 +167,7 @@ image_dump(const Image *this, FILE *out)
     while ((track = image_track(this, ++tracknum)))
     {
         num_sectors = track_numSectors(track);
-        for (i = 1; i <= num_sectors; ++i)
+        for (i = 0; i < num_sectors; ++i)
         {
             block = track_block(track, i);
             if (fwrite(block_rawData(block), BLOCK_RAWSIZE, 1, out) != 1)

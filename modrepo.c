@@ -102,7 +102,11 @@ modrepo_new(const char *exe)
     {
         modso = dlopen(*pathvp, RTLD_NOW);
 #endif
-        if (!modso) continue;
+        if (!modso)
+        {
+            DBG(dlerror());
+            continue;
+        }
 
         modid = GET_MOD_METHOD(modso, "id");
         if (!modid)

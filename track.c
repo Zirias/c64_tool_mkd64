@@ -47,7 +47,7 @@ track_new(int tracknum, size_t num_sectors)
     pos.track = tracknum;
     for (i = 0; i < num_sectors; ++i)
     {
-        pos.sector = i+1;
+        pos.sector = i;
         this->sectors[i] = block_new(this, &pos, &blockStatusChanged);
     }
     return this;
@@ -67,8 +67,8 @@ track_delete(Track *this)
 BlockStatus
 track_blockStatus(const Track *this, int sector)
 {
-    if (sector < 1 || sector > this->num_sectors) return (BlockStatus) -1;
-    return block_status(this->sectors[sector-1]);
+    if (sector < 0 || sector >= this->num_sectors) return (BlockStatus) -1;
+    return block_status(this->sectors[sector]);
 }
 
 size_t
@@ -86,22 +86,22 @@ track_freeSectors(const Track *this)
 int
 track_reserveBlock(Track *this, int sector)
 {
-    if (sector < 1 || sector > this->num_sectors) return 0;
-    return block_reserve(this->sectors[sector-1]);
+    if (sector < 0 || sector >= this->num_sectors) return 0;
+    return block_reserve(this->sectors[sector]);
 }
 
 int
 track_allocateBlock(Track *this, int sector)
 {
-    if (sector < 1 || sector > this->num_sectors) return 0;
-    return block_allocate(this->sectors[sector-1]);
+    if (sector < 0 || sector >= this->num_sectors) return 0;
+    return block_allocate(this->sectors[sector]);
 }
 
 Block *
 track_block(Track *this, int sector)
 {
-    if (sector < 1 || sector > this->num_sectors) return 0;
-    return this->sectors[sector-1];
+    if (sector < 0 || sector > this->num_sectors) return 0;
+    return this->sectors[sector];
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4
