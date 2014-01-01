@@ -36,7 +36,7 @@ CATIN = cat
 CATADD = 
 CATOUT = >
 
-dl_LDFLAGS = -ldl
+dl_LDFLAGS = -ldl -Wl,-E
 mod_CFLAGS = -fPIC
 
 endif
