@@ -5,6 +5,8 @@
 #include "cmdline.h"
 #include "modrepo.h"
 
+#define MKD64_VERSION "0.1b"
+
 int mkd64_init(int argc, char **argv);
 int mkd64_run(void);
 void mkd64_done(void);

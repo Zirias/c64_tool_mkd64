@@ -43,24 +43,23 @@ endif
 
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
+else
+CFLAGS += -g0 -O3
 endif
 
 CC = gcc
 
-mkd64_CLASSES = mkd64.o image.o track.o block.o filemap.o diskfile.o \
-		cmdline.o modrepo.o
-
-mkd64_OBJS = main.o $(mkd64_CLASSES)
+mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
+	     cmdline.o modrepo.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
-
-cmdtest_OBJS = cmdtest.o $(mkd64_CLASSES)
-cmdtest_LDFLAGS = $(dl_LDFLAGS)
 
 MODULES = cbmdos$(SO)
 
 cbmdos_OBJS = modules$(PSEP)cbmdos.o
 
-all:	cmdtest$(EXE)
+all:	bin modules
+
+bin:	mkd64$(EXE)
 
 modules:	$(MODULES)
 
@@ -71,11 +70,12 @@ clean:
 	$(RMF) cmdtest$(EXE)
 	$(RMF) mkd64$(EXE)
 
+strip:	all
+	strip --strip-all mkd64
+	strip --strip-unneeded *$(SO)
+
 mkd64$(EXE):	$(mkd64_OBJS)
 	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
-
-cmdtest$(EXE):	$(cmdtest_OBJS)
-	$(CC) -o$@ $^ $(cmdtest_LDFLAGS)
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c
 	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $<
@@ -86,7 +86,7 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c
 cbmdos$(SO): $(cbmdos_OBJS)
 	$(CC) -shared -o$@ $^
 
-.PHONY:	all modules clean
+.PHONY:	all bin modules strip clean
 
 .SUFFIXES:
 

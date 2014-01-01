@@ -1,5 +1,6 @@
 
 #include "modrepo.h"
+#include "debug.h"
 
 #include <string.h>
 #ifdef WIN32
@@ -154,7 +155,7 @@ modrepo_new(const char *exe)
         }
         current = next;
 
-        fprintf(stderr, "Found module: %s\n", current->id);
+        DBGs1("Found module:", current->id);
 
 #ifdef WIN32
     } while (FindNextFile(findHdl, &findData) != 0);
