@@ -5,6 +5,7 @@
 #include "modrepo.h"
 
 #include <stdio.h>
+#include <errno.h>
 
 typedef struct
 {
@@ -12,6 +13,8 @@ typedef struct
     Image *image;
     Cmdline *cmdline;
     Modrepo *modrepo;
+    FILE *d64;
+    FILE *map;
 } Mkd64;
 
 static Mkd64 mkd64 = {0};
@@ -23,6 +26,8 @@ mkd64_init(int argc, char **argv)
     mkd64.cmdline = cmdline_new();
     cmdline_parse(mkd64.cmdline, argc, argv);
     mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline));
+    mkd64.d64 = 0;
+    mkd64.map = 0;
     mkd64.initialized = 1;
     return 1;
 }
@@ -100,9 +105,74 @@ printHelp(const char *modId)
     }
 }
 
+static void
+collectFiles(void)
+{
+    Diskfile *currentFile = 0;
+    BlockPosition pos;
+    const char *arg;
+    FILE *hostFile;
+
+    do
+    {
+        switch(cmdline_opt(mkd64.cmdline))
+        {
+            case 'f':
+                if (currentFile) diskfile_delete(currentFile);
+                currentFile = 0;
+                arg = cmdline_arg(mkd64.cmdline);
+                if (arg)
+                {
+                    hostFile = fopen(arg, "r");
+                    if (hostFile)
+                    {
+                        currentFile = diskfile_new();
+                        diskfile_readFromHost(currentFile, hostFile);
+                        fclose(hostFile);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "Error opening `%s' for reading: %s\n",
+                                arg, strerror(errno));
+                    }
+                }
+                else
+                {
+                    currentFile = diskfile_new();
+                }
+                pos.track = 0;
+                pos.sector = 0;
+                break;
+            case 't':
+                if (currentFile) pos.track = atoi(cmdline_arg(mkd64.cmdline));
+                break;
+            case 's':
+                if (currentFile) pos.sector = atoi(cmdline_arg(mkd64.cmdline));
+                break;
+            case 'i':
+                if (currentFile) diskfile_setInterleave(currentFile,
+                        atoi(cmdline_arg(mkd64.cmdline)));
+                break;
+            case 'w':
+                if (currentFile)
+                {
+                    diskfile_write(currentFile, mkd64.image, &pos);
+                    currentFile = 0;
+                }
+        }
+        if (currentFile)
+        {
+            modrepo_allFileOption(mkd64.modrepo, currentFile,
+                    cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
+        }
+    } while (cmdline_moveNext(mkd64.cmdline));
+}
+
 int
 mkd64_run(void)
 {
+    int fileFound = 0;
+
     if (!mkd64.initialized) return 0;
 
     if (!cmdline_moveNext(mkd64.cmdline))
@@ -123,7 +193,65 @@ mkd64_run(void)
         return 0;
     }
 
+    do
+    {
+        switch (cmdline_opt(mkd64.cmdline))
+        {
+            case 'm':
+                if (!modrepo_createInstance(mkd64.modrepo,
+                        cmdline_arg(mkd64.cmdline)))
+                {
+                    fprintf(stderr, "Error: module `%s' not found.\n",
+                            cmdline_arg(mkd64.cmdline));
+                    goto mkd64_run_error;
+                }
+                break;
+            case 'o':
+                if (mkd64.d64)
+                {
+                    fputs("Error: D64 output file specified twice.\n", stderr);
+                    goto mkd64_run_error;
+                }
+                mkd64.d64 = fopen(cmdline_arg(mkd64.cmdline), "w");
+                if (!mkd64.d64)
+                {
+                    perror("Error opening D64 output file");
+                    goto mkd64_run_error;
+                }
+                break;
+            case 'M':
+                if (mkd64.map)
+                {
+                    fputs("Error: file map output file specified twice.\n",
+                            stderr);
+                    goto mkd64_run_error;
+                }
+                mkd64.map = fopen(cmdline_arg(mkd64.cmdline), "w");
+                if (!mkd64.map)
+                {
+                    perror("Error opening file map output file");
+                    goto mkd64_run_error;
+                }
+                break;
+            case 'f':
+                fileFound = 1;
+                break;
+        }
+        if (!fileFound)
+        {
+            modrepo_allGlobalOption(mkd64.modrepo,
+                    cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
+        }
+    } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
+
+    if (fileFound) collectFiles();
+
     return 1;
+
+mkd64_run_error:
+    if (mkd64.d64) fclose(mkd64.d64);
+    if (mkd64.map) fclose(mkd64.map);
+    return 0;
 }
 
 void
