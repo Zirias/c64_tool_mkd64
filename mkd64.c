@@ -59,6 +59,7 @@ printHelp(const char *modId)
         if (modHelp)
         {
             fputs(modHelp, stderr);
+            free(modHelp);
         }
         else
         {
