@@ -20,6 +20,22 @@ typedef struct
     int currentDirSector;
 } Cbmdos;
 
+typedef enum
+{
+    FT_DEL = 0x80,
+    FT_SEQ = 0x81,
+    FT_PRG = 0x82,
+    FT_USR = 0x83,
+    FT_REL = 0x84,
+
+    FT_PROT = 0x40
+} CbmdosFileType;
+
+typedef struct
+{
+    CbmdosFileType fileType;
+} CbmdosFileExtra;
+
 static const uint8_t _initialBam[256] = {
     0x12, 0x01, 0x41, 0x00, 0x15, 0xff, 0xff, 0x1f,
     0x15, 0xff, 0xff, 0x1f, 0x15, 0xff, 0xff, 0x1f,
@@ -88,11 +104,44 @@ initImage(IModule *this, Image *image)
 static void
 globalOption(IModule *this, char opt, const char *arg)
 {
+    Cbmdos *dos = (Cbmdos *)this;
+    int arglen;
+
+    switch (opt)
+    {
+        case 'd':
+            if (arg)
+            {
+                arglen = strlen(arg);
+                if (arglen > 16) arglen = 16;
+                memcpy(block_rawData(dos->bam) + 0x90, arg, arglen);
+            }
+            break;
+        case 'i':
+            if (arg)
+            {
+                arglen = strlen(arg);
+                if (arglen > 5) arglen = 5;
+                memcpy(block_rawData(dos->bam) + 0xa2, arg, arglen);
+            }
+            break;
+    }
 }
 
 static void
 fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 {
+    Cbmdos *dos = (Cbmdos *)this;
+
+    switch (opt)
+    {
+        case 'f':
+            diskfile_setInterleave(file, 10);
+            break;
+        case 'n':
+            if (arg) diskfile_setName(file, arg);
+            break;
+    }
 }
 
 static void
