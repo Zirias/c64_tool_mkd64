@@ -171,7 +171,7 @@ diskfile_write(Diskfile *this, Image *image,
         else
         {
             block_setNextTrack(block, 0);
-            block_setNextSector(block, blockWrite);
+            block_setNextSector(block, blockWrite + 1);
         }
     } while (toWrite);
 
