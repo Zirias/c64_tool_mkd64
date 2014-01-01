@@ -1,6 +1,8 @@
 #ifndef MKD64_IMAGE_H
 #define MKD64_IMAGE_H
 
+#include <stdio.h>
+
 struct image;
 typedef struct image Image;
 
@@ -25,6 +27,8 @@ Filemap *image_filemap(const Image *this);
 
 void image_setAllocator(Image *this, IAllocateStrategy *allocator);
 int image_nextFileBlock(const Image *this, int interleave, BlockPosition *pos);
+
+int image_dump(const Image *this, FILE *out);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

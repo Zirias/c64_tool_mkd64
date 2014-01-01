@@ -246,6 +246,22 @@ mkd64_run(void)
 
     if (fileFound) collectFiles();
 
+    if (mkd64.d64)
+    {
+        if (!image_dump(mkd64.image, mkd64.d64))
+            perror("Error writing D64 image");
+        fclose(mkd64.d64);
+        mkd64.d64 = 0;
+    }
+
+    if (mkd64.map)
+    {
+        if (!filemap_dump(image_filemap(mkd64.image), mkd64.map))
+            perror("Error writing file map");
+        fclose(mkd64.map);
+        mkd64.map = 0;
+    }
+
     return 1;
 
 mkd64_run_error:

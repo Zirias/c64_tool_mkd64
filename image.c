@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "image.h"
 #include "track.h"
@@ -153,6 +154,28 @@ image_nextFileBlock(const Image *this, int interleave, BlockPosition *pos)
 {
     return this->allocator->nextFileBlock(
             this->allocator, this, interleave, pos);
+}
+
+int
+image_dump(const Image *this, FILE *out)
+{
+    int tracknum = 0;
+    Track *track;
+    Block *block;
+    size_t num_sectors;
+    int i;
+
+    while ((track = image_track(this, ++tracknum)))
+    {
+        num_sectors = track_numSectors(track);
+        for (i = 1; i <= num_sectors; ++i)
+        {
+            block = track_block(track, i);
+            if (fwrite(block_rawData(block), BLOCK_RAWSIZE, 1, out) != 1)
+                return 0;
+        }
+    }
+    return 1;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

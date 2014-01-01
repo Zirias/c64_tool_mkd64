@@ -67,7 +67,7 @@ filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
     current->startPosition->sector = pos->sector;
 }
 
-void
+int
 filemap_dump(const Filemap *this, FILE *out)
 {
     static const char *unnamed = "[UNNAMED]";
@@ -78,11 +78,14 @@ filemap_dump(const Filemap *this, FILE *out)
     {
         name = diskfile_name(current->file);
         if (!name) name = unnamed;
-        fprintf(out, "%hhu;%hhu;%s\n",
+        if (fprintf(out, "%hhu;%hhu;%s\n",
                 current->startPosition->track,
                 current->startPosition->sector,
-                name);
+                name) < 0)
+            return 0;
     }
+
+    return 1;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4
