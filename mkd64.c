@@ -111,7 +111,7 @@ collectFiles(void)
 {
     Diskfile *currentFile = 0;
     BlockPosition pos;
-    const char *arg;
+    const char *hostFileName;
     FILE *hostFile;
 
     do
@@ -121,10 +121,10 @@ collectFiles(void)
             case 'f':
                 if (currentFile) diskfile_delete(currentFile);
                 currentFile = 0;
-                arg = cmdline_arg(mkd64.cmdline);
-                if (arg)
+                hostFileName = cmdline_arg(mkd64.cmdline);
+                if (hostFileName)
                 {
-                    hostFile = fopen(arg, "r");
+                    hostFile = fopen(hostFileName, "r");
                     if (hostFile)
                     {
                         currentFile = diskfile_new();
@@ -134,7 +134,7 @@ collectFiles(void)
                     else
                     {
                         fprintf(stderr, "Error opening `%s' for reading: %s\n",
-                                arg, strerror(errno));
+                                hostFileName, strerror(errno));
                     }
                 }
                 else
@@ -157,6 +157,8 @@ collectFiles(void)
             case 'w':
                 if (currentFile)
                 {
+                    if (!diskfile_name(currentFile))
+                        diskfile_setName(currentFile, hostFileName);
                     diskfile_write(currentFile, mkd64.image, &pos);
                     currentFile = 0;
                 }
