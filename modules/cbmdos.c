@@ -2,17 +2,42 @@
 #include "../module.h"
 #include "../imodule.h"
 #include "../debug.h"
+#include "../block.h"
+#include "../track.h"
 
 static const char *modid = "cbmdos";
 
 typedef struct
 {
     IModule mod;
+    Image *image;
+    Block *bam;
+    Block *directory[18];
+    int currentDirSector;
 } Cbmdos;
 
 static void
 initImage(IModule *this, Image *image)
 {
+    Cbmdos *dos = (Cbmdos *)this;
+    BlockPosition pos = { 18, 0 };
+    int i;
+    uint8_t *data;
+
+    dos->image = image;
+    dos->bam = image_block(image, &pos);
+    dos->currentDirSector = 0;
+    block_reserve(dos->bam);
+
+    for (i = 0; i < 18; ++i)
+    {
+        ++(pos.sector);
+        dos->directory[i] = image_block(image, &pos);
+        block_reserve(dos->directory[i]);
+    }
+
+    data = block_rawData(dos->bam);
+
 }
 
 static void
