@@ -3,6 +3,7 @@
 #include "image.h"
 #include "cmdline.h"
 #include "modrepo.h"
+#include "imodule.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -172,6 +173,7 @@ int
 mkd64_run(void)
 {
     int fileFound = 0;
+    IModule *mod;
 
     if (!mkd64.initialized) return 0;
 
@@ -198,13 +200,15 @@ mkd64_run(void)
         switch (cmdline_opt(mkd64.cmdline))
         {
             case 'm':
-                if (!modrepo_createInstance(mkd64.modrepo,
-                        cmdline_arg(mkd64.cmdline)))
+                mod = modrepo_moduleInstance(mkd64.modrepo,
+                        cmdline_arg(mkd64.cmdline));
+                if (!mod)
                 {
                     fprintf(stderr, "Error: module `%s' not found.\n",
                             cmdline_arg(mkd64.cmdline));
                     goto mkd64_run_error;
                 }
+                mod->initImage(mod, mkd64.image);
                 break;
             case 'o':
                 if (mkd64.d64)
