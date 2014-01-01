@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmdtest", "cmdtest.vcproj", "{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd64", "mkd64.vcproj", "{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{565D3A0A-B403-4815-9E4A-9EDE511ACC8B}"
 EndProject

@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="cmdtest"
+	Name="mkd64"
 	ProjectGUID="{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}"
 	RootNamespace="mkd64"
 	Keyword="Win32Proj"
@@ -168,10 +168,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\blckstat.h"
-				>
-			</File>
-			<File
 				RelativePath=".\block.h"
 				>
 			</File>
@@ -180,7 +176,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\debug.h"
+				>
+			</File>
+			<File
 				RelativePath=".\diskfile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\filemap.h"
 				>
 			</File>
 			<File
@@ -189,6 +193,10 @@
 			</File>
 			<File
 				RelativePath=".\imodule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mkd64.h"
 				>
 			</File>
 			<File
@@ -228,15 +236,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cmdtest.c"
-				>
-			</File>
-			<File
 				RelativePath=".\diskfile.c"
 				>
 			</File>
 			<File
+				RelativePath=".\filemap.c"
+				>
+			</File>
+			<File
 				RelativePath=".\image.c"
+				>
+			</File>
+			<File
+				RelativePath=".\mkd64.c"
 				>
 			</File>
 			<File
