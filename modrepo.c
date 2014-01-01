@@ -239,6 +239,7 @@ char *
 modrepo_getHelp(Modrepo *this, const char *id)
 {
     static const char *mainHelpHeader = "* Module `%s':\n";
+    static const char *noHelp = "  No help available.\n";
     static const char *fileHelpHeader = "\n* File options:\n";
     char *helpText;
     size_t helpLen;
@@ -251,12 +252,11 @@ modrepo_getHelp(Modrepo *this, const char *id)
     mainHelp = found->help ? found->help() : 0;
     fileHelp = found->helpFile ? found->helpFile() : 0;
 
-    if (!mainHelp && !fileHelp) return 0;
-
     helpLen = strlen(mainHelpHeader) + strlen(id) - 1;
 
     if (mainHelp) helpLen += strlen(mainHelp);
     if (fileHelp) helpLen += strlen(fileHelpHeader) + strlen(fileHelp);
+    if (!mainHelp && !fileHelp) helpLen += strlen(noHelp);
 
     helpText = malloc(helpLen);
     sprintf(helpText, mainHelpHeader, id);
@@ -266,6 +266,7 @@ modrepo_getHelp(Modrepo *this, const char *id)
         strcat(helpText, fileHelpHeader);
         strcat(helpText, fileHelp);
     }
+    if (!mainHelp && !fileHelp) strcat(helpText, noHelp);
 
     return helpText;
 }
