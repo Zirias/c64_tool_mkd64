@@ -84,6 +84,20 @@ track_freeSectors(const Track *this)
 }
 
 int
+track_freeSectorsRaw(const Track *this)
+{
+    int free = 0;
+    int i;
+
+    for (i = 0; i < this->num_sectors; ++i)
+    {
+        if (!(block_status(this->sectors[i]) & BS_ALLOCATED)) ++free;
+    }
+
+    return free;
+}
+
+int
 track_reserveBlock(Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
