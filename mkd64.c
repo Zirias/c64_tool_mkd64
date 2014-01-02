@@ -126,7 +126,7 @@ collectFiles(void)
                 hostFileName = cmdline_arg(mkd64.cmdline);
                 if (hostFileName)
                 {
-                    hostFile = fopen(hostFileName, "r");
+                    hostFile = fopen(hostFileName, "rb");
                     if (hostFile)
                     {
                         currentFile = diskfile_new();
@@ -220,7 +220,7 @@ mkd64_run(void)
                     fputs("Error: D64 output file specified twice.\n", stderr);
                     goto mkd64_run_error;
                 }
-                mkd64.d64 = fopen(cmdline_arg(mkd64.cmdline), "w");
+                mkd64.d64 = fopen(cmdline_arg(mkd64.cmdline), "wb");
                 if (!mkd64.d64)
                 {
                     perror("Error opening D64 output file");
