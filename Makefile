@@ -82,8 +82,8 @@ strip:	all
 mkd64$(EXE):	$(mkd64_OBJS)
 	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
 
-mkd64.a:	mkd64.exe
-	dlltool -lmkd64.a -Dmkd64.exe $(mkd64_OBJS)
+mkd64.a:	$(mkd64_OBJS)
+	dlltool -l$@ -Dmkd64.exe $^
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c
 	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
