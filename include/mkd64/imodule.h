@@ -1,13 +1,15 @@
 #ifndef MKD64_IMODULE_H
 #define MKD64_IMODULE_H
 
-#include "image.h"
-#include "diskfile.h"
-#include "track.h"
-#include "block.h"
+#include <mkd64/common.h>
 
 struct iModule;
 typedef struct iModule IModule;
+
+#include <mkd64/image.h>
+#include <mkd64/diskfile.h>
+#include <mkd64/track.h>
+#include <mkd64/block.h>
 
 struct iModule
 {

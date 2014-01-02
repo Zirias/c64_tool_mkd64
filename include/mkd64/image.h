@@ -1,6 +1,8 @@
 #ifndef MKD64_IMAGE_H
 #define MKD64_IMAGE_H
 
+#include <mkd64/common.h>
+
 struct image;
 typedef struct image Image;
 

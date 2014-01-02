@@ -1,6 +1,8 @@
 #ifndef MKD64_CMDLINE_H
 #define MKD64_CMDLINE_H
 
+#include <mkd64/common.h>
+
 struct cmdline;
 typedef struct cmdline Cmdline;
 

@@ -1,6 +1,8 @@
 #ifndef MKD64_DISKFILE_H
 #define MKD64_DISKFILE_H
 
+#include <mkd64/common.h>
+
 struct diskfile;
 typedef struct diskfile Diskfile;
 
