@@ -76,7 +76,7 @@ clean:
 	$(RMF) mkd64$(EXE)
 
 strip:	all
-	strip --strip-all mkd64
+	strip --strip-all mkd64$(EXE)
 	strip --strip-unneeded *$(SO)
 
 mkd64$(EXE):	$(mkd64_OBJS)
