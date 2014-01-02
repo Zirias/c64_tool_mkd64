@@ -1,23 +1,17 @@
-#ifndef MKD64_MODREPO_H
-#define MKD64_MODREPO_H
+#ifndef MODREPO_H
+#define MODREPO_H
 
-#include "imodule.h"
-#include "image.h"
-#include "diskfile.h"
-#include "track.h"
-#include "block.h"
-
-struct modrepo;
-typedef struct modrepo Modrepo;
+#include <mkd64/modrepo.h>
+#include <mkd64/image.h>
+#include <mkd64/diskfile.h>
+#include <mkd64/track.h>
+#include <mkd64/block.h>
 
 Modrepo *modrepo_new(const char *exe);
 void modrepo_delete(Modrepo *this);
 
-IModule *modrepo_moduleInstance(Modrepo *this, const char *id);
-
 int modrepo_createInstance(Modrepo *this, const char *id);
 int modrepo_deleteInstance(Modrepo *this, const char *id);
-int modrepo_isActive(Modrepo *this, const char *id);
 
 char *modrepo_getHelp(Modrepo *this, const char *id);
 

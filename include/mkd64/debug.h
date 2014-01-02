@@ -2,6 +2,7 @@
 #define MKD64_DEBUG_H
 
 #ifdef DEBUG
+#include <stdio.h>
 #define DBG(x) fprintf(stderr, "[DEBUG] %s\n", x)
 #define DBGd1(x,a) fprintf(stderr, "[DEBUG] %s %d\n", x, a)
 #define DBGd2(x,a,b) fprintf(stderr, "[DEBUG] %s %d %d\n", x, a, b)

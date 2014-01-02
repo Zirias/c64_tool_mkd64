@@ -1,13 +1,13 @@
+#include <mkd64/common.h>
+#include <mkd64/debug.h>
 
 #include "diskfile.h"
 #include "image.h"
 #include "block.h"
-#include "debug.h"
 #include "modrepo.h"
 #include "mkd64.h"
 
 #include <stdlib.h>
-#include "stdintrp.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef WIN32
@@ -28,21 +28,21 @@ struct diskfile
     void *extra;
 };
 
-Diskfile *
+SOLOCAL Diskfile *
 diskfile_new(void)
 {
     Diskfile *this = calloc(1, sizeof(Diskfile));
     return this;
 }
 
-void
+SOLOCAL void
 diskfile_delete(Diskfile *this)
 {
     free(this->content);
     free(this);
 }
 
-int
+SOLOCAL int
 diskfile_readFromHost(Diskfile *this, FILE *hostfile)
 {
     static struct stat st;
@@ -69,37 +69,37 @@ diskfile_readFromHost(Diskfile *this, FILE *hostfile)
     return 1;
 }
 
-size_t
+SOEXPORT size_t
 diskfile_size(const Diskfile *this)
 {
     return this->size;
 }
 
-size_t
+SOEXPORT size_t
 diskfile_blocks(const Diskfile *this)
 {
     return this->blocks;
 }
 
-void
+SOEXPORT void
 diskfile_setInterleave(Diskfile *this, int interleave)
 {
     this->interleave = interleave;
 }
 
-int
+SOEXPORT int
 diskfile_interleave(const Diskfile *this)
 {
     return this->interleave;
 }
 
-void
+SOEXPORT void
 diskfile_setName(Diskfile *this, const char *name)
 {
     this->name = name;
 }
 
-const char *
+SOEXPORT const char *
 diskfile_name(const Diskfile *this)
 {
     return this->name;
@@ -119,7 +119,7 @@ _rollbackWrite(Diskfile *this, Image *image, BlockPosition *pos)
     }
 }
 
-int
+SOLOCAL int
 diskfile_write(Diskfile *this, Image *image,
         const BlockPosition *startPosition)
 {

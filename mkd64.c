@@ -1,9 +1,11 @@
+#include <mkd64/common.h>
+#include <mkd64/imodule.h>
 
 #include "mkd64.h"
 #include "image.h"
+#include "diskfile.h"
 #include "cmdline.h"
 #include "modrepo.h"
-#include "imodule.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -20,7 +22,7 @@ typedef struct
 
 static Mkd64 mkd64 = {0};
 
-int
+SOLOCAL int
 mkd64_init(int argc, char **argv)
 {
     mkd64.image = image_new();
@@ -51,7 +53,7 @@ printUsage(void)
             "       %s OPTION [ARGUMENT] [OPTION [ARGUMENT]...]\n"
             "           [FILEOPTION [ARGUMENT]...]\n\n"
             "type `%s -h' for help on available options and fileoptions.\n",
-            exe, exe);
+            exe, exe, exe, exe);
 }
 
 static void
@@ -171,7 +173,7 @@ collectFiles(void)
     } while (cmdline_moveNext(mkd64.cmdline));
 }
 
-int
+SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
@@ -276,7 +278,7 @@ mkd64_run_error:
     return 0;
 }
 
-void
+SOLOCAL void
 mkd64_done(void)
 {
     if (!mkd64.initialized) return;
@@ -286,19 +288,19 @@ mkd64_done(void)
     image_delete(mkd64.image);
 }
 
-Image *
+SOLOCAL Image *
 mkd64_image(void)
 {
     return mkd64.initialized ? mkd64.image : 0;
 }
 
-Cmdline *
+SOLOCAL Cmdline *
 mkd64_cmdline(void)
 {
     return mkd64.initialized ? mkd64.cmdline : 0;
 }
 
-Modrepo *
+SOEXPORT Modrepo *
 mkd64_modrepo(void)
 {
     return mkd64.initialized ? mkd64.modrepo : 0;

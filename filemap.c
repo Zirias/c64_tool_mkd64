@@ -1,3 +1,4 @@
+#include <mkd64/common.h>
 
 #include "filemap.h"
 #include "diskfile.h"
@@ -21,14 +22,14 @@ struct filemap
     FilemapEntry *first;
 };
 
-Filemap *
+SOLOCAL Filemap *
 filemap_new(void)
 {
     Filemap *this = calloc(1, sizeof(Filemap));
     return this;
 }
 
-void
+SOLOCAL void
 filemap_delete(Filemap *this)
 {
     FilemapEntry *current, *next;
@@ -43,7 +44,7 @@ filemap_delete(Filemap *this)
     free(this);
 }
 
-void
+SOLOCAL void
 filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
 {
     FilemapEntry *current;
@@ -67,7 +68,7 @@ filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
     current->startPosition->sector = pos->sector;
 }
 
-int
+SOLOCAL int
 filemap_dump(const Filemap *this, FILE *out)
 {
     static const char *unnamed = "[UNNAMED]";

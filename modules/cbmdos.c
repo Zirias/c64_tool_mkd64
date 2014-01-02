@@ -1,11 +1,9 @@
-
-#include "../module.h"
-#include "../imodule.h"
-#include "../debug.h"
-#include "../block.h"
-#include "../track.h"
-#include "../random.h"
-#include "../stdintrp.h"
+#include <mkd64/common.h>
+#include <mkd64/imodule.h>
+#include <mkd64/debug.h>
+#include <mkd64/block.h>
+#include <mkd64/track.h>
+#include <mkd64/random.h>
 
 #include <string.h>
 
@@ -173,13 +171,13 @@ statusChanged(IModule *this, const BlockPosition *pos)
     }
 }
 
-const char *
+SOEXPORT const char *
 id(void)
 {
     return modid;
 }
 
-IModule *
+SOEXPORT IModule *
 instance(void)
 {
     Cbmdos *this = malloc(sizeof(Cbmdos));
@@ -194,7 +192,7 @@ instance(void)
     return (IModule *) this;
 }
 
-void
+SOEXPORT void
 delete(IModule *instance)
 {
     free(instance);

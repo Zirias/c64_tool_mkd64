@@ -1,10 +1,12 @@
 .*.swp
 *~
 *.o
+*.a
 *.so
 *.dll
 mkd64
 mkd64.exe
+!include/
 Debug/*
 Release/*
 ipch/*

@@ -1,11 +1,9 @@
-#ifndef MKD64_MKD64_H
-#define MKD64_MKD64_H
+#ifndef MKD64_H
+#define MKD64_H
 
-#include "image.h"
-#include "cmdline.h"
-#include "modrepo.h"
-
-#define MKD64_VERSION "0.1b"
+#include <mkd64/mkd64.h>
+#include <mkd64/image.h>
+#include <mkd64/cmdline.h>
 
 int mkd64_init(int argc, char **argv);
 int mkd64_run(void);
@@ -13,7 +11,6 @@ void mkd64_done(void);
 
 Image *mkd64_image(void);
 Cmdline *mkd64_cmdline(void);
-Modrepo *mkd64_modrepo(void);
 
 #endif
 

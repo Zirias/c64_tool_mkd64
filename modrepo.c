@@ -1,13 +1,16 @@
+#include <mkd64/common.h>
+#include <mkd64/debug.h>
 
 #include "modrepo.h"
-#include "debug.h"
 
+#include <stdio.h>
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
 #include <shlwapi.h>
 #define GET_MOD_METHOD(so, name) GetProcAddress(so, name)
 #define UNLOAD_MOD(so) FreeLibrary(so)
+#define dlerror(x) "Error loading module"
 #else
 #include <glob.h>
 #include <limits.h>
@@ -55,7 +58,7 @@ createInstanceHere(Modrepo *entry)
     return 1;
 }
 
-Modrepo *
+SOLOCAL Modrepo *
 modrepo_new(const char *exe)
 {
     Modrepo *this = 0;
@@ -175,7 +178,7 @@ modrepo_new(const char *exe)
     return this;
 }
 
-void
+SOLOCAL void
 modrepo_delete(Modrepo *this)
 {
     Modrepo *current = this;
@@ -191,7 +194,7 @@ modrepo_delete(Modrepo *this)
     }
 }
 
-IModule *
+SOEXPORT IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
     Modrepo *found;
@@ -203,7 +206,7 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
     return found->mod;
 }
 
-int
+SOLOCAL int
 modrepo_createInstance(Modrepo *this, const char *id)
 {
     Modrepo *found;
@@ -216,7 +219,7 @@ modrepo_createInstance(Modrepo *this, const char *id)
     return found->mod ? 1 : 0;
 }
 
-int
+SOLOCAL int
 modrepo_deleteInstance(Modrepo *this, const char *id)
 {
     Modrepo *found;
@@ -229,7 +232,7 @@ modrepo_deleteInstance(Modrepo *this, const char *id)
     return 1;
 }
 
-int
+SOEXPORT int
 modrepo_isActive(Modrepo *this, const char *id)
 {
     Modrepo *found;
@@ -239,7 +242,7 @@ modrepo_isActive(Modrepo *this, const char *id)
     return (found && found->mod) ? 1 : 0;
 }
 
-char *
+SOLOCAL char *
 modrepo_getHelp(Modrepo *this, const char *id)
 {
     static const char *mainHelpHeader = "* Module `%s':\n";
@@ -275,7 +278,7 @@ modrepo_getHelp(Modrepo *this, const char *id)
     return helpText;
 }
 
-void
+SOLOCAL void
 modrepo_allInitImage(Modrepo *this, Image *image)
 {
     Modrepo *current;
@@ -286,7 +289,7 @@ modrepo_allInitImage(Modrepo *this, Image *image)
     }
 }
 
-void
+SOLOCAL void
 modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 {
     Modrepo *current;
@@ -297,7 +300,7 @@ modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
     }
 }
 
-void
+SOLOCAL void
 modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 {
     Modrepo *current;
@@ -308,7 +311,7 @@ modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
     }
 }
 
-Track *
+SOLOCAL Track *
 modrepo_firstGetTrack(Modrepo *this, int track)
 {
     Track *t;
@@ -326,7 +329,7 @@ modrepo_firstGetTrack(Modrepo *this, int track)
     return t;
 }
 
-void
+SOLOCAL void
 modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start)
 {
@@ -338,7 +341,7 @@ modrepo_allFileWritten(Modrepo *this,
     }
 }
 
-void
+SOLOCAL void
 modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
 {
     Modrepo *current;

@@ -1,9 +1,9 @@
+#include <mkd64/common.h>
 
 #include <stdlib.h>
-#include "stdintrp.h"
 #include <string.h>
 
-#include "track.h"
+#include <mkd64/track.h>
 #include "block.h"
 #include "modrepo.h"
 #include "mkd64.h"
@@ -33,7 +33,7 @@ blockStatusChanged(void *owner, Block *block,
     modrepo_allStatusChanged(mr, block_position(block));
 }
 
-Track *
+SOEXPORT Track *
 track_new(int tracknum, size_t num_sectors)
 {
     int i;
@@ -53,7 +53,7 @@ track_new(int tracknum, size_t num_sectors)
     return this;
 }
 
-void
+SOEXPORT void
 track_delete(Track *this)
 {
     int i;
@@ -64,26 +64,26 @@ track_delete(Track *this)
     free(this);
 }
 
-BlockStatus
+SOEXPORT BlockStatus
 track_blockStatus(const Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return (BlockStatus) -1;
     return block_status(this->sectors[sector]);
 }
 
-size_t
+SOEXPORT size_t
 track_numSectors(const Track *this)
 {
     return this->num_sectors;
 }
 
-int
+SOEXPORT int
 track_freeSectors(const Track *this)
 {
     return this->free_sectors;
 }
 
-int
+SOEXPORT int
 track_freeSectorsRaw(const Track *this)
 {
     int free = 0;
@@ -97,21 +97,21 @@ track_freeSectorsRaw(const Track *this)
     return free;
 }
 
-int
+SOEXPORT int
 track_reserveBlock(Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
     return block_reserve(this->sectors[sector]);
 }
 
-int
+SOEXPORT int
 track_allocateBlock(Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
     return block_allocate(this->sectors[sector]);
 }
 
-Block *
+SOEXPORT Block *
 track_block(Track *this, int sector)
 {
     if (sector < 0 || sector > this->num_sectors) return 0;

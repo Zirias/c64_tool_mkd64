@@ -1,9 +1,10 @@
+#include <mkd64/common.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <mkd64/track.h>
 #include "image.h"
-#include "track.h"
 #include "block.h"
 #include "filemap.h"
 
@@ -84,7 +85,7 @@ struct image
     Track *tracks[IMAGE_NUM_TRACKS];
 };
 
-Image *
+SOLOCAL Image *
 image_new(void)
 {
     int i;
@@ -100,7 +101,7 @@ image_new(void)
     return this;
 }
 
-void
+SOLOCAL void
 image_delete(Image *this)
 {
     int i;
@@ -113,7 +114,7 @@ image_delete(Image *this)
     free(this);
 }
 
-BlockStatus
+SOEXPORT BlockStatus
 image_blockStatus(const Image *this, const BlockPosition *pos)
 {
     Track *t = image_track(this, pos->track);
@@ -121,14 +122,14 @@ image_blockStatus(const Image *this, const BlockPosition *pos)
     return track_blockStatus(t, pos->sector);
 }
 
-Track *
+SOEXPORT Track *
 image_track(const Image *this, int track)
 {
     if (track < 1 || track > IMAGE_NUM_TRACKS) return 0;
     return this->tracks[track-1];
 }
 
-Block *
+SOEXPORT Block *
 image_block(const Image *this, BlockPosition *pos)
 {
     Track *t = image_track(this, pos->track);
@@ -136,26 +137,26 @@ image_block(const Image *this, BlockPosition *pos)
     return track_block(t, pos->sector);
 }
 
-Filemap *
+SOLOCAL Filemap *
 image_filemap(const Image *this)
 {
     return this->map;
 }
 
-void
+SOEXPORT void
 image_setAllocator(Image *this, IAllocateStrategy *allocator)
 {
     this->allocator = allocator;
 }
 
-int
+SOEXPORT int
 image_nextFileBlock(const Image *this, int interleave, BlockPosition *pos)
 {
     return this->allocator->nextFileBlock(
             this->allocator, this, interleave, pos);
 }
 
-int
+SOLOCAL int
 image_dump(const Image *this, FILE *out)
 {
     int tracknum = 0;

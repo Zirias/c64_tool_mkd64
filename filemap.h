@@ -1,13 +1,13 @@
-#ifndef MKD64_FILEMAP_H
-#define MKD64_FILEMAP_H
+#ifndef FILEMAP_H
+#define FILEMAP_H
 
 #include <stdio.h>
 
 struct filemap;
 typedef struct filemap Filemap;
 
-#include "diskfile.h"
-#include "block.h"
+#include <mkd64/diskfile.h>
+#include <mkd64/block.h>
 
 Filemap *filemap_new(void);
 void filemap_delete(Filemap *this);

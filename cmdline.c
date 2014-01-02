@@ -1,3 +1,4 @@
+#include <mkd64/common.h>
 
 #include "cmdline.h"
 
@@ -32,7 +33,7 @@ clear(Cmdline *this)
     this->pos = -1;
 }
 
-Cmdline *
+SOLOCAL Cmdline *
 cmdline_new(void)
 {
     Cmdline *this = calloc(1, sizeof(Cmdline));
@@ -40,14 +41,14 @@ cmdline_new(void)
     return this;
 }
 
-void
+SOLOCAL void
 cmdline_delete(Cmdline *this)
 {
     clear(this);
     free(this);
 }
 
-void
+SOLOCAL void
 cmdline_parse(Cmdline *this, int argc, char **argv)
 {
     char **argvp;
@@ -80,21 +81,21 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
     }
 }
 
-char
+SOEXPORT char
 cmdline_opt(const Cmdline *this)
 {
     if (this->pos < 0) return '\0';
     return this->opts[this->pos];
 }
 
-const char *
+SOEXPORT const char *
 cmdline_arg(const Cmdline *this)
 {
     if (this->pos < 0) return 0;
     return this->args[this->pos];
 }
 
-int
+SOLOCAL int
 cmdline_moveNext(Cmdline *this)
 {
     ++(this->pos);
@@ -106,7 +107,7 @@ cmdline_moveNext(Cmdline *this)
     return 1;
 }
 
-const char *
+SOEXPORT const char *
 cmdline_exe(const Cmdline *this)
 {
     return this->exe;

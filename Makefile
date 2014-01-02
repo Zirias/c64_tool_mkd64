@@ -16,8 +16,9 @@ CATADD = +
 CATOUT =
 
 CFLAGS += -DWIN32
-dl_LDFLAGS = -lshlwapi
+dl_LDFLAGS = -lshlwapi 
 mod_CFLAGS =
+mod_LIBS = mkd64.a
 
 else
 
@@ -38,6 +39,7 @@ CATOUT = >
 
 dl_LDFLAGS = -ldl -Wl,-E
 mod_CFLAGS = -fPIC
+mod_LIBS =
 
 endif
 
@@ -52,8 +54,11 @@ CC = gcc
 mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
 	     cmdline.o modrepo.o random.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
+mkd64_INCLUDES = -Iinclude
 
 MODULES = cbmdos$(SO)
+
+mod_INCLUDES = -I../include
 
 cbmdos_OBJS = modules$(PSEP)cbmdos.o
 
@@ -65,9 +70,9 @@ modules:	$(MODULES)
 
 clean:
 	$(RMF) *.o
+	$(RMF) *.a
 	$(RMF) *$(SO)
 	$(RMF) modules$(PSEP)*.o
-	$(RMF) cmdtest$(EXE)
 	$(RMF) mkd64$(EXE)
 
 strip:	all
@@ -77,13 +82,16 @@ strip:	all
 mkd64$(EXE):	$(mkd64_OBJS)
 	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
 
+mkd64.a:	mkd64.exe
+	dlltool -lmkd64.a -Dmkd64.exe $(mkd64_OBJS)
+
 modules$(PSEP)%.o:	modules$(PSEP)%.c
-	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $<
+	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(mod_INCLUDES) $<
 
 %.o:	%.c
-	$(CC) -o$@ -c $(CFLAGS) $<
+	$(CC) -o$@ -c $(CFLAGS) $(mkd64_INCLUDES) $<
 
-cbmdos$(SO): $(cbmdos_OBJS)
+cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
 
 .PHONY:	all bin modules strip clean

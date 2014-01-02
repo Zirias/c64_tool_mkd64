@@ -1,12 +1,13 @@
+#include <mkd64/common.h>
 
-#include "random.h"
+#include <mkd64/random.h>
 
 #include <stdlib.h>
 #include <time.h>
 
 static int _initialized = 0;
 
-int
+SOEXPORT int
 random_num(int min, int max)
 {
     if (!_initialized)

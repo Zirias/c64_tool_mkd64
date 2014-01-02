@@ -1,5 +1,5 @@
+#include <mkd64/common.h>
 
-#include "stdintrp.h"
 #include <stdlib.h>
 
 #include "block.h"
@@ -13,7 +13,7 @@ struct block
     uint8_t data[BLOCK_RAWSIZE];
 };
 
-Block *
+SOLOCAL Block *
 block_new(void *owner,
         const BlockPosition *pos, BlockStatusChangedHandler handler)
 {
@@ -25,63 +25,63 @@ block_new(void *owner,
     return this;
 }
 
-void
+SOLOCAL void
 block_delete(Block *this)
 {
     free(this);
 }
 
-BlockStatus
+SOEXPORT BlockStatus
 block_status(const Block *this)
 {
     return this->status;
 }
 
-const BlockPosition *
+SOEXPORT const BlockPosition *
 block_position(const Block *this)
 {
     return &(this->pos);
 }
 
-uint8_t
+SOEXPORT uint8_t
 block_nextTrack(const Block *this)
 {
     return this->data[0];
 }
 
-uint8_t
+SOEXPORT uint8_t
 block_nextSector(const Block *this)
 {
     return this->data[1];
 }
 
-void
+SOEXPORT void
 block_nextPosition(const Block *this, BlockPosition *pos)
 {
     pos->track = this->data[0];
     pos->sector = this->data[1];
 }
 
-void
+SOEXPORT void
 block_setNextTrack(Block *this, uint8_t nextTrack)
 {
     this->data[0] = nextTrack;
 }
 
-void
+SOEXPORT void
 block_setNextSector(Block *this, uint8_t nextSector)
 {
     this->data[1] = nextSector;
 }
 
-void
+SOEXPORT void
 block_setNextPosition(Block *this, const BlockPosition *pos)
 {
     this->data[0] = pos->track;
     this->data[1] = pos->sector;
 }
 
-int
+SOEXPORT int
 block_reserve(Block *this)
 {
     BlockStatus old;
@@ -96,7 +96,7 @@ block_reserve(Block *this)
     return 1;
 }
 
-int
+SOEXPORT int
 block_unReserve(Block *this)
 {
     BlockStatus old;
@@ -111,7 +111,7 @@ block_unReserve(Block *this)
     return 1;
 }
 
-int
+SOEXPORT int
 block_allocate(Block *this)
 {
     BlockStatus old;
@@ -126,7 +126,7 @@ block_allocate(Block *this)
     return 1;
 }
 
-int
+SOEXPORT int
 block_free(Block *this)
 {
     BlockStatus old;
@@ -141,13 +141,13 @@ block_free(Block *this)
     return 1;
 }
 
-uint8_t *
+SOEXPORT uint8_t *
 block_data(Block *this)
 {
     return &(this->data[2]);
 }
 
-uint8_t *
+SOEXPORT uint8_t *
 block_rawData(Block *this)
 {
     return this->data;
