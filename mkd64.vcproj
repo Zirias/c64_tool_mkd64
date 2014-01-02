@@ -40,7 +40,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;"
+				AdditionalIncludeDirectories="include"
+				PreprocessorDefinitions="WIN32;BUILDING_MKD64;DEBUG;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -111,7 +112,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;"
+				AdditionalIncludeDirectories="include"
+				PreprocessorDefinitions="WIN32;BUILDING_MKD64;_CONSOLE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -129,6 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -176,10 +179,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\debug.h"
-				>
-			</File>
-			<File
 				RelativePath=".\diskfile.h"
 				>
 			</File>
@@ -192,27 +191,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\imodule.h"
-				>
-			</File>
-			<File
 				RelativePath=".\mkd64.h"
 				>
 			</File>
 			<File
 				RelativePath=".\modrepo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\module.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdintrp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\track.h"
 				>
 			</File>
 		</Filter>
@@ -253,6 +236,10 @@
 			</File>
 			<File
 				RelativePath=".\modrepo.c"
+				>
+			</File>
+			<File
+				RelativePath=".\random.c"
 				>
 			</File>
 			<File

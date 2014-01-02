@@ -56,6 +56,7 @@ INCLUDES = -Iinclude
 mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
 	     cmdline.o modrepo.o random.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
+mkd64_DEFINES = -DBUILDING_MKD64
 
 MODULES = cbmdos$(SO)
 
@@ -88,7 +89,7 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c
 	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 %.o:	%.c
-	$(CC) -o$@ -c $(CFLAGS) $(INCLUDES) $<
+	$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^

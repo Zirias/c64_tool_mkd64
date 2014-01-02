@@ -5,7 +5,7 @@
 
 #define MKD64_VERSION "0.1b"
 
-Modrepo *mkd64_modrepo(void);
+DECLEXPORT Modrepo *mkd64_modrepo(void);
 
 #endif
 

@@ -13,13 +13,15 @@ typedef struct
             int interleave, BlockPosition *pos);
 } IAllocateStrategy;
 
-BlockStatus image_blockStatus(const Image *this, const BlockPosition *pos);
+DECLEXPORT BlockStatus image_blockStatus(const Image *this,
+        const BlockPosition *pos);
 
-Track *image_track(const Image *this, int tracknum);
-Block *image_block(const Image *this, BlockPosition *pos);
+DECLEXPORT Track *image_track(const Image *this, int tracknum);
+DECLEXPORT Block *image_block(const Image *this, BlockPosition *pos);
 
-void image_setAllocator(Image *this, IAllocateStrategy *allocator);
-int image_nextFileBlock(const Image *this, int interleave, BlockPosition *pos);
+DECLEXPORT void image_setAllocator(Image *this, IAllocateStrategy *allocator);
+DECLEXPORT int image_nextFileBlock(const Image *this,
+        int interleave, BlockPosition *pos);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

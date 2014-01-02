@@ -22,24 +22,24 @@ typedef enum
     BS_RESERVED = 1 << 1,
 } BlockStatus;
 
-BlockStatus block_status(const Block *this);
-const BlockPosition *block_position(const Block *this);
+DECLEXPORT BlockStatus block_status(const Block *this);
+DECLEXPORT const BlockPosition *block_position(const Block *this);
 
-uint8_t block_nextTrack(const Block *this);
-uint8_t block_nextSector(const Block *this);
-void block_nextPosition(const Block *this, BlockPosition *pos);
+DECLEXPORT uint8_t block_nextTrack(const Block *this);
+DECLEXPORT uint8_t block_nextSector(const Block *this);
+DECLEXPORT void block_nextPosition(const Block *this, BlockPosition *pos);
 
-void block_setNextTrack(Block *this, uint8_t nextTrack);
-void block_setNextSector(Block *this, uint8_t nextSector);
-void block_setNextPosition(Block *this, const BlockPosition *pos);
+DECLEXPORT void block_setNextTrack(Block *this, uint8_t nextTrack);
+DECLEXPORT void block_setNextSector(Block *this, uint8_t nextSector);
+DECLEXPORT void block_setNextPosition(Block *this, const BlockPosition *pos);
 
-int block_reserve(Block *this);
-int block_unReserve(Block *this);
-int block_allocate(Block *this);
-int block_free(Block *this);
+DECLEXPORT int block_reserve(Block *this);
+DECLEXPORT int block_unReserve(Block *this);
+DECLEXPORT int block_allocate(Block *this);
+DECLEXPORT int block_free(Block *this);
 
-uint8_t *block_data(Block *this);
-uint8_t *block_rawData(Block *this);
+DECLEXPORT uint8_t *block_data(Block *this);
+DECLEXPORT uint8_t *block_rawData(Block *this);
 
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4

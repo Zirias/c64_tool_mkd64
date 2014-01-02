@@ -3,8 +3,14 @@
 
 #ifdef WIN32
 #define SOEXPORT __declspec(dllexport)
+#ifdef BUILDING_MKD64
+#define DECLEXPORT __declspec(dllexport)
+#else
+#define DECLEXPORT __declspec(dllimport)
+#endif
 #define SOLOCAL
 #else
+#define DECLEXPORT
 #if __GNUC__ >= 4
 #define SOEXPORT __attribute__ ((visibility ("default")))
 #define SOLOCAL __attribute__ ((visibility ("hidden")))

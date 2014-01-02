@@ -6,6 +6,24 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{565D3A0A-B403-4815-9E4A-9EDE511ACC8B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cbmdos", "cbmdos.vcproj", "{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9B4684CA-A57D-4CA0-BF36-E0DD75B89409} = {9B4684CA-A57D-4CA0-BF36-E0DD75B89409}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{8B7B5141-E0DD-4B48-B62F-E65F53CA71BE}"
+	ProjectSection(SolutionItems) = preProject
+		include\mkd64\block.h = include\mkd64\block.h
+		include\mkd64\cmdline.h = include\mkd64\cmdline.h
+		include\mkd64\common.h = include\mkd64\common.h
+		include\mkd64\debug.h = include\mkd64\debug.h
+		include\mkd64\diskfile.h = include\mkd64\diskfile.h
+		include\mkd64\image.h = include\mkd64\image.h
+		include\mkd64\imodule.h = include\mkd64\imodule.h
+		include\mkd64\mkd64.h = include\mkd64\mkd64.h
+		include\mkd64\modrepo.h = include\mkd64\modrepo.h
+		include\mkd64\random.h = include\mkd64\random.h
+		include\mkd64\track.h = include\mkd64\track.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
