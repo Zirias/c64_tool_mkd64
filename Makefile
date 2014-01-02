@@ -51,14 +51,13 @@ endif
 
 CC = gcc
 
+INCLUDES = -Iinclude
+
 mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
 	     cmdline.o modrepo.o random.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
-mkd64_INCLUDES = -Iinclude
 
 MODULES = cbmdos$(SO)
-
-mod_INCLUDES = -I../include
 
 cbmdos_OBJS = modules$(PSEP)cbmdos.o
 
@@ -86,10 +85,10 @@ mkd64.a:	mkd64.exe
 	dlltool -lmkd64.a -Dmkd64.exe $(mkd64_OBJS)
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c
-	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(mod_INCLUDES) $<
+	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 %.o:	%.c
-	$(CC) -o$@ -c $(CFLAGS) $(mkd64_INCLUDES) $<
+	$(CC) -o$@ -c $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
