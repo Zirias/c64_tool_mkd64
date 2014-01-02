@@ -16,6 +16,16 @@
 #include <stdio.h>
 #include <string.h>
 
+struct diskfileData;
+typedef struct diskfileData DiskfileData;
+
+struct diskfileData
+{
+    DiskfileData *next;
+    void *owner;
+    void *data;
+};
+
 struct diskfile
 {
     const char *name;
@@ -25,7 +35,7 @@ struct diskfile
 
     uint8_t *content;
 
-    void *extra;
+    DiskfileData *extraData;
 };
 
 SOLOCAL Diskfile *
@@ -40,6 +50,78 @@ diskfile_delete(Diskfile *this)
 {
     free(this->content);
     free(this);
+}
+
+static DiskfileData *
+_createData(void *owner, void *data)
+{
+    DiskfileData *d = malloc(sizeof(DiskfileData));
+    d->next = 0;
+    d->owner = owner;
+    d->data = data;
+    return d;
+}
+
+SOEXPORT int
+diskfile_attachData(Diskfile *this, void *owner, void *data)
+{
+    DiskfileData *parent;
+
+    if (!this->extraData)
+    {
+        this->extraData = _createData(owner, data);
+        return 1;
+    }
+
+    for (parent = this->extraData; parent->next; parent = parent->next)
+    {
+        if (parent->owner == owner) return 0;
+    }
+
+    parent->next = _createData(owner, data);
+    return 1;
+}
+
+SOEXPORT void *
+diskfile_data(const Diskfile *this, void *owner)
+{
+    DiskfileData *d;
+
+    for (d = this->extraData; d; d = d->next)
+    {
+        if (d->owner == owner) return d->data;
+    }
+    return 0;
+}
+
+SOEXPORT void *
+diskfile_removeData(Diskfile *this, void *owner)
+{
+    DiskfileData *d, *tmp;
+    void *data;
+
+    if (this->extraData->owner == owner)
+    {
+        data = this->extraData->data;
+        tmp = this->extraData->next;
+        free(this->extraData);
+        this->extraData = tmp;
+        return data;
+    }
+
+    for (d = this->extraData; d->next; d = d->next)
+    {
+        if (d->next->owner == owner)
+        {
+            data = d->next->data;
+            tmp = d->next->next;
+            free(d->next);
+            d->next = tmp;
+            return data;
+        }
+    }
+
+    return 0;
 }
 
 SOLOCAL int
