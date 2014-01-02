@@ -214,6 +214,8 @@ diskfile_write(Diskfile *this, Image *image,
     Block *block;
     size_t blockWrite;
 
+    if (!toWrite) goto diskfile_write_done;
+
     if (startPosition && startPosition->track > 0)
     {
         if (image_blockStatus(image, startPosition) != BS_NONE)
@@ -257,6 +259,7 @@ diskfile_write(Diskfile *this, Image *image,
         }
     } while (toWrite);
 
+diskfile_write_done:
     filemap_add(image_filemap(image), this, &start);
 
     modrepo_allFileWritten(mkd64_modrepo(), this, &start);
