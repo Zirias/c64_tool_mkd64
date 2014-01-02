@@ -58,6 +58,29 @@ createInstanceHere(Modrepo *entry)
     return 1;
 }
 
+#ifdef WIN32
+#include <ctype.h>
+
+static int
+_endsWith(const char *value, const char *pattern)
+{
+    int valueLen = strlen(value);
+    int patternLen = strlen(pattern);
+    const char *valuePtr;
+    int i;
+
+    if (patternLen > valueLen) return 0;
+
+    valuePtr = value + valueLen - patternLen;
+    for (i = 0; i < patternLen; ++i)
+    {
+        if (toupper(valuePtr[i]) != toupper(pattern[i])) return 0;
+    }
+
+    return 1;
+}
+#endif
+
 SOLOCAL Modrepo *
 modrepo_new(const char *exe)
 {
@@ -73,6 +96,15 @@ modrepo_new(const char *exe)
 
     char *modpat = malloc(4096);
     GetModuleFileName(GetModuleHandle(0), modpat, 4096);
+    if (!_endsWith(modpat, "\\MKD64.EXE"))
+    {
+        fputs("\n\n********\n"
+                "WARNING: Loading of modules will not work!\n"
+                "         The executable must be named `mkd64.exe' to load "
+                "modules.\n********\n\n", stderr);
+        free(modpat);
+        return 0;
+    }
     PathRemoveFileSpec(modpat);
     strcat(modpat, "\\*.dll");
 
@@ -83,6 +115,7 @@ modrepo_new(const char *exe)
         return this;
     }
 
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
     do
     {
         modso = LoadLibrary(findData.cFileName);
@@ -167,6 +200,7 @@ modrepo_new(const char *exe)
 #ifdef WIN32
     } while (FindNextFile(findHdl, &findData) != 0);
 
+    SetErrorMode(0);
     FindClose(findHdl);
     free(modpat);
 #else
