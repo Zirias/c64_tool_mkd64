@@ -279,9 +279,9 @@ modrepo_isActive(Modrepo *this, const char *id)
 SOLOCAL char *
 modrepo_getHelp(Modrepo *this, const char *id)
 {
-    static const char *mainHelpHeader = "* Module `%s':\n";
+    static const char *mainHelpHeader = "* Module `%s':\n\n";
     static const char *noHelp = "  No help available.\n";
-    static const char *fileHelpHeader = "\n* File options:\n";
+    static const char *fileHelpHeader = "\n* File options:\n\n";
     char *helpText;
     size_t helpLen;
     const char *mainHelp, *fileHelp;

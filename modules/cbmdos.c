@@ -299,5 +299,28 @@ delete(IModule *instance)
     free(instance);
 }
 
+SOEXPORT const char *
+help(void)
+{
+    return
+"cbmdos implements the default directory and BAM scheme of a 1541 floppy.\n"
+"Interleave is initially set to 10 for every file (cbmdos standard). The\n"
+"following options are recognized:\n\n"
+"  -d DISKNAME  The name of the disk, defaults to an empty name.\n"
+"  -i DISKID    The ID of the disk, defaults to two random characters.\n"
+"               This can be up to 5 characters long, in this case it will\n"
+"               overwrite the default `DOS type' string (`2A')\n";
+}
+
+SOEXPORT const char *
+helpFile(void)
+{
+    return
+"  -n FILENAME  The name to use in the cbmdos directory\n"
+"  -t FILETYPE  One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
+"               DEL), defaults to PRG\n"
+"  -P           Make the file write-protected\n";
+}
+
 /* vim: et:si:ts=4:sts=4:sw=4
 */
