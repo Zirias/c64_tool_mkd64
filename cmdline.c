@@ -4,6 +4,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
+
+#define FILEOPT_CHUNKSIZE 256
 
 struct cmdline
 {
@@ -79,6 +87,143 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
             ++(this->count);
         }
     }
+}
+
+static int
+_charIn(const char *set, char c)
+{
+    const char *ptr = set;
+    while (*ptr)
+    {
+        if (*ptr == c) return 1;
+        ++ptr;
+    }
+    return 0;
+}
+
+static void
+_rmFirstChar(char *s)
+{
+    char *ptr = s;
+    while (ptr[1])
+    {
+        *ptr = ptr[1];
+        ++ptr;
+    }
+}
+
+static char *
+_cmdtok(char *str, const char *delim, const char *quote)
+{
+    static char *start;
+    char *ptr, *tok;
+    char inquot;
+
+    if (str) start = str;
+    if (*start == '\0') return 0;
+
+    inquot = '\0';
+
+    while (_charIn(delim, *start)) ++start;
+    if (*start == '\0') return 0;
+
+    ptr = start;
+    while (*ptr != '\0' && !_charIn(delim, *ptr))
+    {
+        if (_charIn(quote, *ptr))
+        {
+            inquot = *ptr;
+            _rmFirstChar(ptr);
+            while (*ptr != '\0' && *ptr != inquot)
+            {
+                ++ptr;
+            }
+            if (*ptr == inquot) _rmFirstChar(ptr);
+            inquot = '\0';
+        }
+        else
+        {
+            ++ptr;
+        }
+    }
+    tok = start;
+    if (*ptr == '\0')
+    {
+        start = ptr;
+    }
+    else
+    {
+        *ptr = '\0';
+        start = ptr+1;
+    }
+    return tok;
+}
+
+SOLOCAL void
+cmdline_parseFile(Cmdline *this, FILE *cmdfile)
+{
+    static const char *delim = " \t\r\n";
+    static const char *quote = "\"'";
+    static struct stat st;
+    size_t optSize = FILEOPT_CHUNKSIZE * sizeof(char);
+    size_t argSize = FILEOPT_CHUNKSIZE * sizeof(char *);
+    char *buf, *tok;
+
+    clear(this);
+
+    if (fstat(fileno(cmdfile), &st) < 0) return;
+    if (st.st_size < 1) return;
+
+    buf = malloc(st.st_size);
+    rewind(cmdfile);
+
+    if (fread(buf, 1, st.st_size, cmdfile) != st.st_size)
+    {
+        free(buf);
+        return;
+    }
+
+    this->opts = malloc(optSize);
+    this->args = malloc(argSize);
+
+    tok = _cmdtok(buf, delim, quote);
+    while (tok)
+    {
+        if (strlen(tok) > 1 && *tok == '-')
+        {
+            this->opts[this->count] = tok[1];
+            if (strlen(tok) > 2)
+            {
+                this->args[this->count] = strdup(tok+2);
+                tok = _cmdtok(0, delim, quote);
+            }
+            else
+            {
+                tok = _cmdtok(0, delim, quote);
+                if (tok && tok[0] != '-')
+                {
+                    this->args[this->count] = strdup(tok);
+                    tok = _cmdtok(0, delim, quote);
+                }
+                else
+                {
+                    this->args[this->count] = 0;
+                }
+            }
+            if (!(++(this->count) % FILEOPT_CHUNKSIZE))
+            {
+                optSize += FILEOPT_CHUNKSIZE * sizeof(char);
+                this->opts = realloc(this->opts, optSize);
+                argSize += FILEOPT_CHUNKSIZE * sizeof(char *);
+                this->args = realloc(this->args, argSize);
+            }
+        }
+        else
+        {
+            tok = _cmdtok(0, delim, quote);
+        }
+    }
+    free(buf);
 }
 
 SOEXPORT char

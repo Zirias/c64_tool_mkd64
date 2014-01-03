@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 typedef struct
 {
@@ -179,6 +180,9 @@ mkd64_run(void)
 {
     int fileFound = 0;
     IModule *mod;
+    const char *arg;
+    char *argDup;
+    FILE *cmdfile;
 
     if (!mkd64.initialized) return 0;
 
@@ -198,6 +202,27 @@ mkd64_run(void)
     {
         printHelp(cmdline_arg(mkd64.cmdline));
         return 0;
+    }
+
+    if (cmdline_opt(mkd64.cmdline) == 'C'
+            && (arg = cmdline_arg(mkd64.cmdline)))
+    {
+        argDup = strdup(arg);
+        cmdfile = fopen(argDup, "r");
+        if (!cmdfile)
+        {
+            perror("Error opening commandline file");
+            return 0;
+        }
+        cmdline_parseFile(mkd64.cmdline, cmdfile);
+        fclose(cmdfile);
+        if (!cmdline_moveNext(mkd64.cmdline))
+        {
+            fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
+            free(argDup);
+            return 0;
+        }
+        free(argDup);
     }
 
     do
