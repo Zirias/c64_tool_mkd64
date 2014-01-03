@@ -52,10 +52,11 @@ printUsage(void)
     printVersion();
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
             "       %s -V\n"
+            "       %s -C OPTFILE\n"
             "       %s OPTION [ARGUMENT] [OPTION [ARGUMENT]...]\n"
             "           [FILEOPTION [ARGUMENT]...]\n\n"
             "type `%s -h' for help on available options and fileoptions.\n",
-            exe, exe, exe, exe);
+            exe, exe, exe, exe, exe);
 }
 
 static void
@@ -79,15 +80,24 @@ printHelp(const char *modId)
     else
     {
         fputs(
-"mkd64 supports two types of options. Global options affect the whole disk\n"
-"image generation, file options control single files written to the image.\n"
+"mkd64 supports three types of options. Single options trigger some immediate\n"
+"action, see below. Global options affect the whole disk image generation,\n"
+"and file options control single files written to the image.\n"
 "Global options must come before all file options on the command line.\n\n"
 "Modules can provide their own global and file options, check their help\n"
 "messages (-h MODULE) for reference.\n\n"
-"GLOBAL options:\n"
+"SINGLE options (must be given first, anything following is ignored):\n"
 "  -h [MODULE]    Show this help message or, if given, the help message for\n"
-"                 the module {MODULE}, and exit (must be the first option)\n"
-"  -V             Show version info and exit (must be the first option)\n\n"
+"                 the module {MODULE}, and exit.\n"
+"  -V             Show version info and exit.\n"
+"  -C OPTFILE     Read options from file {OPTFILE} instead of the command\n"
+"                 line. The file has the same format as the normal command\n"
+"                 line and the following rules:\n"
+"                 - Strings containing whitespace are escaped using quotes\n"
+"                   or doublequotes (' or \")\n"
+"                 - The backslash (\\) has no special meaning at all\n"
+"                 - Newlines are just normal whitspace and thus ignored\n\n"
+"GLOBAL options:\n"
 "  -m MODULE      Activate module {MODULE}. Modules are searched for in the\n"
 "                 directory of the mkd64 executable.\n"
 "  -o D64FILE     Write generated disk image to {D64FILE}. This option must\n"
