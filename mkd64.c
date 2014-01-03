@@ -82,7 +82,7 @@ printHelp(const char *modId)
 "image generation, file options control single files written to the image.\n"
 "Global options must come before all file options on the command line.\n\n"
 "Modules can provide their own global and file options, check their help\n"
-"messages (-? MODULE) for reference.\n\n"
+"messages (-h MODULE) for reference.\n\n"
 "GLOBAL options:\n"
 "  -h [MODULE]    Show this help message or, if given, the help message for\n"
 "                 the module {MODULE}, and exit (must be the first option)\n"
