@@ -19,6 +19,7 @@ features
 - interleave can be specified per file
 - can create a 'map file' containing files and their start track/sector
 - start track and sector of a file can be specified explicitly
+- for lots of files on the image, options may be read from a file
 
 build
 -----
@@ -69,6 +70,5 @@ development
 
 Patches and comments are welcome. For the future, the following features are planned:
 
-- read command line from file (for disks with lots of files)
 - support 40track formats
 - custom directory formats in new modules
