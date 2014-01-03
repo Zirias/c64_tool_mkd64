@@ -1,0 +1,96 @@
+mkd64 module API
+----------------
+
+1. static module interface
+
+mkd64 tries to load all modules in its directory at startup. To be able to
+load, each module must export the following functions:
+
+- const char *id(void)
+  The name of the module. This should be a short string and is used for
+  identifying the module, for example when the user activates it using the
+  '-m' option.
+
+- IModule *instance(void)
+  Create an instance of the module. Instance should be structs with a first
+  member of type IModule (the dynamic module interface), so they are
+  convertible to and from IModule *.
+
+- void delete(IModule *)
+  Delete the given module instance. This should free all memory allocated by
+  instance().
+
+The following functions MAY be exported:
+
+- const char **depends(void)
+  A pointer to a string array containing the ids of modules that must be
+  activated for the current module to work correctly.
+
+- const char **conflicts(void)
+  A pointer to a string array containing the ids of modules that conflict
+  with the current module.
+
+- const char *help(void)
+  Should return a help string for the module that contains a list of all
+  global options understood by this module
+
+- const char *helpFile(void)
+  Should return a help string describing all file options understood by this
+  module
+
+2. dynamic module interface
+
+The module instance created by instance() must contain an IModule struct as
+its first member. The function pointers in this struct are called
+automatically by mkd64 when an event occurs. If an event is not needed by the
+module, the pointer can be left NULL.
+
+- const char *(*id)(void)
+  This is the only pointer that MUST be set. It should return the module id,
+  so the instance could be identified at runtime. Just let it point to your
+  const char *id().
+
+- void (*initImage)(IModule *this, Image *image)
+  This is called when mkd64 created the image initially in RAM. Here you can
+  for example reserve blocks needed by your module. You should probably save
+  the Image pointer for later use, too.
+
+- void (*globalOption)(IModule *this, char opt, const char *arg)
+  Every global option including its argument is delivered to every active
+  module by calling this function.
+
+- void (*fileOption)(IModule *this, Diskfile *file, char opt, const char *arg)
+  Every file option except the final '-w' is delivered to every active module
+  by calling this function. If you need per file initialization, check for the
+  '-f' option in this function, as this option starts a new file.
+
+- Track *(*getTrack)(IModule *this, int track)
+  This function is called for tracks that are not part of the core Image (e.g.
+  track numbers > 35). As soon as a module returns a Track, this track is used
+  by the core mkd64. So if two active modules both provide extra tracks, this
+  could lead to undefined behavior -- better make sure only one module
+  prividing extra tracks is loaded.
+
+- void (*fileWritten)(IModule *this, Diskfile *file,
+	const BlockPosition *start)
+  This function is called after a file is written to the image. 'start'
+  contains the start track and sector of the new file. Use this for any
+  directory writing.
+
+- void (*statusChanged)(IModule *this, const BlockPosition *pos)
+  This is called when the status of the block at track/sector 'pos' changed.
+  If your module needs to keep a record of used/free blocks, use this. The
+  'cbmdos' module updates the BAM here.
+
+3. mkd64 public API
+
+Every module can call mkd64 methods and functions. You find the public
+functions in include/mkd64/. Most of the time, it should be possible to figure
+out what they are doing just from their names and arguments. Nevertheless,
+those headers will eventuelly get commented.
+
+4. example
+
+See the implementation of the cbmdos module (in modules/cbmdos.c) for an
+example how to create an mkd64 module.
+
