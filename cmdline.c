@@ -226,14 +226,14 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
     free(buf);
 }
 
-SOEXPORT char
+SOLOCAL char
 cmdline_opt(const Cmdline *this)
 {
     if (this->pos < 0) return '\0';
     return this->opts[this->pos];
 }
 
-SOEXPORT const char *
+SOLOCAL const char *
 cmdline_arg(const Cmdline *this)
 {
     if (this->pos < 0) return 0;
@@ -252,7 +252,7 @@ cmdline_moveNext(Cmdline *this)
     return 1;
 }
 
-SOEXPORT const char *
+SOLOCAL const char *
 cmdline_exe(const Cmdline *this)
 {
     return this->exe;
