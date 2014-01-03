@@ -8,6 +8,7 @@
 #include "modrepo.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 
 typedef struct
@@ -308,9 +309,13 @@ mkd64_modrepo(void)
 
 int main(int argc, char **argv)
 {
+    int exit;
+
     mkd64_init(argc, argv);
-    mkd64_run();
+    exit = mkd64_run() ? EXIT_SUCCESS : EXIT_FAILURE;
     mkd64_done();
+
+    return exit;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4
