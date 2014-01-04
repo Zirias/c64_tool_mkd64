@@ -186,6 +186,9 @@ getHostArchitecture(void)
 static const char *
 getBuildArchitecture(void)
 {
+#ifdef GCC32BIT
+    return "x86";
+#else
     const char *buildArch;
 
     buildArch = getHostArchitecture();
@@ -197,6 +200,7 @@ getBuildArchitecture(void)
 #endif
 
     return buildArch;
+#endif
 }
 
 static const char *

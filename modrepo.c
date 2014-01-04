@@ -106,7 +106,11 @@ modrepo_new(const char *exe)
         free(modpat);
         return 0;
     }
+#ifdef MODDIR
+    strcpy(modpat, MODDIR);
+#else
     PathRemoveFileSpec(modpat);
+#endif
     strcat(modpat, "\\*.dll");
 
     findHdl = FindFirstFile(modpat, &findData);
@@ -126,14 +130,21 @@ modrepo_new(const char *exe)
     char *modpat;
     void *modso, *modid, *modinst, *moddel, *modopt;
 
+#ifdef MODDIR
+    modpat = malloc(strlen(MODDIR) + 6);
+    strcpy(modpat, MODDIR);
+#else
     char *exefullpath = realpath(exe, 0);
     char *dir = dirname(exefullpath);
     modpat = malloc(strlen(dir) + 6);
     strcpy(modpat, dir);
+#endif
     strcat(modpat, "/*.so");
     glob(modpat, 0, 0, &glb);
     free(modpat);
+#ifndef MODDIR
     free(exefullpath);
+#endif
 
     for (pathvp = glb.gl_pathv; pathvp && *pathvp; ++pathvp)
     {

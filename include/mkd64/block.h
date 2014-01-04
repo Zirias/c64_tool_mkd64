@@ -19,7 +19,7 @@ typedef enum
 {
     BS_NONE = 0,
     BS_ALLOCATED = 1,
-    BS_RESERVED = 1 << 1,
+    BS_RESERVED = 1 << 1
 } BlockStatus;
 
 DECLEXPORT BlockStatus block_status(const Block *this);

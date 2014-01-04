@@ -1,0 +1,3 @@
+mkd64 usr/bin
+*.so usr/lib/mkd64
+
