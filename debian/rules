@@ -18,7 +18,10 @@ override_dh_auto_clean:
 	make clean
 
 override_dh_auto_build:
-	make MODDIR=/usr/lib/mkd64
+	if [ "${DEB_HOST_ARCH}" = "i386" -a "${DEB_BUILD_ARCH}" = "amd64" ]; \
+	then make MODDIR=/usr/lib/mkd64 GCC32=1; \
+	else make MODDIR=/usr/lib/mkd64; \
+	fi
 
 override_dh_auto_test:
 
