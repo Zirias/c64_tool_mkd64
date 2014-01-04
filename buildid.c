@@ -241,7 +241,7 @@ main(int argc, char **argv)
          "#define BUILDID_ALL \"Built using \" BUILDID_COMPILER \"\\n\" \\\n"
          "                    \"on \" BUILDID_SYSTEM \"\\n\" \\\n"
          "                    \"host architecture \" BUILDID_HOSTARCH \""
-         ", target architecture  \" BUILDID_BUILDARCH \".\\n\" \\\n"
+         ", target architecture \" BUILDID_BUILDARCH \".\\n\" \\\n"
          "                    \"Build time: \" BUILDID_TIME\n\n"
          "#endif");
 
