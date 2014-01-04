@@ -39,21 +39,37 @@ mkd64_init(int argc, char **argv)
 }
 
 static void
-printVersion(void)
+printVersion(const char *modId)
 {
-    fputs("mkd64 " MKD64_VERSION "\n"
-            "a modular tool for creating D64 disk images.\n"
-            "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n\n"
-            BUILDID_ALL "\n\n", stderr);
+    if (modId)
+    {
+       char *versionInfo = modrepo_getVersionInfo(mkd64.modrepo, modId);
+       if (versionInfo)
+       {
+           fputs(versionInfo, stderr);
+           free(versionInfo);
+       }
+       else
+       {
+           fprintf(stderr, "Module `%s' not found.\n", modId);
+       }
+    }
+    else
+    {
+        fputs("mkd64 " MKD64_VERSION "\n"
+                "a modular tool for creating D64 disk images.\n"
+                "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n\n"
+                BUILDID_ALL "\n", stderr);
+    }
 }
 
 static void
 printUsage(void)
 {
     const char *exe = cmdline_exe(mkd64.cmdline);
-    printVersion();
+    printVersion(0);
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
-            "       %s -V\n"
+            "       %s -V [MODULE]\n"
             "       %s -C OPTFILE\n"
             "       %s OPTION [ARGUMENT] [OPTION [ARGUMENT]...]\n"
             "           [FILEOPTION [ARGUMENT]...]\n\n"
@@ -91,7 +107,8 @@ printHelp(const char *modId)
 "SINGLE options (must be given first, anything following is ignored):\n"
 "  -h [MODULE]    Show this help message or, if given, the help message for\n"
 "                 the module {MODULE}, and exit.\n"
-"  -V             Show version info and exit.\n"
+"  -V [MODULE]    Show version info and exit. If {MODULE} is given, version\n"
+"                 info for that module is shown instead.\n"
 "  -C OPTFILE     Read options from file {OPTFILE} instead of the command\n"
 "                 line. The file has the same format as the normal command\n"
 "                 line and the following rules:\n"
@@ -206,7 +223,7 @@ mkd64_run(void)
 
     if (cmdline_opt(mkd64.cmdline) == 'V')
     {
-        printVersion();
+        printVersion(cmdline_arg(mkd64.cmdline));
         return 0;
     }
 

@@ -14,6 +14,7 @@ int modrepo_createInstance(Modrepo *this, const char *id);
 int modrepo_deleteInstance(Modrepo *this, const char *id);
 
 char *modrepo_getHelp(Modrepo *this, const char *id);
+char *modrepo_getVersionInfo(Modrepo *this, const char *id);
 
 void modrepo_allInitImage(Modrepo *this, Image *image);
 void modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg);

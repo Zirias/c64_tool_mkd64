@@ -89,10 +89,13 @@ buildid$(EXE):	buildid.c
 buildid.h:	buildid$(EXE)
 	.$(PSEP)buildid$(EXE) > buildid.h
 
+modules$(PSEP)buildid.h:	buildid$(EXE)
+	.$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
+
 mkd64.a:	$(mkd64_OBJS)
 	dlltool -l$@ -Dmkd64.exe $^
 
-modules$(PSEP)%.o:	modules$(PSEP)%.c
+modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 %.o:	%.c buildid.h
@@ -101,7 +104,8 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
 
-.PHONY:	buildid$(EXE) buildid.h all bin modules strip clean
+.PHONY:	buildid$(EXE) buildid.h modules$(PSEP)buildid.h \
+	all bin modules strip clean
 
 .SUFFIXES:
 

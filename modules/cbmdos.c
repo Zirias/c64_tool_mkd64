@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "buildid.h"
+
+#define MODVERSION "0.2b"
+
 static const char *modid = "cbmdos";
 
 typedef struct
@@ -322,5 +326,14 @@ helpFile(void)
 "  -P           Make the file write-protected\n";
 }
 
+SOEXPORT const char *
+versionInfo(void)
+{
+    return
+"cbmdos " MODVERSION "\n"
+"an mkd64 module for writing original-like BAM and Directory.\n"
+"Felix Palmen (Zirias) -- <felix@palmen-it.de>\n\n"
+BUILDID_ALL "\n";
+}
 /* vim: et:si:ts=4:sts=4:sw=4
 */

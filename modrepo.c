@@ -33,6 +33,7 @@ struct modrepo
     const char **conflicts;
     const char *(*help)(void);
     const char *(*helpFile)(void);
+    const char *(*versionInfo)(void);
 };
 
 static Modrepo *
@@ -185,6 +186,9 @@ modrepo_new(const char *exe)
         modopt = GET_MOD_METHOD(modso, "helpFile");
         next->helpFile = modopt ? (const char *(*)(void))modopt : 0;
 
+        modopt = GET_MOD_METHOD(modso, "versionInfo");
+        next->versionInfo = modopt ? (const char *(*)(void))modopt : 0;
+
         if (current)
         {
             current->next = next;
@@ -310,6 +314,34 @@ modrepo_getHelp(Modrepo *this, const char *id)
     if (!mainHelp && !fileHelp) strcat(helpText, noHelp);
 
     return helpText;
+}
+
+SOLOCAL char *
+modrepo_getVersionInfo(Modrepo *this, const char *id)
+{
+    static const char *versionHeader = "* Module `%s':\n\n";
+    static const char *noVersion = "  No version info available.\n";
+    char *versionText;
+    size_t versionLen;
+    const char *versionInfo;
+    Modrepo *found;
+
+    if (!this) return 0;
+    found = findModule(this, id);
+    if (!found) return 0;
+    versionInfo = found->versionInfo ? found->versionInfo() : 0;
+
+    versionLen = strlen(versionInfo) + strlen(id) - 1;
+
+    if (versionInfo) versionLen += strlen(versionInfo);
+    else versionLen += strlen(noVersion);
+
+    versionText = malloc(versionLen);
+    sprintf(versionText, versionHeader, id);
+    if (versionInfo) strcat(versionText, versionInfo);
+    else strcat(versionText, noVersion);
+
+    return versionText;
 }
 
 SOLOCAL void
