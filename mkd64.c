@@ -6,6 +6,7 @@
 #include "diskfile.h"
 #include "cmdline.h"
 #include "modrepo.h"
+#include "buildid.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +43,8 @@ printVersion(void)
 {
     fputs("mkd64 " MKD64_VERSION "\n"
             "a modular tool for creating D64 disk images.\n"
-            "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n", stderr);
+            "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n\n"
+            BUILDID_ALL "\n\n", stderr);
 }
 
 static void

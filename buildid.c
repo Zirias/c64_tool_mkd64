@@ -9,6 +9,7 @@
 #define KEY_WOW64_64KEY 0x100
 #endif
 #else
+#include <sys/utsname.h>
 #endif
 
 const char *unknown = "<UNKNOWN>";
@@ -95,7 +96,7 @@ getRegValue(HKEY key, const wchar_t *name)
 }
 
 static const char *
-getWindowsVersion(void)
+getOsVersion(void)
 {
     static char buffer[1024];
     const char *csd;
@@ -135,16 +136,29 @@ onWow64(void)
     return (result == TRUE) ? 1 : 0;
 }
 
-#endif
+#else
+
+static struct utsname sysname;
+static int haveSysname = 0;
 
 static const char *
-getSystem(void)
+getOsVersion(void)
 {
-#ifdef WIN32
-    return getWindowsVersion();
-#else
-#endif
+    static char buffer[1024];
+
+    if (!haveSysname)
+    {
+        haveSysname = (uname(&sysname) == 0);
+    }
+    if (!haveSysname) return unknown;
+
+    snprintf(buffer, sizeof(buffer),"%s %s [%s]",
+            sysname.sysname, sysname.release, sysname.version);
+
+    return buffer;
 }
+
+#endif
 
 static const char *
 getHostArchitecture(void)
@@ -156,6 +170,14 @@ getHostArchitecture(void)
     procArch = getRegValue(regEnvironment, L"PROCESSOR_ARCHITECTURE");
     if (!procArch || strlen(procArch) == 0) return unknown;
 #else
+    if (haveSysname)
+    {
+        procArch = sysname.machine;
+    }
+    else
+    {
+        procArch = unknown;
+    }
 #endif
 
     return procArch;
@@ -166,13 +188,12 @@ getBuildArchitecture(void)
 {
     const char *buildArch;
 
-#ifdef WIN32
     buildArch = getHostArchitecture();
+#ifdef WIN32
     if (buildArch != unknown && strcmp(buildArch, "x86") != 0)
     {
         if (onWow64()) buildArch = "x86";
     }
-#else
 #endif
 
     return buildArch;
@@ -203,12 +224,27 @@ main(int argc, char **argv)
 
     puts("#ifndef BUILDID_H\n#define BUILDID_H\n");
 
-    printf("#define BUILDID_SYSTEM \"%s\"\n", getSystem());
+    printf("#define BUILDID_SYSTEM \"%s\"\n", getOsVersion());
     printf("#define BUILDID_HOSTARCH \"%s\"\n", getHostArchitecture());
     printf("#define BUILDID_BUILDARCH \"%s\"\n", getBuildArchitecture());
     printf("#define BUILDID_TIME \"%s\"\n", getBuildTime());
 
-    puts("\n#endif");
+    puts("#ifdef __GNUC__\n"
+         "#define BUILDID_COMPILER \"gcc \" __VERSION__\n"
+         "#else\n"
+         "#ifdef _MSC_VER\n"
+         "#define BUILDID_COMPILER \"msvc \" _MSC_VER\n"
+         "#else\n"
+         "#define BUILDID_COMPILER \"<UNKNOWN>\"\n"
+         "#endif\n"
+         "#endif\n\n"
+         "#define BUILDID_ALL \"Built using \" BUILDID_COMPILER \"\\n\" \\\n"
+         "                    \"on \" BUILDID_SYSTEM \",\\n\" \\\n"
+         "                    \"arch \" BUILDID_HOSTARCH \" for \" "
+         "BUILDID_BUILDARCH \".\\n\" \\\n"
+         "                    \"time: \" BUILDID_TIME\n\n"
+         "#endif");
+
 #ifdef WIN32
     closeRegKeys();
 #endif
