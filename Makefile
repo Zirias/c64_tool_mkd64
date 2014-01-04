@@ -75,6 +75,8 @@ clean:
 	$(RMF) modules$(PSEP)*.o
 	$(RMF) mkd64$(EXE)
 	$(RMF) buildid$(EXE)
+	$(RMF) buildid.h
+	$(RMF) modules$(PSEP)buildid.h
 
 strip:	all
 	strip --strip-all mkd64$(EXE)

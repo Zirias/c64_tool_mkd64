@@ -24,6 +24,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="$(OutDir)\buildid.exe &gt;buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -97,6 +98,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="$(OutDir)\buildid.exe &gt;buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
