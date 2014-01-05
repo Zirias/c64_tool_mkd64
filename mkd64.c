@@ -217,10 +217,9 @@ SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
-    const char *arg;
+    const char *arg, *modid;
     char *argDup;
     FILE *cmdfile;
-    const char * const *modNames;
 
     if (!mkd64.initialized) return 0;
 
@@ -266,10 +265,10 @@ mkd64_run(void)
     if (cmdline_opt(mkd64.cmdline) == 'M')
     {
         fputs("Available modules:\n", stderr);
-        for (modNames = modrepo_foundModules(mkd64.modrepo);
-                *modNames; ++modNames)
+        modid = 0;
+        while ((modid = modrepo_nextAvailableModule(mkd64.modrepo, modid)))
         {
-            fprintf(stderr, "  %s\n", *modNames);
+            fprintf(stderr, "  %s\n", modid);
         }
         return 0;
     }
