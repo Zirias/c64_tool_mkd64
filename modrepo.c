@@ -100,7 +100,7 @@ createInstanceHere(Modrepo *this, Modrepo *entry)
             if (!otherMod->mod)
             {
                 fprintf(stderr, "Info: loading module `%s' "
-                        "because `%s' depends on it",
+                        "because `%s' depends on it.\n",
                         otherMod->id, entry->id);
                 if (!createInstanceHere(this, otherMod))
                 {
@@ -297,7 +297,7 @@ modrepo_delete(Modrepo *this)
     {
         tmp = current;
         current = current->next;
-        tmp->delete(tmp->mod);
+        if (tmp->mod) tmp->delete(tmp->mod);
         UNLOAD_MOD(tmp->so);
         free(tmp);
     }
