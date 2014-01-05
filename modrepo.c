@@ -489,5 +489,22 @@ modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
     }
 }
 
+SOLOCAL const char **
+modrepo_foundModules(const Modrepo *this)
+{
+    static const char *foundModules[128];
+
+    int i = 0;
+    Modrepo *current;
+
+    for (current = this; current; current = current->next)
+    {
+        foundModules[i++] = current->id;
+        if (i == 128) break;
+    }
+    foundModules[i] = 0;
+
+    return foundModules;
+}
 /* vim: et:si:ts=4:sts=4:sw=4
 */

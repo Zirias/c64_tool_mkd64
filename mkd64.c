@@ -71,10 +71,11 @@ printUsage(void)
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
             "       %s -V [MODULE]\n"
             "       %s -C OPTFILE\n"
+            "       %s -M\n"
             "       %s OPTION [ARGUMENT] [OPTION [ARGUMENT]...]\n"
             "           [FILEOPTION [ARGUMENT]...]\n\n"
             "type `%s -h' for help on available options and fileoptions.\n",
-            exe, exe, exe, exe, exe);
+            exe, exe, exe, exe, exe, exe);
 }
 
 static void
@@ -115,7 +116,8 @@ printHelp(const char *modId)
 "                 - Strings containing whitespace are escaped using quotes\n"
 "                   or doublequotes (' or \")\n"
 "                 - The backslash (\\) has no special meaning at all\n"
-"                 - Newlines are just normal whitspace and thus ignored\n\n"
+"                 - Newlines are just normal whitspace and thus ignored\n"
+"  -M             Display all available modules and exit.\n\n"
 "GLOBAL options:\n"
 "  -m MODULE      Activate module {MODULE}. Modules are searched for in the\n"
 "                 directory of the mkd64 executable.\n"
@@ -212,6 +214,7 @@ mkd64_run(void)
     const char *arg;
     char *argDup;
     FILE *cmdfile;
+    const char **modNames;
 
     if (!mkd64.initialized) return 0;
 
@@ -252,6 +255,17 @@ mkd64_run(void)
             return 0;
         }
         free(argDup);
+    }
+
+    if (cmdline_opt(mkd64.cmdline) == 'M')
+    {
+        fputs("Available modules:\n", stderr);
+        for (modNames = modrepo_foundModules(mkd64.modrepo);
+                *modNames; ++modNames)
+        {
+            fprintf(stderr, "  %s\n", *modNames);
+        }
+        return 0;
     }
 
     do

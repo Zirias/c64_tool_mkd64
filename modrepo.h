@@ -25,6 +25,8 @@ void modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start);
 void modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos);
 
+const char **modrepo_foundModules(const Modrepo *this);
+
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4
 */
