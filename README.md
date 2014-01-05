@@ -48,7 +48,12 @@ modules
 cbmdos
 ------
 
-This is the only module for now. It reserves track 18 and uses it to write the BAM and directory entries like an original floppy dos. Use 'mkd64 -h cbmdos' for details.
+This module reserves track 18 and uses it to write the BAM and directory entries like an original floppy dos. Use 'mkd64 -h cbmdos' for details.
+
+xtracks
+-------
+
+This module provides tracks 36-40 and an option to write BAM entries in DOLPHIN DOS and/or SPEED DOS format
 
 module API
 ==========

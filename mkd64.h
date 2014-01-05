@@ -3,7 +3,7 @@
 
 #include <mkd64/mkd64.h>
 #include <mkd64/image.h>
-#include <mkd64/cmdline.h>
+#include "cmdline.h"
 
 int mkd64_init(int argc, char **argv);
 int mkd64_run(void);

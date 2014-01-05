@@ -6,6 +6,7 @@
 #include "diskfile.h"
 #include "cmdline.h"
 #include "modrepo.h"
+#include "buildid.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,13 +25,20 @@ typedef struct
 
 static Mkd64 mkd64 = {0};
 
+static void moduleLoaded(void *owner, IModule *mod)
+{
+    Mkd64 *this = owner;
+    mod->initImage(mod, this->image);
+}
+
 SOLOCAL int
 mkd64_init(int argc, char **argv)
 {
     mkd64.image = image_new();
     mkd64.cmdline = cmdline_new();
     cmdline_parse(mkd64.cmdline, argc, argv);
-    mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline));
+    mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline),
+            &mkd64, &moduleLoaded);
     mkd64.d64 = 0;
     mkd64.map = 0;
     mkd64.initialized = 1;
@@ -38,25 +46,43 @@ mkd64_init(int argc, char **argv)
 }
 
 static void
-printVersion(void)
+printVersion(const char *modId)
 {
-    fputs("mkd64 " MKD64_VERSION "\n"
-            "a modular tool for creating D64 disk images.\n"
-            "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n", stderr);
+    if (modId)
+    {
+       char *versionInfo = modrepo_getVersionInfo(mkd64.modrepo, modId);
+       if (versionInfo)
+       {
+           fputs(versionInfo, stderr);
+           free(versionInfo);
+       }
+       else
+       {
+           fprintf(stderr, "Module `%s' not found.\n", modId);
+       }
+    }
+    else
+    {
+        fputs("mkd64 " MKD64_VERSION "\n"
+                "a modular tool for creating D64 disk images.\n"
+                "Felix Palmen (Zirias) -- <felix@palmen-it.de>\n\n"
+                BUILDID_ALL "\n", stderr);
+    }
 }
 
 static void
 printUsage(void)
 {
     const char *exe = cmdline_exe(mkd64.cmdline);
-    printVersion();
+    printVersion(0);
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
-            "       %s -V\n"
+            "       %s -V [MODULE]\n"
             "       %s -C OPTFILE\n"
+            "       %s -M\n"
             "       %s OPTION [ARGUMENT] [OPTION [ARGUMENT]...]\n"
             "           [FILEOPTION [ARGUMENT]...]\n\n"
             "type `%s -h' for help on available options and fileoptions.\n",
-            exe, exe, exe, exe, exe);
+            exe, exe, exe, exe, exe, exe);
 }
 
 static void
@@ -89,14 +115,16 @@ printHelp(const char *modId)
 "SINGLE options (must be given first, anything following is ignored):\n"
 "  -h [MODULE]    Show this help message or, if given, the help message for\n"
 "                 the module {MODULE}, and exit.\n"
-"  -V             Show version info and exit.\n"
+"  -V [MODULE]    Show version info and exit. If {MODULE} is given, version\n"
+"                 info for that module is shown instead.\n"
 "  -C OPTFILE     Read options from file {OPTFILE} instead of the command\n"
 "                 line. The file has the same format as the normal command\n"
 "                 line and the following rules:\n"
 "                 - Strings containing whitespace are escaped using quotes\n"
 "                   or doublequotes (' or \")\n"
 "                 - The backslash (\\) has no special meaning at all\n"
-"                 - Newlines are just normal whitspace and thus ignored\n\n"
+"                 - Newlines are just normal whitspace and thus ignored\n"
+"  -M             Display all available modules and exit.\n\n"
 "GLOBAL options:\n"
 "  -m MODULE      Activate module {MODULE}. Modules are searched for in the\n"
 "                 directory of the mkd64 executable.\n"
@@ -189,10 +217,10 @@ SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
-    IModule *mod;
     const char *arg;
     char *argDup;
     FILE *cmdfile;
+    const char * const *modNames;
 
     if (!mkd64.initialized) return 0;
 
@@ -204,7 +232,7 @@ mkd64_run(void)
 
     if (cmdline_opt(mkd64.cmdline) == 'V')
     {
-        printVersion();
+        printVersion(cmdline_arg(mkd64.cmdline));
         return 0;
     }
 
@@ -235,20 +263,29 @@ mkd64_run(void)
         free(argDup);
     }
 
+    if (cmdline_opt(mkd64.cmdline) == 'M')
+    {
+        fputs("Available modules:\n", stderr);
+        for (modNames = modrepo_foundModules(mkd64.modrepo);
+                *modNames; ++modNames)
+        {
+            fprintf(stderr, "  %s\n", *modNames);
+        }
+        return 0;
+    }
+
     do
     {
         switch (cmdline_opt(mkd64.cmdline))
         {
             case 'm':
-                mod = modrepo_moduleInstance(mkd64.modrepo,
-                        cmdline_arg(mkd64.cmdline));
-                if (!mod)
+                if (!modrepo_createInstance(mkd64.modrepo,
+                        cmdline_arg(mkd64.cmdline)))
                 {
                     fprintf(stderr, "Error: module `%s' not found.\n",
                             cmdline_arg(mkd64.cmdline));
                     goto mkd64_run_error;
                 }
-                mod->initImage(mod, mkd64.image);
                 break;
             case 'o':
                 if (mkd64.d64)
