@@ -38,6 +38,7 @@ typedef enum
 typedef struct
 {
     CbmdosFileType fileType;
+    int writeDirEntry;
 } CbmdosFileData;
 
 static const uint8_t _initialBam[256] = {
@@ -149,10 +150,16 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             diskfile_setInterleave(file, 10);
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
+            data->writeDirEntry = 0;
             diskfile_attachData(file, dos, data);
             break;
         case 'n':
-            if (arg) diskfile_setName(file, arg);
+            data = diskfile_data(file, dos);
+            data->writeDirEntry = 1;
+            if (arg)
+            {
+                diskfile_setName(file, arg);
+            }
             break;
         case 't':
             if (!arg) break;
@@ -201,6 +208,14 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
 
+    data = diskfile_removeData(file, dos);
+
+    if (!data->writeDirEntry)
+    {
+        free(data);
+        return;
+    }
+
     dirBlockPos.track = 18;
     ++(dos->currentDirSlot);
     if (dos->currentDirSlot > 7)
@@ -236,7 +251,6 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     memset(fileEntry + 0x05, 0xa0, 0x10);
     if (dos->currentDirSlot == 0) fileEntry[1] = 0xff;
 
-    data = diskfile_removeData(file, dos);
     fileName = diskfile_name(file);
 
     fileEntry[0x02] = data->fileType;
@@ -310,20 +324,21 @@ help(void)
 "cbmdos implements the default directory and BAM scheme of a 1541 floppy.\n"
 "Interleave is initially set to 10 for every file (cbmdos standard). The\n"
 "following options are recognized:\n\n"
-"  -d DISKNAME  The name of the disk, defaults to an empty name.\n"
-"  -i DISKID    The ID of the disk, defaults to two random characters.\n"
-"               This can be up to 5 characters long, in this case it will\n"
-"               overwrite the default `DOS type' string (`2A')\n";
+"  -d DISKNAME   The name of the disk, defaults to an empty name.\n"
+"  -i DISKID     The ID of the disk, defaults to two random characters.\n"
+"                This can be up to 5 characters long, in this case it will\n"
+"                overwrite the default `DOS type' string (`2A')\n";
 }
 
 SOEXPORT const char *
 helpFile(void)
 {
     return
-"  -n FILENAME  The name to use in the cbmdos directory\n"
-"  -t FILETYPE  One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
-"               DEL), defaults to PRG\n"
-"  -P           Make the file write-protected\n";
+"  -n [FILENAME] Activates cbmdos directory entry for the current file. If\n"
+"                {FILENAME} is given, it is used for the cbmdos directory.\n"
+"  -t FILETYPE   One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
+"                DEL), defaults to PRG.\n"
+"  -P            Make the file write-protected.\n";
 }
 
 SOEXPORT const char *
