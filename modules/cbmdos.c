@@ -161,7 +161,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
                 diskfile_setName(file, arg);
             }
             break;
-        case 't':
+        case 'T':
             if (!arg) break;
             data = diskfile_data(file, dos);
             switch (arg[0])
@@ -276,6 +276,8 @@ statusChanged(IModule *this, const BlockPosition *pos)
 
     DBGd2("cbmdos: statusChanged", pos->track, pos->sector);
 
+    if (pos->track < 1 || pos->track > 35) return;
+
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
     bamEntry[0] = track_freeSectorsRaw(image_track(dos->image, pos->track));
     bamByte = pos->sector / 8 + 1;
@@ -336,7 +338,7 @@ helpFile(void)
     return
 "  -n [FILENAME] Activates cbmdos directory entry for the current file. If\n"
 "                {FILENAME} is given, it is used for the cbmdos directory.\n"
-"  -t FILETYPE   One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
+"  -T FILETYPE   One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
 "                DEL), defaults to PRG.\n"
 "  -P            Make the file write-protected.\n";
 }
