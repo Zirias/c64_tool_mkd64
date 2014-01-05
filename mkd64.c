@@ -25,13 +25,20 @@ typedef struct
 
 static Mkd64 mkd64 = {0};
 
+static void moduleLoaded(void *owner, IModule *mod)
+{
+    Mkd64 *this = owner;
+    mod->initImage(mod, this->image);
+}
+
 SOLOCAL int
 mkd64_init(int argc, char **argv)
 {
     mkd64.image = image_new();
     mkd64.cmdline = cmdline_new();
     cmdline_parse(mkd64.cmdline, argc, argv);
-    mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline));
+    mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline),
+            &mkd64, &moduleLoaded);
     mkd64.d64 = 0;
     mkd64.map = 0;
     mkd64.initialized = 1;
@@ -210,11 +217,10 @@ SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
-    IModule *mod;
     const char *arg;
     char *argDup;
     FILE *cmdfile;
-    const char **modNames;
+    const char * const *modNames;
 
     if (!mkd64.initialized) return 0;
 
@@ -273,15 +279,13 @@ mkd64_run(void)
         switch (cmdline_opt(mkd64.cmdline))
         {
             case 'm':
-                mod = modrepo_moduleInstance(mkd64.modrepo,
-                        cmdline_arg(mkd64.cmdline));
-                if (!mod)
+                if (!modrepo_createInstance(mkd64.modrepo,
+                        cmdline_arg(mkd64.cmdline)))
                 {
                     fprintf(stderr, "Error: module `%s' not found.\n",
                             cmdline_arg(mkd64.cmdline));
                     goto mkd64_run_error;
                 }
-                mod->initImage(mod, mkd64.image);
                 break;
             case 'o':
                 if (mkd64.d64)

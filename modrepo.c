@@ -21,9 +21,12 @@
 #define UNLOAD_MOD(so) dlclose(so)
 #endif
 
-struct modrepo
+struct modentry;
+typedef struct modentry Modentry;
+
+struct modentry
 {
-    Modrepo *next;
+    Modentry *next;
     void *so;
     IModule *mod;
     const char *id;
@@ -37,12 +40,20 @@ struct modrepo
     int conflicted;
 };
 
-static Modrepo *
+struct modrepo
+{
+    void *owner;
+    ModInstanceCreated callback;
+    const char *availableModules[128];
+    Modentry *modules;
+};
+
+static Modentry *
 findModule(Modrepo *this, const char *id)
 {
-    Modrepo *current;
+    Modentry *current;
 
-    for (current = this; current; current = current->next)
+    for (current = this->modules; current; current = current->next)
     {
         if (!strcmp(id, current->id))
         {
@@ -53,9 +64,9 @@ findModule(Modrepo *this, const char *id)
 }
 
 static int
-createInstanceHere(Modrepo *this, Modrepo *entry)
+createInstanceHere(Modrepo *this, Modentry *entry)
 {
-    Modrepo *otherMod;
+    Modentry *otherMod;
     const char **otherModId;
 
     if (entry->conflicted)
@@ -114,6 +125,7 @@ createInstanceHere(Modrepo *this, Modrepo *entry)
     }
 
     entry->mod = entry->instance();
+    this->callback(this->owner, entry->mod);
     return 1;
 }
 
@@ -141,11 +153,16 @@ _endsWith(const char *value, const char *pattern)
 #endif
 
 SOLOCAL Modrepo *
-modrepo_new(const char *exe)
+modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 {
-    Modrepo *this = 0;
-    Modrepo *current = 0;
-    Modrepo *next;
+    Modrepo *this = malloc(sizeof(Modrepo));
+    this->owner = owner;
+    this->callback = callback;
+    this->modules = 0;
+    int i = 0;
+
+    Modentry *current = 0;
+    Modentry *next;
 
 #ifdef WIN32
     HANDLE findHdl;
@@ -266,11 +283,13 @@ modrepo_new(const char *exe)
         }
         else
         {
-            this = next;
+            this->modules = next;
         }
         current = next;
 
         DBGs1("Found module:", current->id);
+        this->availableModules[i++] = current->id;
+        if (i == 128) break;
 
 #ifdef WIN32
     } while (FindNextFile(findHdl, &findData) != 0);
@@ -283,6 +302,7 @@ modrepo_new(const char *exe)
 
     globfree(&glb);
 #endif
+    this->availableModules[i] = 0;
 
     return this;
 }
@@ -290,8 +310,8 @@ modrepo_new(const char *exe)
 SOLOCAL void
 modrepo_delete(Modrepo *this)
 {
-    Modrepo *current = this;
-    Modrepo *tmp;
+    Modentry *current = this->modules;
+    Modentry *tmp;
 
     while (current)
     {
@@ -301,14 +321,14 @@ modrepo_delete(Modrepo *this)
         UNLOAD_MOD(tmp->so);
         free(tmp);
     }
+    free(this);
 }
 
 SOEXPORT IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
     if (!found->mod) createInstanceHere(this, found);
@@ -318,9 +338,8 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
 SOLOCAL int
 modrepo_createInstance(Modrepo *this, const char *id)
 {
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
     if (found->mod) return 1;
@@ -331,9 +350,8 @@ modrepo_createInstance(Modrepo *this, const char *id)
 SOLOCAL int
 modrepo_deleteInstance(Modrepo *this, const char *id)
 {
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
     found->delete(found->mod);
@@ -344,9 +362,8 @@ modrepo_deleteInstance(Modrepo *this, const char *id)
 SOEXPORT int
 modrepo_isActive(Modrepo *this, const char *id)
 {
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     return (found && found->mod) ? 1 : 0;
 }
@@ -360,9 +377,8 @@ modrepo_getHelp(Modrepo *this, const char *id)
     char *helpText;
     size_t helpLen;
     const char *mainHelp, *fileHelp;
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
     mainHelp = found->help ? found->help() : 0;
@@ -395,9 +411,8 @@ modrepo_getVersionInfo(Modrepo *this, const char *id)
     char *versionText;
     size_t versionLen;
     const char *versionInfo;
-    Modrepo *found;
+    Modentry *found;
 
-    if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
     versionInfo = found->versionInfo ? found->versionInfo() : 0;
@@ -418,8 +433,8 @@ modrepo_getVersionInfo(Modrepo *this, const char *id)
 SOLOCAL void
 modrepo_allInitImage(Modrepo *this, Image *image)
 {
-    Modrepo *current;
-    for (current = this; current; current = current->next)
+    Modentry *current;
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->initImage)
             current->mod->initImage(current->mod, image);
@@ -429,8 +444,8 @@ modrepo_allInitImage(Modrepo *this, Image *image)
 SOLOCAL void
 modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 {
-    Modrepo *current;
-    for (current = this; current; current = current->next)
+    Modentry *current;
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->globalOption)
             current->mod->globalOption(current->mod, opt, arg);
@@ -440,8 +455,8 @@ modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 SOLOCAL void
 modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 {
-    Modrepo *current;
-    for (current = this; current; current = current->next)
+    Modentry *current;
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->fileOption)
             current->mod->fileOption(current->mod, file, opt, arg);
@@ -452,9 +467,9 @@ SOLOCAL Track *
 modrepo_firstGetTrack(Modrepo *this, int track)
 {
     Track *t;
-    Modrepo *current;
+    Modentry *current;
 
-    for (current = this; current; current = current->next)
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->getTrack)
         {
@@ -470,8 +485,8 @@ SOLOCAL void
 modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start)
 {
-    Modrepo *current;
-    for (current = this; current; current = current->next)
+    Modentry *current;
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->fileWritten)
             current->mod->fileWritten(current->mod, file, start);
@@ -481,30 +496,18 @@ modrepo_allFileWritten(Modrepo *this,
 SOLOCAL void
 modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
 {
-    Modrepo *current;
-    for (current = this; current; current = current->next)
+    Modentry *current;
+    for (current = this->modules; current; current = current->next)
     {
         if (current->mod && current->mod->statusChanged)
             current->mod->statusChanged(current->mod, pos);
     }
 }
 
-SOLOCAL const char **
+SOLOCAL const char * const *
 modrepo_foundModules(const Modrepo *this)
 {
-    static const char *foundModules[128];
-
-    int i = 0;
-    Modrepo *current;
-
-    for (current = this; current; current = current->next)
-    {
-        foundModules[i++] = current->id;
-        if (i == 128) break;
-    }
-    foundModules[i] = 0;
-
-    return foundModules;
+    return this->availableModules;
 }
 /* vim: et:si:ts=4:sts=4:sw=4
 */
