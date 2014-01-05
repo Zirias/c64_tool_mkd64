@@ -49,8 +49,11 @@ else
 CFLAGS += -g0 -O3
 endif
 
-ifdef MODDIR
-CFLAGS += -DMODDIR="\"$(MODDIR)\""
+ifdef prefix
+BINDIR = /bin
+LIBDIR = /lib
+INSTALL = install
+CFLAGS += -DMODDIR="\"$(prefix)$(LIBDIR)/mkd64\""
 endif
 
 ifdef GCC32
@@ -87,9 +90,21 @@ clean:
 	$(RMF) buildid.h
 	$(RMF) modules$(PSEP)buildid.h
 
+distclean: clean
+
 strip:	all
 	strip --strip-all mkd64$(EXE)
 	strip --strip-unneeded *$(SO)
+
+ifdef prefix
+
+install: strip
+	$(INSTALL) -d $(DESTDIR)$(prefix)$(BINDIR)
+	$(INSTALL) -d $(DESTDIR)$(prefix)$(LIBDIR)/mkd64
+	$(INSTALL) mkd64$(EXE) $(DESTDIR)$(prefix)$(BINDIR)
+	$(INSTALL) *$(SO) $(DESTDIR)$(prefix)$(LIBDIR)/mkd64
+
+endif
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
 	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
@@ -115,7 +130,7 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
 
-.PHONY: all bin modules strip clean
+.PHONY: all bin modules strip clean distclean install
 
 .SUFFIXES:
 

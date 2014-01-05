@@ -9,21 +9,16 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+export prefix=/usr
+
+ifeq ($(DEB_HOST_ARCH),i386)
+ifeq ($(DEB_BUILD_ARCH),amd64)
+export GCC32=1
+endif
+endif
+
 %:
 	dh $@ 
 
-override_dh_auto_configure:
-
-override_dh_auto_clean:
-	make clean
-
-override_dh_auto_build:
-	if [ "${DEB_HOST_ARCH}" = "i386" -a "${DEB_BUILD_ARCH}" = "amd64" ]; \
-	then make MODDIR=/usr/lib/mkd64 GCC32=1; \
-	else make MODDIR=/usr/lib/mkd64; \
-	fi
-
 override_dh_auto_test:
-
-override_dh_auto_install:
 
