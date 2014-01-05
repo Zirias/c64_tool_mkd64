@@ -155,12 +155,8 @@ _endsWith(const char *value, const char *pattern)
 SOLOCAL Modrepo *
 modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 {
-    Modrepo *this = malloc(sizeof(Modrepo));
-    this->owner = owner;
-    this->callback = callback;
-    this->modules = 0;
+    Modrepo *this = calloc(1, sizeof(Modrepo));
     int i = 0;
-
     Modentry *current = 0;
     Modentry *next;
 
@@ -303,6 +299,8 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
     globfree(&glb);
 #endif
     this->availableModules[i] = 0;
+    this->owner = owner;
+    this->callback = callback;
 
     return this;
 }
