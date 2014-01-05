@@ -1,3 +1,9 @@
+mkd64 (0.31b) unstable; urgency=low
+
+  * Bugfix release: memory corruption fixed
+
+ -- Felix Palmen <felix@palmen-it.de>  Sun, 05 Jan 2014 17:00:43 +0100
+
 mkd64 (0.3b) unstable; urgency=low
 
   * New Release, adding new 'xtracks' module and a build id
