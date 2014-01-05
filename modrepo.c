@@ -44,7 +44,6 @@ struct modrepo
 {
     void *owner;
     ModInstanceCreated callback;
-    const char *availableModules[128];
     Modentry *modules;
 };
 
@@ -156,7 +155,6 @@ SOLOCAL Modrepo *
 modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 {
     Modrepo *this = calloc(1, sizeof(Modrepo));
-    int i = 0;
     Modentry *current = 0;
     Modentry *next;
 
@@ -248,7 +246,7 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
             continue;
         }
 
-        next = malloc(sizeof(Modrepo));
+        next = malloc(sizeof(Modentry));
         next->next = 0;
         next->so = modso;
         next->mod = 0;
@@ -284,8 +282,6 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
         current = next;
 
         DBGs1("Found module:", current->id);
-        this->availableModules[i++] = current->id;
-        if (i == 128) break;
 
 #ifdef WIN32
     } while (FindNextFile(findHdl, &findData) != 0);
@@ -298,7 +294,6 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 
     globfree(&glb);
 #endif
-    this->availableModules[i] = 0;
     this->owner = owner;
     this->callback = callback;
 
@@ -502,10 +497,19 @@ modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
     }
 }
 
-SOLOCAL const char * const *
-modrepo_foundModules(const Modrepo *this)
+SOLOCAL const char *
+modrepo_nextAvailableModule(Modrepo *this, const char *id)
 {
-    return this->availableModules;
+    Modentry *found;
+    if (!id)
+    {
+        if (this->modules) return this->modules->id;
+        else return 0;
+    }
+    found = findModule(this, id);
+    if (!found) return 0;
+    if (found->next) return found->next->id;
+    return 0;
 }
 /* vim: et:si:ts=4:sts=4:sw=4
 */
