@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <mkd64/mkd64.h>
 #include <mkd64/track.h>
+#include "modrepo.h"
 #include "image.h"
 #include "block.h"
 #include "filemap.h"
@@ -125,8 +127,18 @@ image_blockStatus(const Image *this, const BlockPosition *pos)
 SOEXPORT Track *
 image_track(const Image *this, int track)
 {
-    if (track < 1 || track > IMAGE_NUM_TRACKS) return 0;
-    return this->tracks[track-1];
+    Track *t;
+
+    if (track > 0 && track <= IMAGE_NUM_TRACKS)
+    {
+        t = this->tracks[track-1];
+    }
+    else
+    {
+        t = modrepo_firstGetTrack(mkd64_modrepo(), track);
+    }
+
+    return t;
 }
 
 SOEXPORT Block *

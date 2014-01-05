@@ -34,6 +34,7 @@ struct modrepo
     const char *(*help)(void);
     const char *(*helpFile)(void);
     const char *(*versionInfo)(void);
+    int conflicted;
 };
 
 static Modrepo *
@@ -52,9 +53,66 @@ findModule(Modrepo *this, const char *id)
 }
 
 static int
-createInstanceHere(Modrepo *entry)
+createInstanceHere(Modrepo *this, Modrepo *entry)
 {
-    /* TODO: check dependencies */
+    Modrepo *otherMod;
+    const char **otherModId;
+
+    if (entry->conflicted)
+    {
+        fprintf(stderr,
+"Error: cannot load module `%s' because an already loaded module conflicts\n"
+"       with it.\n", entry->id);
+        return 0;
+    }
+
+    if (entry->conflicts)
+    {
+        for (otherModId = entry->conflicts; *otherModId; ++otherModId)
+        {
+            otherMod = findModule(this, *otherModId);
+            if (otherMod)
+            {
+                if (otherMod->mod)
+                {
+                    fprintf(stderr,
+"Error: cannot load module `%s' because it conflicts with already loaded\n"
+"       module `%s'.\n", entry->id, otherMod->id);
+                    return 0;
+                }
+                otherMod->conflicted = 1;
+            }
+        }
+    }
+
+    if (entry->depends)
+    {
+        for (otherModId = entry->depends; *otherModId; ++otherModId)
+        {
+            otherMod = findModule(this, *otherModId);
+            if (!otherMod)
+            {
+                fprintf(stderr,
+"Error: cannot load module `%s' because it depends on `%s' which is not\n"
+"       available.\n", entry->id, *otherModId);
+                return 0;
+            }
+            if (!otherMod->mod)
+            {
+                fprintf(stderr, "Info: loading module `%s' "
+                        "because `%s' depends on it",
+                        otherMod->id, entry->id);
+                if (!createInstanceHere(this, otherMod))
+                {
+                    fprintf(stderr,
+"Error: cannot load module `%s' because its dependency `%s' failed to load.",
+                            entry->id, otherMod->id);
+                    return 0;
+                }
+            }
+        }
+    }
+
     entry->mod = entry->instance();
     return 1;
 }
@@ -200,6 +258,8 @@ modrepo_new(const char *exe)
         modopt = GET_MOD_METHOD(modso, "versionInfo");
         next->versionInfo = modopt ? (const char *(*)(void))modopt : 0;
 
+        next->conflicted = 0;
+
         if (current)
         {
             current->next = next;
@@ -251,7 +311,7 @@ modrepo_moduleInstance(Modrepo *this, const char *id)
     if (!this) return 0;
     found = findModule(this, id);
     if (!found) return 0;
-    if (!found->mod) createInstanceHere(found);
+    if (!found->mod) createInstanceHere(this, found);
     return found->mod;
 }
 
@@ -264,7 +324,7 @@ modrepo_createInstance(Modrepo *this, const char *id)
     found = findModule(this, id);
     if (!found) return 0;
     if (found->mod) return 1;
-    createInstanceHere(found);
+    createInstanceHere(this, found);
     return found->mod ? 1 : 0;
 }
 
