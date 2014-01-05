@@ -27,7 +27,6 @@ initImage(IModule *this, Image *image)
     int i;
 
     dos->image = image;
-    dos->bam = 0;
     for (i = 0; i < 5; ++i)
     {
         if (!image_track(image, i+36))
