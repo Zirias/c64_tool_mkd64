@@ -19,6 +19,7 @@ Description: Modular tool for creating .D64 disk images
  Features:
  - can create images without directory
  - module 'cbmdos' writes directory in original format (sector interleave 4)
+ - module 'xtracks' provides 40 tracks and DOLPHIN DOS / SPEED DOS bam
  - module API for other directory formats
  - interleave can be specified per file
  - can create a 'map file' containing files and their start track/sector
