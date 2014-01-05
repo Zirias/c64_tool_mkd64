@@ -70,11 +70,11 @@ mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 mkd64_DEFINES = -DBUILDING_MKD64
 
-MODULES = cbmdos$(SO) dlphndos$(SO)
+MODULES = cbmdos$(SO) xtracks$(SO)
 
 cbmdos_OBJS = modules$(PSEP)cbmdos.o
 
-dlphndos_OBJS = modules$(PSEP)dlphndos.o
+xtracks_OBJS = modules$(PSEP)xtracks.o
 
 all:	bin modules
 
@@ -132,7 +132,7 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
 
-dlphndos$(SO): $(dlphndos_OBJS) $(mod_LIBS)
+xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
 	$(CC) -shared -o$@ $^
 
 .PHONY: all bin modules strip clean distclean install
