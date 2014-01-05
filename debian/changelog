@@ -1,3 +1,9 @@
+mkd64 (0.3b) unstable; urgency=low
+
+  * New Release, adding new 'xtracks' module and a build id
+
+ -- Felix Palmen <felix@palmen-it.de>  Sun, 05 Jan 2014 15:56:19 +0100
+
 mkd64 (0.2b) unstable; urgency=low
 
   * Initial Release.
