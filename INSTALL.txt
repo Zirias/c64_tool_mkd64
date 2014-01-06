@@ -36,15 +36,15 @@ Complete building instructions
   For building an installable version, provide an installation prefix to make,
   for example:
 
-	make prefix=/usr/local
-	make prefix=/usr/local install
+    make prefix=/usr/local
+    make prefix=/usr/local install
   
   This will install mkd64 in ${prefix}/bin and modules in ${prefix}/lib/mkd64
 
   For packagers: The install target supports a DESTDIR variable, for example:
 
-  	make prefix=/usr
-	make DESTDIR=/tmp/pkg prefix=/usr install
+    make prefix=/usr
+    make DESTDIR=/tmp/pkg prefix=/usr install
 
   = Other make options and targets =
 
@@ -67,16 +67,18 @@ Complete building instructions
 
   To build your own debian packages, just use
 
-	dpkg-buildpackage -b -us -uc
+    dpkg-buildpackage -b -us -uc
 
   It is possible to build i386 debian packages on an amd64 debian machine like
-  so:
-	dpkg-buildpackage -b -us -uc -ai386
+  this:
 
-  Note that dpkg-buildpackage will look for a tool 'i486-linux-gnu-strip' in
-  this case. A symlink to your normal strip utility (e.g.
+    dpkg-buildpackage -b -us -uc -ai386
+
+  Note that dpkg-buildpackage will look for a tool 'i486-linux-gnu-strip'
+  in this case.  A symlink to your normal strip utility  (e.g.
   /usr/local/bin/i486-linux-gnu-strip => /usr/bin/strip) will satisfy this.
 
   A second package 'mkd64-dev' will be created, containing the public mkd64
   headers for module development.
 
+# vim:et:sts=4:ts=4:sw=4
