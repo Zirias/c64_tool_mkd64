@@ -1,0 +1,82 @@
+Build and installation instructions for mkd64
+=============================================
+
+Quick start
+-----------
+
+  just type 'make'.
+
+
+Complete building instructions
+------------------------------
+
+  = Prerequisites =
+
+  For building mkd64, you need a C89-compliant C-Compiler. A Makefile is
+  included for building with the GCC C-Compiler and GNU Make. For building
+  with Visual Studio, there's also a solution file and some project files.
+
+  = GCC / GNU Make on windows =
+
+  For windows, get a copy of either mingw32 or mingw-w64. Do NOT install msys,
+  or at least make sure it is not in your search path. If GNU make finds an
+  'sh.exe', it tries to use it for executing the recipes. The provided Makefile
+  uses 'cmd.exe' syntax on windows, so this would fail.
+
+  = Building 'portable' binaries =
+
+  THIS IS THE ONLY SUPPORTED OPTION FOR WINDOWS
+  'make' without any options will build a portable version, that means, mkd64
+  will look for modules in its own directory. So you can just place mkd64
+  and all modules (*.so / *.dll) in a directory together and no installation
+  is required.
+
+  = Building an installable version =
+
+  For building an installable version, provide an installation prefix to make,
+  for example:
+
+	make prefix=/usr/local
+	make prefix=/usr/local install
+  
+  This will install mkd64 in ${prefix}/bin and modules in ${prefix}/lib/mkd64
+
+  For packagers: The install target supports a DESTDIR variable, for example:
+
+  	make prefix=/usr
+	make DESTDIR=/tmp/pkg prefix=/usr install
+
+  = Other make options and targets =
+
+    * stripping:
+
+    Type 'make strip'. For installable builds, this is done by default.
+
+    * debugging:
+
+    'make DEBUG=1' creates a debugging build with verbose output and debugging
+    symbols for use with gdb or valgrind. Do a 'make clean' first.
+
+    * i386 builds on linux amd64:
+
+    'make GCC32=1' will build i386 binaries on an amd64 linux system. This
+    could work for other multiarch systems, too -- I didn't test it. Do a
+    'make clean' first.
+
+  = Debian packages =
+
+  To build your own debian packages, just use
+
+	dpkg-buildpackage -b -us -uc
+
+  It is possible to build i386 debian packages on an amd64 debian machine like
+  so:
+	dpkg-buildpackage -b -us -uc -ai386
+
+  Note that dpkg-buildpackage will look for a tool 'i486-linux-gnu-strip' in
+  this case. A symlink to your normal strip utility (e.g.
+  /usr/local/bin/i486-linux-gnu-strip => /usr/bin/strip) will satisfy this.
+
+  A second package 'mkd64-dev' will be created, containing the public mkd64
+  headers for module development.
+
