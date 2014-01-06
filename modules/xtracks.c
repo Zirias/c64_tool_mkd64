@@ -21,6 +21,20 @@ typedef struct
 } Xtracks;
 
 static void
+delete(IModule *this)
+{
+    Xtracks *dos = (Xtracks *) this;
+    int i;
+
+    for (i = 0; i < 5; ++i)
+    {
+        if (dos->extraTracks[i]) track_delete(dos->extraTracks[i]);
+    }
+
+    free(dos);
+}
+
+static void
 initImage(IModule *this, Image *image)
 {
     Xtracks *dos = (Xtracks *)this;
@@ -156,26 +170,13 @@ instance(void)
 {
     Xtracks *this = calloc(1, sizeof(Xtracks));
     this->mod.id = &id;
+    this->mod.delete = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.getTrack = &getTrack;
     this->mod.statusChanged = &statusChanged;
 
     return (IModule *) this;
-}
-
-SOEXPORT void
-delete(IModule *instance)
-{
-    Xtracks *this = (Xtracks *) instance;
-    int i;
-
-    for (i = 0; i < 5; ++i)
-    {
-        if (this->extraTracks[i]) track_delete(this->extraTracks[i]);
-    }
-
-    free(this);
 }
 
 SOEXPORT const char *

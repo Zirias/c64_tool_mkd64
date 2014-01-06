@@ -4,7 +4,8 @@ mkd64 module API
 1. static module interface
 
 mkd64 tries to load all modules in its directory at startup. To be able to
-load, each module must export the following functions:
+load, each module must export the following functions, using the SOEXPORT
+macro from <mkd64/common.h>:
 
 - const char *id(void)
   The name of the module. This should be a short string and is used for
@@ -16,19 +17,18 @@ load, each module must export the following functions:
   member of type IModule (the dynamic module interface), so they are
   convertible to and from IModule *.
 
-- void delete(IModule *)
-  Delete the given module instance. This should free all memory allocated by
-  instance().
-
 The following functions MAY be exported:
 
 - const char **depends(void)
-  A pointer to a string array containing the ids of modules that must be
-  activated for the current module to work correctly.
+  A pointer to a null-terminated string array containing the ids of modules
+  that must be activated for the current module to work correctly. mkd64 makes
+  sure they are loaded before loading the current module.
 
 - const char **conflicts(void)
-  A pointer to a string array containing the ids of modules that conflict
-  with the current module.
+  A pointer to a null-terminated string array containing the ids of modules
+  that conflict with the current module. If any of them is loaded, the current
+  module will not load. Otherwise, they are marked so they cannot be loaded
+  later.
 
 - const char *help(void)
   Should return a help string for the module that contains a list of all
@@ -38,6 +38,11 @@ The following functions MAY be exported:
   Should return a help string describing all file options understood by this
   module
 
+- const char *versionInfo(void)
+  Should return a string containing version information about the module and
+  a short description. It's probably a good idea to include some build
+  information, too (e.g. using the mkd64 buildid tool)
+
 2. dynamic module interface
 
 The module instance created by instance() must contain an IModule struct as
@@ -46,9 +51,14 @@ automatically by mkd64 when an event occurs. If an event is not needed by the
 module, the pointer can be left NULL.
 
 - const char *(*id)(void)
-  This is the only pointer that MUST be set. It should return the module id,
-  so the instance could be identified at runtime. Just let it point to your
-  const char *id().
+  This should return the module id, so the instance could be identified at
+  runtime. Just let it point to your const char *id().
+  MUST BE IMPLEMENTED (must not be NULL)
+
+- void (*delete)(IModule *)
+  Delete the given module instance. This should free all memory allocated by
+  instance().
+  MUST BE IMPLEMENTED (must not be NULL)
 
 - void (*initImage)(IModule *this, Image *image)
   This is called when mkd64 created the image initially in RAM. Here you can

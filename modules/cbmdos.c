@@ -81,6 +81,12 @@ static const int _dirSectors[18] = {
 };
 
 static void
+delete(IModule *this)
+{
+    free(this);
+}
+
+static void
 initImage(IModule *this, Image *image)
 {
     Cbmdos *dos = (Cbmdos *)this;
@@ -303,6 +309,7 @@ instance(void)
 {
     Cbmdos *this = malloc(sizeof(Cbmdos));
     this->mod.id = &id;
+    this->mod.delete = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.fileOption = &fileOption;
@@ -311,12 +318,6 @@ instance(void)
     this->mod.statusChanged = &statusChanged;
 
     return (IModule *) this;
-}
-
-SOEXPORT void
-delete(IModule *instance)
-{
-    free(instance);
 }
 
 SOEXPORT const char *

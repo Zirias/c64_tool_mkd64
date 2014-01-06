@@ -15,6 +15,8 @@ struct iModule
 {
     const char *(*id)(void);
 
+    void (*delete)(IModule *this);
+
     void (*initImage)(IModule *this, Image *image);
 
     void (*globalOption)(IModule *this, char opt, const char *arg);
