@@ -185,9 +185,12 @@ help(void)
     return
 "xtracks provides tracks 36 - 40. Optionally, BAM entries can be written in\n"
 "either DOLPHIN DOS or SPEED DOS format, or even both. The following option\n"
-"controls xtracks behaviour:\n"
+"controls xtracks behaviour:\n\n"
 " -X BAMTYPE  One of `d' for DOLPHIN DOS or `s' for SPEED DOS, or both. If\n"
-"             given, extended BAM entries are written for the extra tracks.\n";
+"             given, extended BAM entries are written for the extra tracks.\n"
+"             ATTENTION: If you want xtracks to write BAM entries, make sure\n"
+"             cbmdos is loaded before you give this option. Otherwise, cbmdos\n"
+"             overwrites the complete BAM again.\n";
 }
 
 SOEXPORT const char *
