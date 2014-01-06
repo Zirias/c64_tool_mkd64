@@ -46,7 +46,8 @@ endif
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
 else
-CFLAGS += -g0 -O3
+CFLAGS += -g0 -O3 -flto
+LDFLAGS += -flto
 endif
 
 ifdef prefix
@@ -109,7 +110,7 @@ install: strip
 endif
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
-	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
+	$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
 
 buildid$(EXE):	buildid.c
 	$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
@@ -130,10 +131,10 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^
+	$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^
+	$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 .PHONY: all bin modules strip clean distclean install
 
