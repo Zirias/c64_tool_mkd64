@@ -1,1 +1,2 @@
-include/mkd64/*.h usr/include/mkd64
+usr/include/mkd64/*.h
+usr/share/doc/mkd64/modapi.txt

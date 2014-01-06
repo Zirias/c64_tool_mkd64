@@ -1,2 +1,3 @@
 usr/bin/mkd64
 usr/lib/mkd64/*.so
+usr/share/doc/mkd64/README.md
