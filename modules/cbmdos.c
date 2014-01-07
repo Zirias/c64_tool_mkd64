@@ -334,6 +334,8 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
             }
             if (_nextDirBlock(dos, &pos, 1))
             {
+                DBGd2("cbmdos: reserved extra directory block",
+                        pos.track, pos.sector);
                 nextBlock = image_block(dos->image, &pos);
                 ++(dos->extraDirBlocks);
             }
@@ -402,6 +404,30 @@ statusChanged(IModule *this, const BlockPosition *pos)
     }
 }
 
+static int
+requestReservedBlock(IModule *this, const BlockPosition *pos)
+{
+    Cbmdos *dos = (Cbmdos *)this;
+    DirBlock *parent = 0;
+    DirBlock *current;
+
+    for (current = dos->directory; current;
+            parent = current, current = current->next)
+    {
+        if (current->pos.track == pos->track &&
+                current->pos.sector == pos->sector)
+        {
+            if (parent) parent->next = current->next;
+            else dos->directory = current->next;
+            free(current);
+            DBGd2("cbmdos: gave back block", pos->track, pos->sector);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 SOEXPORT const char *
 id(void)
 {
@@ -420,6 +446,7 @@ instance(void)
     this->mod.getTrack = 0;
     this->mod.fileWritten = &fileWritten;
     this->mod.statusChanged = &statusChanged;
+    this->mod.requestReservedBlock = &requestReservedBlock;
     this->reservedDirBlocks = 18;
     this->extraDirBlocks = 0;
     this->reclaimedDirBlocks = 0;
