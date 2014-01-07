@@ -1,3 +1,13 @@
+mkd64 (0.4b) unstable; urgency=low
+
+  * New Release
+  * core: add possibility for claiming back reserved blocks from modules
+  * cbmdos: option for how many blocks to reserve for directory
+  * cbmdos: allow allocating more directory blocks as needed
+  * cbmdos: support claiming back reserved blocks
+
+ -- Felix Palmen <felix@palmen-it.de>  Tue, 07 Jan 2014 23:41:15 +0100
+
 mkd64 (0.31b) unstable; urgency=low
 
   * Bugfix release: memory corruption fixed

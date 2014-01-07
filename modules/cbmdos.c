@@ -10,7 +10,7 @@
 
 #include "buildid.h"
 
-#define MODVERSION "0.2b"
+#define MODVERSION "0.3b"
 
 static const char *modid = "cbmdos";
 
