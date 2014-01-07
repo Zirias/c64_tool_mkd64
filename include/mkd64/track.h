@@ -20,7 +20,7 @@ DECLEXPORT int track_freeSectorsRaw(const Track *this);
 DECLEXPORT int track_reserveBlock(Track *this, int sector, IModule *by);
 DECLEXPORT int track_allocateBlock(Track *this, int sector);
 DECLEXPORT int track_allocateFirstFreeFrom(Track *this,
-        int sector, int askModules);
+        int sector, int considerReserved);
 
 DECLEXPORT Block *track_block(Track *this, int sector);
 

@@ -218,15 +218,28 @@ diskfile_write(Diskfile *this, Image *image,
 
     if (startPosition && startPosition->track > 0)
     {
-        if (image_blockStatus(image, startPosition) != BS_NONE)
+        current.track = startPosition->track;
+        current.sector = startPosition->sector;
+        if (!image_nextFileBlock(image, this->interleave, &current))
         {
             return 0;
         }
-        current.track = startPosition->track;
-        current.sector = startPosition->sector;
+        if (current.track != startPosition->track
+                || current.sector != startPosition->sector)
+        {
+            block = image_block(image, &current);
+            block_free(block);
+            return 0;
+        }
+    }
+    else
+    {
+        if (!image_nextFileBlock(image, this->interleave, &current))
+        {
+            return 0;
+        }
     }
 
-    image_nextFileBlock(image, this->interleave, &current);
     start.track = current.track;
     start.sector = current.sector;
     this->blocks = 1;
