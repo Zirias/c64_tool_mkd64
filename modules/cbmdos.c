@@ -103,7 +103,7 @@ initImage(IModule *this, Image *image)
     {
         ++(pos.sector);
         dos->directory[i] = image_block(image, &pos);
-        block_reserve(dos->directory[i]);
+        block_reserve(dos->directory[i], this);
     }
 
     data = block_rawData(dos->bam);

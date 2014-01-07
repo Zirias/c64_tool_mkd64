@@ -98,10 +98,10 @@ track_freeSectorsRaw(const Track *this)
 }
 
 SOEXPORT int
-track_reserveBlock(Track *this, int sector)
+track_reserveBlock(Track *this, int sector, IModule *by)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
-    return block_reserve(this->sectors[sector]);
+    return block_reserve(this->sectors[sector], by);
 }
 
 SOEXPORT int
@@ -111,10 +111,40 @@ track_allocateBlock(Track *this, int sector)
     return block_allocate(this->sectors[sector]);
 }
 
+SOEXPORT int
+track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
+{
+    Block *b;
+    BlockStatus s;
+    int i;
+
+    if (sector < 0) return -1;
+
+    for (i = this->num_sectors; i > 0 ; --i, ++sector)
+    {
+        if (sector >= this->num_sectors) sector = 0;
+        b = this->sectors[sector];
+        s = block_status(b);
+
+        if (s == BS_NONE)
+        {
+            block_allocate(b);
+            return sector;
+        }
+        if (askModules && s == BS_RESERVED && block_unReserve(b))
+        {
+            block_allocate(b);
+            return sector;
+        }
+    }
+
+    return -1;
+}
+
 SOEXPORT Block *
 track_block(Track *this, int sector)
 {
-    if (sector < 0 || sector > this->num_sectors) return 0;
+    if (sector < 0 || sector >= this->num_sectors) return 0;
     return this->sectors[sector];
 }
 

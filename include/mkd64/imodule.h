@@ -30,6 +30,8 @@ struct iModule
             Diskfile *file, const BlockPosition *start);
 
     void (*statusChanged)(IModule *this, const BlockPosition *pos);
+
+    int (*requestReservedBlock)(IModule *this, const BlockPosition *pos);
 };
 
 #endif

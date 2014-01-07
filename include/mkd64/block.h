@@ -22,6 +22,8 @@ typedef enum
     BS_RESERVED = 1 << 1
 } BlockStatus;
 
+#include <mkd64/imodule.h>
+
 DECLEXPORT BlockStatus block_status(const Block *this);
 DECLEXPORT const BlockPosition *block_position(const Block *this);
 
@@ -33,7 +35,7 @@ DECLEXPORT void block_setNextTrack(Block *this, uint8_t nextTrack);
 DECLEXPORT void block_setNextSector(Block *this, uint8_t nextSector);
 DECLEXPORT void block_setNextPosition(Block *this, const BlockPosition *pos);
 
-DECLEXPORT int block_reserve(Block *this);
+DECLEXPORT int block_reserve(Block *this, IModule *by);
 DECLEXPORT int block_unReserve(Block *this);
 DECLEXPORT int block_allocate(Block *this);
 DECLEXPORT int block_free(Block *this);
