@@ -30,6 +30,7 @@ DECLEXPORT const BlockPosition *block_position(const Block *this);
 DECLEXPORT uint8_t block_nextTrack(const Block *this);
 DECLEXPORT uint8_t block_nextSector(const Block *this);
 DECLEXPORT void block_nextPosition(const Block *this, BlockPosition *pos);
+DECLEXPORT IModule *block_reservedBy(const Block *this);
 
 DECLEXPORT void block_setNextTrack(Block *this, uint8_t nextTrack);
 DECLEXPORT void block_setNextSector(Block *this, uint8_t nextSector);

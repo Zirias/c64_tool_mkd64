@@ -63,6 +63,13 @@ block_nextPosition(const Block *this, BlockPosition *pos)
     pos->sector = this->data[1];
 }
 
+SOEXPORT IModule *
+block_reservedBy(const Block *this)
+{
+    if (this->status & BS_RESERVED) return this->reservedBy;
+    return 0;
+}
+
 SOEXPORT void
 block_setNextTrack(Block *this, uint8_t nextTrack)
 {
