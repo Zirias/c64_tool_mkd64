@@ -517,7 +517,7 @@ modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 SOLOCAL Track *
 modrepo_firstGetTrack(Modrepo *this, int track)
 {
-    Track *t;
+    Track *t = 0;
     Modinstance *current;
 
     for (current = this->instances; current; current = current->next)
