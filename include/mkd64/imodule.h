@@ -15,6 +15,8 @@ struct iModule
 {
     const char *(*id)(void);
 
+    void (*delete)(IModule *this);
+
     void (*initImage)(IModule *this, Image *image);
 
     void (*globalOption)(IModule *this, char opt, const char *arg);
@@ -28,6 +30,8 @@ struct iModule
             Diskfile *file, const BlockPosition *start);
 
     void (*statusChanged)(IModule *this, const BlockPosition *pos);
+
+    int (*requestReservedBlock)(IModule *this, const BlockPosition *pos);
 };
 
 #endif

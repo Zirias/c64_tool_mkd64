@@ -21,6 +21,20 @@ typedef struct
 } Xtracks;
 
 static void
+delete(IModule *this)
+{
+    Xtracks *dos = (Xtracks *) this;
+    int i;
+
+    for (i = 0; i < 5; ++i)
+    {
+        if (dos->extraTracks[i]) track_delete(dos->extraTracks[i]);
+    }
+
+    free(dos);
+}
+
+static void
 initImage(IModule *this, Image *image)
 {
     Xtracks *dos = (Xtracks *)this;
@@ -156,6 +170,7 @@ instance(void)
 {
     Xtracks *this = calloc(1, sizeof(Xtracks));
     this->mod.id = &id;
+    this->mod.delete = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.getTrack = &getTrack;
@@ -164,29 +179,18 @@ instance(void)
     return (IModule *) this;
 }
 
-SOEXPORT void
-delete(IModule *instance)
-{
-    Xtracks *this = (Xtracks *) instance;
-    int i;
-
-    for (i = 0; i < 5; ++i)
-    {
-        if (this->extraTracks[i]) track_delete(this->extraTracks[i]);
-    }
-
-    free(this);
-}
-
 SOEXPORT const char *
 help(void)
 {
     return
 "xtracks provides tracks 36 - 40. Optionally, BAM entries can be written in\n"
 "either DOLPHIN DOS or SPEED DOS format, or even both. The following option\n"
-"controls xtracks behaviour:\n"
+"controls xtracks behaviour:\n\n"
 " -X BAMTYPE  One of `d' for DOLPHIN DOS or `s' for SPEED DOS, or both. If\n"
-"             given, extended BAM entries are written for the extra tracks.\n";
+"             given, extended BAM entries are written for the extra tracks.\n"
+"             ATTENTION: If you want xtracks to write BAM entries, make sure\n"
+"             cbmdos is loaded before you give this option. Otherwise, cbmdos\n"
+"             overwrites the complete BAM again.\n";
 }
 
 SOEXPORT const char *

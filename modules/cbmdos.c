@@ -10,18 +10,30 @@
 
 #include "buildid.h"
 
-#define MODVERSION "0.2b"
+#define MODVERSION "0.3b"
 
 static const char *modid = "cbmdos";
+
+struct dirBlock;
+typedef struct dirBlock DirBlock;
+
+struct dirBlock
+{
+    DirBlock *next;
+    BlockPosition pos;
+};
 
 typedef struct
 {
     IModule mod;
     Image *image;
     Block *bam;
-    Block *directory[18];
-    int currentDirSector;
+    DirBlock *directory;
+    int reservedDirBlocks;
+    Block *currentDirBlock;
     int currentDirSlot;
+    int extraDirBlocks;
+    int reclaimedDirBlocks;
 } Cbmdos;
 
 typedef enum
@@ -76,33 +88,109 @@ static const uint8_t _initialBam[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const int _dirSectors[18] = {
-    1,5,9,13,17,2,6,10,14,18,3,7,11,15,4,8,12,16
-};
+static int
+_nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
+{
+    Track *t;
+    int trackChanged = 0;
+
+    if (pos->track == 0)
+    {
+        pos->track = 18;
+        pos->sector = 1;
+    }
+
+    t = image_track(this->image, pos->track);
+    while (t && !track_freeSectors(t))
+    {
+        trackChanged = 1;
+        ++(pos->track);
+        t = image_track(this->image, pos->track);
+    }
+    if (!t)
+    {
+        trackChanged = 1;
+        pos->track = 17;
+        t = image_track(this->image, pos->track);
+        while (t && !track_freeSectors(t))
+        {
+            --(pos->track);
+            t = image_track(this->image, pos->track);
+        }
+    }
+    if (!t) return 0;
+
+    if (!trackChanged && track_blockStatus(t, pos->sector) == BS_NONE)
+    {
+        if (allocate) track_allocateBlock(t, pos->sector);
+        else track_reserveBlock(t, pos->sector, (IModule *)this);
+        return 1;
+    }
+
+    pos->sector = (pos->sector + 4) % track_numSectors(t);
+
+    while (track_blockStatus(t, pos->sector) != BS_NONE)
+    {
+        if (++(pos->sector) >= track_numSectors(t)) pos->sector = 0;
+    }
+
+    if (allocate) track_allocateBlock(t, pos->sector);
+    else track_reserveBlock(t, pos->sector, (IModule *)this);
+    return 1;
+}
+
+static void
+_reserveDirBlocks(Cbmdos *this)
+{
+    BlockPosition pos = {0,0};
+    DirBlock *current;
+    DirBlock *parent = 0;
+    int i;
+
+    for (i = 0; i < this->reservedDirBlocks; ++i)
+    {
+        if (!_nextDirBlock(this, &pos, 0)) return;
+        current = malloc(sizeof(DirBlock));
+        current->next = 0;
+        current->pos.track = pos.track;
+        current->pos.sector = pos.sector;
+        if (parent) parent->next = current;
+        else this->directory = current;
+        parent = current;
+    }
+}
+
+static void
+delete(IModule *this)
+{
+    Cbmdos *dos = (Cbmdos *)this;
+    DirBlock *tmp;
+
+    while (dos->directory)
+    {
+        tmp = dos->directory;
+        dos->directory = tmp->next;
+        free(tmp);
+    }
+
+    free(this);
+}
 
 static void
 initImage(IModule *this, Image *image)
 {
     Cbmdos *dos = (Cbmdos *)this;
     BlockPosition pos = { 18, 0 };
-    int i;
     uint8_t *data;
 
     dos->image = image;
     dos->bam = image_block(image, &pos);
-    dos->currentDirSector = -1;
     dos->currentDirSlot = 7;
-
-    for (i = 0; i < 18; ++i)
-    {
-        ++(pos.sector);
-        dos->directory[i] = image_block(image, &pos);
-        block_reserve(dos->directory[i]);
-    }
 
     data = block_rawData(dos->bam);
     memcpy(data, _initialBam, 256);
 
+    /* write random disk id */
     data[0xa2] = random_num(0x30, 0x53);
     if (data[0xa2] > 0x39) data[0xa2] += 7;
     data[0xa3] = random_num(0x30, 0x53);
@@ -135,6 +223,12 @@ globalOption(IModule *this, char opt, const char *arg)
                 memcpy(block_rawData(dos->bam) + 0xa2, arg, arglen);
             }
             break;
+        case 'R':
+            if (arg)
+            {
+                dos->reservedDirBlocks = atoi(arg);
+            }
+            break;
     }
 }
 
@@ -147,6 +241,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
     switch (opt)
     {
         case 'f':
+            if (!dos->directory) _reserveDirBlocks(dos);
             diskfile_setInterleave(file, 10);
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
@@ -203,8 +298,9 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     uint8_t *fileEntry;
     const char *fileName;
     size_t nameLen;
-    BlockPosition dirBlockPos;
-    Block *dirBlock;
+    DirBlock *tmp;
+    Block *nextBlock;
+    BlockPosition pos;
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
 
@@ -216,47 +312,66 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
         return;
     }
 
-    dirBlockPos.track = 18;
     ++(dos->currentDirSlot);
     if (dos->currentDirSlot > 7)
     {
-        if (dos->currentDirSector > 17)
+        if (dos->directory)
         {
-            fputs("[cbmdos] ERROR: directory full!\n", stderr);
-            --(dos->currentDirSlot);
-            return;
+            nextBlock = image_block(dos->image, &(dos->directory->pos));
+            block_allocate(nextBlock);
+            tmp = dos->directory;
+            dos->directory = tmp->next;
+            free(tmp);
         }
+        else
+        {
+            if (dos->currentDirBlock)
+            {
+                pos.track = block_position(dos->currentDirBlock)->track;
+                pos.sector = block_position(dos->currentDirBlock)->sector;
+            }
+            else
+            {
+                pos.track = 0;
+                pos.sector = 0;
+            }
+            if (_nextDirBlock(dos, &pos, 1))
+            {
+                DBGd2("cbmdos: reserved extra directory block",
+                        pos.track, pos.sector);
+                nextBlock = image_block(dos->image, &pos);
+                ++(dos->extraDirBlocks);
+            }
+            else
+            {
+                fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
+                --(dos->currentDirSlot);
+                return;
+            }
+        }
+        if (dos->currentDirBlock)
+        {
+            block_setNextTrack(dos->currentDirBlock,
+                    block_position(nextBlock)->track);
+            block_setNextSector(dos->currentDirBlock,
+                    block_position(nextBlock)->sector);
+        }
+        dos->currentDirBlock = nextBlock;
+        memset(block_rawData(dos->currentDirBlock), 0, 256);
         dos->currentDirSlot = 0;
-        ++(dos->currentDirSector);
-        if (dos->currentDirSector > 0)
-        {
-            dirBlockPos.sector = _dirSectors[dos->currentDirSector - 1];
-            fileEntry = block_rawData(image_block(dos->image, &dirBlockPos));
-            fileEntry[0] = 18;
-            fileEntry[1] = _dirSectors[dos->currentDirSector];
-        }
-        dirBlockPos.sector = _dirSectors[dos->currentDirSector];
-        dirBlock = image_block(dos->image, &dirBlockPos);
-        block_allocate(dirBlock);
-        memset(block_rawData(dirBlock), 0, 256);
-    }
-    else
-    {
-        dirBlockPos.sector = _dirSectors[dos->currentDirSector];
-        dirBlock = image_block(dos->image, &dirBlockPos);
     }
 
-    fileEntry = block_rawData(dirBlock) + dos->currentDirSlot * 0x20;
+    fileEntry = block_rawData(dos->currentDirBlock)
+        + dos->currentDirSlot * 0x20;
     memset(fileEntry, 0, 0x20);
     memset(fileEntry + 0x05, 0xa0, 0x10);
     if (dos->currentDirSlot == 0) fileEntry[1] = 0xff;
-
-    fileName = diskfile_name(file);
 
     fileEntry[0x02] = data->fileType;
     fileEntry[0x03] = start->track;
     fileEntry[0x04] = start->sector;
 
+    fileName = diskfile_name(file);
     nameLen = strlen(fileName);
     if (nameLen > 16) nameLen = 16;
     memcpy(fileEntry + 0x05, fileName, nameLen);
@@ -292,6 +407,30 @@ statusChanged(IModule *this, const BlockPosition *pos)
     }
 }
 
+static int
+requestReservedBlock(IModule *this, const BlockPosition *pos)
+{
+    Cbmdos *dos = (Cbmdos *)this;
+    DirBlock *parent = 0;
+    DirBlock *current;
+
+    for (current = dos->directory; current;
+            parent = current, current = current->next)
+    {
+        if (current->pos.track == pos->track &&
+                current->pos.sector == pos->sector)
+        {
+            if (parent) parent->next = current->next;
+            else dos->directory = current->next;
+            free(current);
+            DBGd2("cbmdos: gave back block", pos->track, pos->sector);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 SOEXPORT const char *
 id(void)
 {
@@ -303,20 +442,21 @@ instance(void)
 {
     Cbmdos *this = malloc(sizeof(Cbmdos));
     this->mod.id = &id;
+    this->mod.delete = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.fileOption = &fileOption;
     this->mod.getTrack = 0;
     this->mod.fileWritten = &fileWritten;
     this->mod.statusChanged = &statusChanged;
+    this->mod.requestReservedBlock = &requestReservedBlock;
+    this->reservedDirBlocks = 18;
+    this->extraDirBlocks = 0;
+    this->reclaimedDirBlocks = 0;
+    this->directory = 0;
+    this->currentDirBlock = 0;
 
     return (IModule *) this;
-}
-
-SOEXPORT void
-delete(IModule *instance)
-{
-    free(instance);
 }
 
 SOEXPORT const char *
@@ -329,7 +469,9 @@ help(void)
 "  -d DISKNAME   The name of the disk, defaults to an empty name.\n"
 "  -i DISKID     The ID of the disk, defaults to two random characters.\n"
 "                This can be up to 5 characters long, in this case it will\n"
-"                overwrite the default `DOS type' string (`2A')\n";
+"                overwrite the default `DOS type' string (`2A')\n"
+"  -R DIRBLOCKS  reserve {DIRBLOCKS} blocks for the directory. The default\n"
+"                value is 18, which is exactly the whole track #18\n";
 }
 
 SOEXPORT const char *

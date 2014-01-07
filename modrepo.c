@@ -21,6 +21,16 @@
 #define UNLOAD_MOD(so) dlclose(so)
 #endif
 
+struct modinstance;
+typedef struct modinstance Modinstance;
+
+struct modinstance
+{
+    Modinstance *next;
+    const char *id;
+    IModule *mod;
+};
+
 struct modentry;
 typedef struct modentry Modentry;
 
@@ -28,10 +38,8 @@ struct modentry
 {
     Modentry *next;
     void *so;
-    IModule *mod;
     const char *id;
     IModule *(*instance)(void);
-    void (*delete)(IModule *instance);
     const char **depends;
     const char **conflicts;
     const char *(*help)(void);
@@ -45,6 +53,7 @@ struct modrepo
     void *owner;
     ModInstanceCreated callback;
     Modentry *modules;
+    Modinstance *instances;
 };
 
 static Modentry *
@@ -62,11 +71,48 @@ findModule(Modrepo *this, const char *id)
     return 0;
 }
 
+static Modinstance *
+findInstance(Modrepo *this, const char *id)
+{
+    Modinstance *current;
+    
+    for (current = this->instances; current; current = current->next)
+    {
+        if (!strcmp(id, current->id))
+        {
+            return current;
+        }
+    }
+    return 0;
+}
+
+static void
+appendInstance(Modrepo *this, IModule *instance)
+{
+    Modinstance *current = malloc(sizeof(Modinstance));
+    Modinstance *parent;
+
+    current->id = instance->id();
+    current->mod = instance;
+    current->next = 0;
+
+    if (this->instances)
+    {
+        for (parent = this->instances; parent->next; parent = parent->next) {}
+        parent->next = current;
+    }
+    else
+    {
+        this->instances = current;
+    }
+}
+
 static int
 createInstanceHere(Modrepo *this, Modentry *entry)
 {
     Modentry *otherMod;
     const char **otherModId;
+    IModule *created;
 
     if (entry->conflicted)
     {
@@ -80,16 +126,16 @@ createInstanceHere(Modrepo *this, Modentry *entry)
     {
         for (otherModId = entry->conflicts; *otherModId; ++otherModId)
         {
+            if (findInstance(this, *otherModId))
+            {
+                fprintf(stderr,
+"Error: cannot load module `%s' because it conflicts with already loaded\n"
+"       module `%s'.\n", entry->id, *otherModId);
+                return 0;
+            }
             otherMod = findModule(this, *otherModId);
             if (otherMod)
             {
-                if (otherMod->mod)
-                {
-                    fprintf(stderr,
-"Error: cannot load module `%s' because it conflicts with already loaded\n"
-"       module `%s'.\n", entry->id, otherMod->id);
-                    return 0;
-                }
                 otherMod->conflicted = 1;
             }
         }
@@ -107,7 +153,7 @@ createInstanceHere(Modrepo *this, Modentry *entry)
 "       available.\n", entry->id, *otherModId);
                 return 0;
             }
-            if (!otherMod->mod)
+            if (!findInstance(this, *otherModId))
             {
                 fprintf(stderr, "Info: loading module `%s' "
                         "because `%s' depends on it.\n",
@@ -123,8 +169,9 @@ createInstanceHere(Modrepo *this, Modentry *entry)
         }
     }
 
-    entry->mod = entry->instance();
-    this->callback(this->owner, entry->mod);
+    created = entry->instance();
+    appendInstance(this, created);
+    this->callback(this->owner, created);
     return 1;
 }
 
@@ -161,7 +208,7 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 #ifdef WIN32
     HANDLE findHdl;
     HMODULE modso;
-    FARPROC modid, modinst, moddel, modopt;
+    FARPROC modid, modinst, modopt;
     WIN32_FIND_DATA findData;
 
     char *modpat = malloc(4096);
@@ -197,7 +244,7 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
     glob_t glb;
     char **pathvp;
     char *modpat;
-    void *modso, *modid, *modinst, *moddel, *modopt;
+    void *modso, *modid, *modinst, *modopt;
 
 #ifdef MODDIR
     modpat = malloc(strlen(MODDIR) + 6);
@@ -239,20 +286,11 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
             continue;
         }
 
-        moddel = GET_MOD_METHOD(modso, "delete");
-        if (!moddel)
-        {
-            UNLOAD_MOD(modso);
-            continue;
-        }
-
         next = malloc(sizeof(Modentry));
         next->next = 0;
         next->so = modso;
-        next->mod = 0;
         next->id = ((const char *(*)(void))modid)();
         next->instance = (IModule *(*)(void))modinst;
-        next->delete = (void (*)(IModule *))moddel;
 
         modopt = GET_MOD_METHOD(modso, "depends");
         next->depends = modopt ? ((const char **(*)(void))modopt)() : 0;
@@ -303,16 +341,25 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 SOLOCAL void
 modrepo_delete(Modrepo *this)
 {
-    Modentry *current = this->modules;
-    Modentry *tmp;
+    Modentry *currentEntry = this->modules;
+    Modinstance *currentInstance = this->instances;
+    Modentry *tmpEntry;
+    Modinstance *tmpInstance;
 
-    while (current)
+    while (currentInstance)
     {
-        tmp = current;
-        current = current->next;
-        if (tmp->mod) tmp->delete(tmp->mod);
-        UNLOAD_MOD(tmp->so);
-        free(tmp);
+        tmpInstance = currentInstance;
+        currentInstance = currentInstance->next;
+        tmpInstance->mod->delete(tmpInstance->mod);
+        free(tmpInstance);
+    }
+
+    while (currentEntry)
+    {
+        tmpEntry = currentEntry;
+        currentEntry = currentEntry->next;
+        UNLOAD_MOD(tmpEntry->so);
+        free(tmpEntry);
     }
     free(this);
 }
@@ -320,11 +367,15 @@ modrepo_delete(Modrepo *this)
 SOEXPORT IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
-    Modentry *found;
+    Modinstance *found;
 
-    found = findModule(this, id);
+    found = findInstance(this, id);
+    if (!found)
+    {
+        modrepo_createInstance(this, id);
+        found = findInstance(this, id);
+    }
     if (!found) return 0;
-    if (!found->mod) createInstanceHere(this, found);
     return found->mod;
 }
 
@@ -333,32 +384,39 @@ modrepo_createInstance(Modrepo *this, const char *id)
 {
     Modentry *found;
 
+    if (findInstance(this, id)) return 1;
+
     found = findModule(this, id);
     if (!found) return 0;
-    if (found->mod) return 1;
-    createInstanceHere(this, found);
-    return found->mod ? 1 : 0;
+    return createInstanceHere(this, found);
 }
 
 SOLOCAL int
 modrepo_deleteInstance(Modrepo *this, const char *id)
 {
-    Modentry *found;
+    Modinstance *current, *parent;
 
-    found = findModule(this, id);
-    if (!found) return 0;
-    found->delete(found->mod);
-    found->mod = 0;
-    return 1;
+    if (!this->instances) return 0;
+
+    parent = 0;
+    for (current = this->instances;
+            current && strcmp(current->id,id) != 0;
+            parent = current, current = current->next) {}
+    if (current)
+    {
+        if (parent) parent->next = current->next;
+        else this->instances = current->next;
+        current->mod->delete(current->mod);
+        free(current);
+        return 1;
+    }
+    return 0;
 }
 
 SOEXPORT int
 modrepo_isActive(Modrepo *this, const char *id)
 {
-    Modentry *found;
-
-    found = findModule(this, id);
-    return (found && found->mod) ? 1 : 0;
+    return findInstance(this, id) ? 1 : 0;
 }
 
 SOLOCAL char *
@@ -426,10 +484,10 @@ modrepo_getVersionInfo(Modrepo *this, const char *id)
 SOLOCAL void
 modrepo_allInitImage(Modrepo *this, Image *image)
 {
-    Modentry *current;
-    for (current = this->modules; current; current = current->next)
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->initImage)
+        if (current->mod->initImage)
             current->mod->initImage(current->mod, image);
     }
 }
@@ -437,10 +495,10 @@ modrepo_allInitImage(Modrepo *this, Image *image)
 SOLOCAL void
 modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 {
-    Modentry *current;
-    for (current = this->modules; current; current = current->next)
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->globalOption)
+        if (current->mod->globalOption)
             current->mod->globalOption(current->mod, opt, arg);
     }
 }
@@ -448,10 +506,10 @@ modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 SOLOCAL void
 modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 {
-    Modentry *current;
-    for (current = this->modules; current; current = current->next)
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->fileOption)
+        if (current->mod->fileOption)
             current->mod->fileOption(current->mod, file, opt, arg);
     }
 }
@@ -459,12 +517,12 @@ modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 SOLOCAL Track *
 modrepo_firstGetTrack(Modrepo *this, int track)
 {
-    Track *t;
-    Modentry *current;
+    Track *t = 0;
+    Modinstance *current;
 
-    for (current = this->modules; current; current = current->next)
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->getTrack)
+        if (current->mod->getTrack)
         {
             t = current->mod->getTrack(current->mod, track);
             if (t) break;
@@ -478,10 +536,10 @@ SOLOCAL void
 modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start)
 {
-    Modentry *current;
-    for (current = this->modules; current; current = current->next)
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->fileWritten)
+        if (current->mod->fileWritten)
             current->mod->fileWritten(current->mod, file, start);
     }
 }
@@ -489,10 +547,10 @@ modrepo_allFileWritten(Modrepo *this,
 SOLOCAL void
 modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
 {
-    Modentry *current;
-    for (current = this->modules; current; current = current->next)
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
     {
-        if (current->mod && current->mod->statusChanged)
+        if (current->mod->statusChanged)
             current->mod->statusChanged(current->mod, pos);
     }
 }
@@ -511,5 +569,21 @@ modrepo_nextAvailableModule(Modrepo *this, const char *id)
     if (found->next) return found->next->id;
     return 0;
 }
+
+SOLOCAL const char *
+modrepo_nextLoadedModule(Modrepo *this, const char *id)
+{
+    Modinstance *found;
+    if (!id)
+    {
+        if (this->instances) return this->instances->id;
+        else return 0;
+    }
+    found = findInstance(this, id);
+    if (!found) return 0;
+    if (found->next) return found->next->id;
+    return 0;
+}
+
 /* vim: et:si:ts=4:sts=4:sw=4
 */

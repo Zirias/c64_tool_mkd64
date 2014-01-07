@@ -21,60 +21,59 @@ static size_t num_sectors[] =
 };
 
 static int
-_nextFileBlock(void *this, const Image *image,
-        int interleave, BlockPosition *pos)
+_nextFileBlock(IBlockAllocator *this, Image *image, int interleave,
+        BlockPosition *pos, int considerReserved)
 {
+    BlockPosition currentp = { pos->track, pos->sector };
+    BlockStatus s;
     Track *t;
-    size_t sectors;
+    int foundSector;
 
-    if (pos->track == 0)
+    if (currentp.track == 0)
     {
-        pos->track = 17;
-        pos->sector = 0;
-        t = image_track(image, pos->track);
+        currentp.track = 17;
+        currentp.sector = 0;
+        t = image_track(image, currentp.track);
     }
     else
     {
-        t = image_track(image, pos->track);
-        if (track_blockStatus(t, pos->sector) != BS_NONE)
+        t = image_track(image, currentp.track);
+        s = track_blockStatus(t, currentp.sector);
+        if (considerReserved) s |= ~BS_RESERVED;
+        if (s != BS_NONE)
         {
-            pos->sector = (pos->sector + interleave) % track_numSectors(t);
+            currentp.sector =
+                (currentp.sector + interleave) % track_numSectors(t);
         }
     }
 
-    while (t && !track_freeSectors(t))
+    while (t && (foundSector = track_allocateFirstFreeFrom(t,
+                    currentp.sector, considerReserved)) < 0)
     {
-        if (pos->track == 1)
+        if (currentp.track == 1)
         {
-            pos->track = 18;
+            currentp.track = 18;
         }
-        else if (pos->track < 18)
+        else if (currentp.track < 18)
         {
-            --(pos->track);
+            --(currentp.track);
         }
         else
         {
-            ++(pos->track);
+            ++(currentp.track);
         }
-        t = image_track(image, pos->track);
+        t = image_track(image, currentp.track);
     }
 
     if (!t) return 0;
 
-    sectors = track_numSectors(t);
-
-    while (track_blockStatus(t, pos->sector) != BS_NONE)
-    {
-        ++(pos->sector);
-        if (pos->sector >= sectors) pos->sector = 0;
-    }
-
-    track_allocateBlock(t, pos->sector);
+    pos->track = currentp.track;
+    pos->sector = foundSector;
 
     return 1;
 }
 
-static IAllocateStrategy _defaultAllocator =
+static IBlockAllocator _defaultAllocator =
 {
     &_nextFileBlock
 };
@@ -82,7 +81,7 @@ static IAllocateStrategy _defaultAllocator =
 struct image
 {
     size_t num_tracks;
-    IAllocateStrategy *allocator;
+    IBlockAllocator *allocator;
     Filemap *map;
     Track *tracks[IMAGE_NUM_TRACKS];
 };
@@ -156,16 +155,24 @@ image_filemap(const Image *this)
 }
 
 SOEXPORT void
-image_setAllocator(Image *this, IAllocateStrategy *allocator)
+image_setAllocator(Image *this, IBlockAllocator *allocator)
 {
     this->allocator = allocator;
 }
 
 SOEXPORT int
-image_nextFileBlock(const Image *this, int interleave, BlockPosition *pos)
+image_nextFileBlock(Image *this, int interleave, BlockPosition *pos)
 {
-    return this->allocator->nextFileBlock(
-            this->allocator, this, interleave, pos);
+    if (this->allocator->nextFileBlock(
+                this->allocator, this, interleave, pos, 0))
+    {
+        return 1;
+    }
+    else
+    {
+        return this->allocator->nextFileBlock(
+                this->allocator, this, interleave, pos, 1);
+    }
 }
 
 SOLOCAL int

@@ -46,14 +46,21 @@ endif
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
 else
-CFLAGS += -g0 -O3
+CFLAGS += -g0 -O3 -flto
+LDFLAGS += -flto
 endif
 
 ifdef prefix
-BINDIR = /bin
-LIBDIR = /lib
+bindir = $(prefix)/bin
+libbasedir = $(prefix)/lib
+libdir = $(libbasedir)/mkd64
+includebasedir = $(prefix)/include
+includedir = $(includebasedir)/mkd64
+docbasedir = $(prefix)/share/doc
+docdir = $(docbasedir)/mkd64
+
 INSTALL = install
-CFLAGS += -DMODDIR="\"$(prefix)$(LIBDIR)/mkd64\""
+CFLAGS += -DMODDIR="\"$(libdir)\""
 endif
 
 ifdef GCC32
@@ -101,15 +108,20 @@ strip:	all
 ifdef prefix
 
 install: strip
-	$(INSTALL) -d $(DESTDIR)$(prefix)$(BINDIR)
-	$(INSTALL) -d $(DESTDIR)$(prefix)$(LIBDIR)/mkd64
-	$(INSTALL) mkd64$(EXE) $(DESTDIR)$(prefix)$(BINDIR)
-	$(INSTALL) *$(SO) $(DESTDIR)$(prefix)$(LIBDIR)/mkd64
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(includedir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)
+	$(INSTALL) mkd64$(EXE) $(DESTDIR)$(bindir)
+	$(INSTALL) *$(SO) $(DESTDIR)$(libdir)
+	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
+	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
 
 endif
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
-	$(CC) -o$@ $^ $(mkd64_LDFLAGS)
+	$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
 
 buildid$(EXE):	buildid.c
 	$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
@@ -130,10 +142,10 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^
+	$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^
+	$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 .PHONY: all bin modules strip clean distclean install
 

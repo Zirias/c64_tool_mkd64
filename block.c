@@ -7,6 +7,7 @@
 struct block
 {
     void *owner;
+    IModule *reservedBy;
     BlockStatus status;
     BlockPosition pos;
     BlockStatusChangedHandler handler;
@@ -62,6 +63,13 @@ block_nextPosition(const Block *this, BlockPosition *pos)
     pos->sector = this->data[1];
 }
 
+SOEXPORT IModule *
+block_reservedBy(const Block *this)
+{
+    if (this->status & BS_RESERVED) return this->reservedBy;
+    return 0;
+}
+
 SOEXPORT void
 block_setNextTrack(Block *this, uint8_t nextTrack)
 {
@@ -82,13 +90,14 @@ block_setNextPosition(Block *this, const BlockPosition *pos)
 }
 
 SOEXPORT int
-block_reserve(Block *this)
+block_reserve(Block *this, IModule *by)
 {
     BlockStatus old;
 
     if (this->status & BS_RESERVED) return 0;
     old = this->status;
     this->status |= BS_RESERVED;
+    this->reservedBy = by;
     if (this->handler)
     {
         this->handler(this->owner, this, old, this->status);
@@ -102,13 +111,20 @@ block_unReserve(Block *this)
     BlockStatus old;
 
     if (!(this->status & BS_RESERVED)) return 0;
-    old = this->status;
-    this->status &= ~BS_RESERVED;
-    if (this->handler)
+
+    if (this->reservedBy->requestReservedBlock &&
+            this->reservedBy->requestReservedBlock(
+                this->reservedBy, &(this->pos)))
     {
-        this->handler(this->owner, this, old, this->status);
+        old = this->status;
+        this->status &= ~BS_RESERVED;
+        if (this->handler)
+        {
+            this->handler(this->owner, this, old, this->status);
+        }
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 SOEXPORT int
