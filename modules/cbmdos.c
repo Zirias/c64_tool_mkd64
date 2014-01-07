@@ -92,6 +92,7 @@ static int
 _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
 {
     Track *t;
+    int trackChanged = 0;
 
     if (pos->track == 0)
     {
@@ -102,11 +103,13 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
     t = image_track(this->image, pos->track);
     while (t && !track_freeSectors(t))
     {
+        trackChanged = 1;
         ++(pos->track);
         t = image_track(this->image, pos->track);
     }
     if (!t)
     {
+        trackChanged = 1;
         pos->track = 17;
         t = image_track(this->image, pos->track);
         while (t && !track_freeSectors(t))
@@ -117,7 +120,7 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
     }
     if (!t) return 0;
 
-    if (track_blockStatus(t, pos->sector) == BS_NONE)
+    if (!trackChanged && track_blockStatus(t, pos->sector) == BS_NONE)
     {
         if (allocate) track_allocateBlock(t, pos->sector);
         else track_reserveBlock(t, pos->sector, (IModule *)this);
