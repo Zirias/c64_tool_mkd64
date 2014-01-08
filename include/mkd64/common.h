@@ -26,6 +26,10 @@
 typedef unsigned char uint8_t;
 #endif
 
+#if defined(_MSC_VER)
+#define snprintf _snprintf
+#endif
+
 #define API_VER_MAJOR 1
 #define API_VER_MINOR 0
 
