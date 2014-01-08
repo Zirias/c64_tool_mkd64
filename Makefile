@@ -43,6 +43,8 @@ mod_LIBS =
 
 endif
 
+CFLAGS += -Werror=declaration-after-statement -fvisibility=hidden
+
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
 else
