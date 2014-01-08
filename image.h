@@ -10,6 +10,8 @@ void image_delete(Image *this);
 
 Filemap *image_filemap(const Image *this);
 
+void image_reset(Image *this);
+
 int image_dump(const Image *this, FILE *out);
 
 #endif

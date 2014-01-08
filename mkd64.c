@@ -13,22 +13,54 @@
 #include <errno.h>
 #include <string.h>
 
+struct suggestedOption;
+typedef struct suggestedOption SuggestedOption;
+
+struct suggestedOption
+{
+    SuggestedOption *next;
+    IModule *suggestedBy;
+    int fileNo;
+    char opt;
+    char *arg;
+    const char *reason;
+};
+
 typedef struct
 {
     int initialized;
+    int currentPass;
+    int maxPasses;
+    int currentFileNo;
     Image *image;
     Cmdline *cmdline;
     Modrepo *modrepo;
+    SuggestedOption *suggestions;
+    SuggestedOption *currentSuggestions;
     FILE *d64;
     FILE *map;
 } Mkd64;
 
 static Mkd64 mkd64 = {0};
 
-static void moduleLoaded(void *owner, IModule *mod)
+static void
+moduleLoaded(void *owner, IModule *mod)
 {
     Mkd64 *this = owner;
     mod->initImage(mod, this->image);
+}
+
+static void
+deleteSuggestions(SuggestedOption *suggestions)
+{
+    SuggestedOption *tmp = suggestions;
+    while (tmp)
+    {
+        suggestions = suggestions->next;
+        free(tmp->arg);
+        free(tmp);
+        tmp = suggestions;
+    }
 }
 
 SOLOCAL int
@@ -39,6 +71,8 @@ mkd64_init(int argc, char **argv)
     cmdline_parse(mkd64.cmdline, argc, argv);
     mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline),
             &mkd64, &moduleLoaded);
+    mkd64.suggestions = 0;
+    mkd64.currentSuggestions = 0;
     mkd64.d64 = 0;
     mkd64.map = 0;
     mkd64.initialized = 1;
@@ -132,7 +166,11 @@ printHelp(const char *modId)
 "                 be given to actually write something.\n"
 "  -M MAPFILE     Write file map of the generated disk image to MAPFILE. The\n"
 "                 map file format is one line per file on disk:\n"
-"                 [startTrack];[startSector];[filename]\n\n"
+"                 [startTrack];[startSector];[filename]\n"
+"  -P [MAXPASSES] Allow up to {MAXPASSES} passes, automatically applying\n"
+"                 options suggested by modules. The default is only one pass\n"
+"                 if this option is not given or up to 5 passes if it is\n"
+"                 given without an argument.\n\n"
 "FILE options:\n"
 "  -f [FILENAME]  Start a new file. {FILENAME} is the name on your PC. It\n"
 "                 can be omitted for special emtpy files.\n"
@@ -149,16 +187,50 @@ printHelp(const char *modId)
 }
 
 static void
-collectFiles(void)
+processFileSuggestions(Diskfile *file, BlockPosition *pos)
+{
+    int fileNo = diskfile_fileNo(file);
+    SuggestedOption *sopt = mkd64.currentSuggestions;
+
+    while (sopt)
+    {
+        if (sopt->fileNo == fileNo)
+        {
+            switch (sopt->opt)
+            {
+                case 't':
+                    pos->track = atoi(sopt->arg);
+                    break;
+                case 's':
+                    pos->sector = atoi(sopt->arg);
+                    break;
+                case 'i':
+                    diskfile_setInterleave(file, atoi(sopt->arg));
+                    break;
+            }
+            if (sopt->opt != 'w')
+            {
+                modrepo_allFileOption(mkd64.modrepo, file,
+                        sopt->opt, sopt->arg);
+            }
+        }
+        sopt = sopt->next;
+    }
+}
+
+static int
+processFiles(void)
 {
     Diskfile *currentFile = 0;
     BlockPosition pos;
     const char *hostFileName;
     FILE *hostFile;
 
+    mkd64.currentFileNo = 0;
+
     do
     {
-        switch(cmdline_opt(mkd64.cmdline))
+        switch (cmdline_opt(mkd64.cmdline))
         {
             case 'f':
                 if (currentFile) diskfile_delete(currentFile);
@@ -183,6 +255,7 @@ collectFiles(void)
                 {
                     currentFile = diskfile_new();
                 }
+                diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
                 pos.track = 0;
                 pos.sector = 0;
                 break;
@@ -199,9 +272,17 @@ collectFiles(void)
             case 'w':
                 if (currentFile)
                 {
+                    processFileSuggestions(currentFile, &pos);
                     if (!diskfile_name(currentFile))
                         diskfile_setName(currentFile, hostFileName);
-                    diskfile_write(currentFile, mkd64.image, &pos);
+                    if (!diskfile_write(currentFile, mkd64.image, &pos))
+                    {
+                        fprintf(stderr,
+                                "Error: Disk full while writing file #%d.",
+                                mkd64.currentFileNo);
+                        diskfile_delete(currentFile);
+                        return 0;
+                    }
                     currentFile = 0;
                 }
         }
@@ -211,6 +292,48 @@ collectFiles(void)
                     cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
         }
     } while (cmdline_moveNext(mkd64.cmdline));
+    return 1;
+}
+
+static void
+processSuggestions(void)
+{
+    SuggestedOption *sopt = mkd64.currentSuggestions;
+
+    while (sopt)
+    {
+        if (sopt->fileNo == 0)
+        {
+            modrepo_allGlobalOption(mkd64.modrepo, sopt->opt, sopt->arg);
+        }
+        sopt = sopt->next;
+    }
+}
+
+static void
+printSuggestions(SuggestedOption *suggestions)
+{
+    static const char *empty = "";
+
+    while (suggestions)
+    {
+        if (suggestions->fileNo > 0)
+        {
+            fprintf(stderr,
+                    "[Hint] %s suggests option -%c%s for file #%d: %s\n",
+                    suggestions->suggestedBy->id(), suggestions->opt,
+                    suggestions->arg ? suggestions->arg : empty,
+                    suggestions->fileNo, suggestions->reason);
+        }
+        else
+        {
+            fprintf(stderr, "[Hint] %s suggests global option -%c%s: %s\n",
+                    suggestions->suggestedBy->id(), suggestions->opt,
+                    suggestions->arg ? suggestions->arg : empty,
+                    suggestions->reason);
+        }
+        suggestions = suggestions->next;
+    }
 }
 
 SOLOCAL int
@@ -245,7 +368,7 @@ mkd64_run(void)
             && (arg = cmdline_arg(mkd64.cmdline)))
     {
         argDup = strdup(arg);
-        cmdfile = fopen(argDup, "r");
+        cmdfile = fopen(argDup, "rb");
         if (!cmdfile)
         {
             perror("Error opening commandline file");
@@ -273,11 +396,16 @@ mkd64_run(void)
         return 0;
     }
 
+    mkd64.currentPass = 1;
+    mkd64.maxPasses = 1;
+
+mkd64_run_mainloop:
     do
     {
         switch (cmdline_opt(mkd64.cmdline))
         {
             case 'm':
+                if (mkd64.currentPass > 1) break;
                 if (!modrepo_createInstance(mkd64.modrepo,
                         cmdline_arg(mkd64.cmdline)))
                 {
@@ -287,6 +415,7 @@ mkd64_run(void)
                 }
                 break;
             case 'o':
+                if (mkd64.currentPass > 1) break;
                 if (mkd64.d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
@@ -300,6 +429,7 @@ mkd64_run(void)
                 }
                 break;
             case 'M':
+                if (mkd64.currentPass > 1) break;
                 if (mkd64.map)
                 {
                     fputs("Error: file map output file specified twice.\n",
@@ -313,6 +443,17 @@ mkd64_run(void)
                     goto mkd64_run_error;
                 }
                 break;
+            case 'P':
+                if (mkd64.currentPass > 1) break;
+                if (cmdline_arg(mkd64.cmdline))
+                {
+                    mkd64.maxPasses = atoi(cmdline_arg(mkd64.cmdline));
+                }
+                else
+                {
+                    mkd64.maxPasses = 5;
+                }
+                break;
             case 'f':
                 fileFound = 1;
                 break;
@@ -324,7 +465,30 @@ mkd64_run(void)
         }
     } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
 
-    if (fileFound) collectFiles();
+    if (fileFound)
+    {
+        processSuggestions();
+        if (!processFiles()) goto mkd64_run_error;
+    }
+
+    modrepo_allImageComplete(mkd64.modrepo);
+
+    if (mkd64.suggestions)
+    {
+        printSuggestions(mkd64.suggestions);
+        if (mkd64.currentPass < mkd64.maxPasses)
+        {
+            fputs("[Info] rerunning using the above suggestions ...\n", stderr);
+            image_reset(mkd64.image);
+            modrepo_reloadModules(mkd64.modrepo);
+            cmdline_moveNext(mkd64.cmdline);
+            deleteSuggestions(mkd64.currentSuggestions);
+            mkd64.currentSuggestions = mkd64.suggestions;
+            mkd64.suggestions = 0;
+            fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+            goto mkd64_run_mainloop;
+        }
+    }
 
     if (mkd64.d64)
     {
@@ -358,6 +522,8 @@ mkd64_done(void)
     modrepo_delete(mkd64.modrepo);
     cmdline_delete(mkd64.cmdline);
     image_delete(mkd64.image);
+    deleteSuggestions(mkd64.suggestions);
+    deleteSuggestions(mkd64.currentSuggestions);
 }
 
 SOLOCAL Image *
@@ -376,6 +542,29 @@ SOEXPORT Modrepo *
 mkd64_modrepo(void)
 {
     return mkd64.initialized ? mkd64.modrepo : 0;
+}
+
+SOEXPORT void
+mkd64_suggestOption(IModule *mod, int fileNo,
+        char opt, const char *arg, const char *reason)
+{
+    SuggestedOption *sopt = malloc(sizeof(SuggestedOption));
+    SuggestedOption *parent;
+
+    sopt->next = 0;
+    sopt->suggestedBy = mod;
+    sopt->fileNo = fileNo;
+    sopt->opt = opt;
+    sopt->arg = arg ? strdup(arg) : 0;
+    sopt->reason = reason;
+
+    if (!mkd64.suggestions) mkd64.suggestions = sopt;
+    else
+    {
+        parent = mkd64.suggestions;
+        while (parent->next) parent = parent->next;
+        parent->next = sopt;
+    }
 }
 
 int main(int argc, char **argv)

@@ -14,6 +14,8 @@ Modrepo *modrepo_new(const char *exe, void *owner,
 
 void modrepo_delete(Modrepo *this);
 
+void modrepo_reloadModules(Modrepo *this);
+
 int modrepo_createInstance(Modrepo *this, const char *id);
 int modrepo_deleteInstance(Modrepo *this, const char *id);
 
@@ -28,6 +30,7 @@ Track *modrepo_firstGetTrack(Modrepo *this, int track);
 void modrepo_allFileWritten(Modrepo *this,
         Diskfile *file, const BlockPosition *start);
 void modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos);
+void modrepo_allImageComplete(Modrepo *this);
 
 const char *modrepo_nextAvailableModule(Modrepo *this, const char *id);
 const char *modrepo_nextLoadedModule(Modrepo *this, const char *id);

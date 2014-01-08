@@ -1,2 +1,4 @@
 usr/include/mkd64/*.h
-usr/share/doc/mkd64/modapi.txt
+usr/share/doc/mkd64/modapi.txt usr/share/doc/mkd64-dev/
+usr/share/doc/mkd64/examples/module/Makefile usr/share/doc/mkd64-dev/examples/module/
+usr/share/doc/mkd64/examples/module/module.c usr/share/doc/mkd64-dev/examples/module/

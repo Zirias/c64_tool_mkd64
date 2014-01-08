@@ -43,6 +43,8 @@ mod_LIBS =
 
 endif
 
+CFLAGS += -Werror=declaration-after-statement -fvisibility=hidden
+
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
 else
@@ -98,6 +100,7 @@ clean:
 	$(RMF) buildid$(EXE)
 	$(RMF) buildid.h
 	$(RMF) modules$(PSEP)buildid.h
+	$(RMFR) mkd64sdk
 
 distclean: clean
 
@@ -111,14 +114,25 @@ install: strip
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(INSTALL) -d $(DESTDIR)$(includedir)
-	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) mkd64$(EXE) $(DESTDIR)$(bindir)
-	$(INSTALL) *$(SO) $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)/examples/module
+	$(INSTALL) mkd64 $(DESTDIR)$(bindir)
+	$(INSTALL) *.so $(DESTDIR)$(libdir)
 	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
 	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 examples/module/* $(DESTDIR)$(docdir)/examples/module
 
 endif
+
+sdk:	bin mkd64.a
+	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
+	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
+	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) include$(PSEP)mkd64$(PSEP)*.h mkd64sdk$(PSEP)include$(PSEP)mkd64
+	-$(CPF) mkd64.a mkd64sdk$(PSEP)lib$(PSEP)mkd64
+	$(CPF) examples$(PSEP)module$(PSEP)Makefile mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) modapi.txt mkd64sdk
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
 	$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
@@ -133,7 +147,7 @@ modules$(PSEP)buildid.h:	buildid$(EXE)
 	.$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
 
 mkd64.a:	$(mkd64_OBJS)
-	dlltool -l$@ -Dmkd64.exe $^
+	-dlltool -l$@ -Dmkd64.exe $^
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<

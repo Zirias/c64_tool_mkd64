@@ -29,6 +29,7 @@ struct diskfileData
 struct diskfile
 {
     const char *name;
+    int fileNo;
     size_t size;
     size_t blocks;
     int interleave;
@@ -278,6 +279,18 @@ diskfile_write_done:
     modrepo_allFileWritten(mkd64_modrepo(), this, &start);
 
     return 1;
+}
+
+SOLOCAL void
+diskfile_setFileNo(Diskfile *this, int fileNo)
+{
+    this->fileNo = fileNo;
+}
+
+SOEXPORT int
+diskfile_fileNo(const Diskfile *this)
+{
+    return this->fileNo;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

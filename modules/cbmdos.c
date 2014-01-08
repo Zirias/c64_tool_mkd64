@@ -10,7 +10,7 @@
 
 #include "buildid.h"
 
-#define MODVERSION "0.3b"
+#define MODVERSION "1.0"
 
 static const char *modid = "cbmdos";
 
@@ -30,10 +30,12 @@ typedef struct
     Block *bam;
     DirBlock *directory;
     int reservedDirBlocks;
+    int usedDirBlocks;
     Block *currentDirBlock;
     int currentDirSlot;
     int extraDirBlocks;
     int reclaimedDirBlocks;
+    int directoryOverflow;
 } Cbmdos;
 
 typedef enum
@@ -185,7 +187,6 @@ initImage(IModule *this, Image *image)
 
     dos->image = image;
     dos->bam = image_block(image, &pos);
-    dos->currentDirSlot = 7;
 
     data = block_rawData(dos->bam);
     memcpy(data, _initialBam, 256);
@@ -241,7 +242,11 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
     switch (opt)
     {
         case 'f':
-            if (!dos->directory) _reserveDirBlocks(dos);
+            if (dos->reservedDirBlocks &&
+                    !dos->directory && !dos->usedDirBlocks)
+            {
+                _reserveDirBlocks(dos);
+            }
             diskfile_setInterleave(file, 10);
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
@@ -337,7 +342,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
             }
             if (_nextDirBlock(dos, &pos, 1))
             {
-                DBGd2("cbmdos: reserved extra directory block",
+                DBGd2("cbmdos: allocated extra directory block",
                         pos.track, pos.sector);
                 nextBlock = image_block(dos->image, &pos);
                 ++(dos->extraDirBlocks);
@@ -346,6 +351,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
             {
                 fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
                 --(dos->currentDirSlot);
+                dos->directoryOverflow = 1;
                 return;
             }
         }
@@ -359,6 +365,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
         dos->currentDirBlock = nextBlock;
         memset(block_rawData(dos->currentDirBlock), 0, 256);
         dos->currentDirSlot = 0;
+        ++(dos->usedDirBlocks);
     }
 
     fileEntry = block_rawData(dos->currentDirBlock)
@@ -423,12 +430,48 @@ requestReservedBlock(IModule *this, const BlockPosition *pos)
             if (parent) parent->next = current->next;
             else dos->directory = current->next;
             free(current);
+            ++(dos->reclaimedDirBlocks);
             DBGd2("cbmdos: gave back block", pos->track, pos->sector);
             return 1;
         }
     }
 
     return 0;
+}
+
+static void
+imageComplete(IModule *this)
+{
+    Cbmdos *dos = (Cbmdos *)this;
+    char buf[8];
+
+    if (dos->directoryOverflow) return;
+
+    if (dos->extraDirBlocks)
+    {
+        snprintf(buf, 8, "%d", dos->reservedDirBlocks + dos->extraDirBlocks);
+        mkd64_suggestOption(this, 0, 'R', buf,
+                "More directory blocks were needed, reserving them beforehand "
+                "lessens directory fragmentation.");
+    }
+    else if (dos->reclaimedDirBlocks &&
+            dos->reservedDirBlocks - dos->reclaimedDirBlocks < 18)
+    {
+        snprintf(buf, 8, "%d",
+                dos->reservedDirBlocks - dos->reclaimedDirBlocks);
+        mkd64_suggestOption(this, 0, 'R', buf,
+                "Blocks reserved for directory were needed for files. Not "
+                "reserving them can lessen file fragmentation.");
+    }
+    else if (dos->reservedDirBlocks > 18 && dos->usedDirBlocks <=18)
+    {
+        buf[0] = '1';
+        buf[1] = '8';
+        buf[2] = 0;
+        mkd64_suggestOption(this, 0, 'R', buf,
+                "More than 18 directory blocks were reserved, but not needed. "
+                "Not reserving them can lessen file fragmentation.");
+    }
 }
 
 SOEXPORT const char *
@@ -450,11 +493,16 @@ instance(void)
     this->mod.fileWritten = &fileWritten;
     this->mod.statusChanged = &statusChanged;
     this->mod.requestReservedBlock = &requestReservedBlock;
+    this->mod.imageComplete = &imageComplete;
+
     this->reservedDirBlocks = 18;
+    this->usedDirBlocks = 0;
     this->extraDirBlocks = 0;
     this->reclaimedDirBlocks = 0;
     this->directory = 0;
     this->currentDirBlock = 0;
+    this->directoryOverflow = 0;
+    this->currentDirSlot = 7; /* force new dir block allocation */
 
     return (IModule *) this;
 }

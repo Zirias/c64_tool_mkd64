@@ -23,6 +23,8 @@ DECLEXPORT int diskfile_interleave(const Diskfile *this);
 DECLEXPORT void diskfile_setName(Diskfile *this, const char *name);
 DECLEXPORT const char *diskfile_name(const Diskfile *this);
 
+DECLEXPORT int diskfile_fileNo(const Diskfile *this);
+
 #endif
 
 /* vim: et:si:ts=8:sts=4:sw=4
