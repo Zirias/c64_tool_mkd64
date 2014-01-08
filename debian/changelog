@@ -1,3 +1,17 @@
+mkd64 (1.0) unstable; urgency=low
+
+  * First non-beta release
+  * core: add API version infrastructure,
+    check API version before loading a module
+  * core: add possibility for modules to suggest better options
+  * core: add multi-pass image creation
+  * add example module and sdk creation for building modules out-of-tree
+  * fix several bugs, provide better information about errors
+  * cbmdos: add option for how many blocks to reserve for directory
+  * cbmdos: suggest value for reserved blocks to mkd64 if not optimal
+
+ -- Felix Palmen <felix@palmen-it.de>  Thu, 09 Jan 2014 00:24:47 +0100
+
 mkd64 (0.4b) unstable; urgency=low
 
   * New Release

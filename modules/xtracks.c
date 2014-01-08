@@ -6,7 +6,7 @@
 
 #include "buildid.h"
 
-#define MODVERSION "0.1b"
+#define MODVERSION "1.0"
 
 static const char *modid = "xtracks";
 
