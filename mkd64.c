@@ -468,6 +468,7 @@ mkd64_run_mainloop:
         {
             fputs("[Info] rerunning using the above suggestions ...\n", stderr);
             image_reset(mkd64.image);
+            modrepo_reloadModules(mkd64.modrepo);
             cmdline_moveNext(mkd64.cmdline);
             deleteSuggestions(mkd64.currentSuggestions);
             mkd64.currentSuggestions = mkd64.suggestions;

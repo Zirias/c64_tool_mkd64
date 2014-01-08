@@ -14,6 +14,8 @@ Modrepo *modrepo_new(const char *exe, void *owner,
 
 void modrepo_delete(Modrepo *this);
 
+void modrepo_reloadModules(Modrepo *this);
+
 int modrepo_createInstance(Modrepo *this, const char *id);
 int modrepo_deleteInstance(Modrepo *this, const char *id);
 

@@ -364,6 +364,21 @@ modrepo_delete(Modrepo *this)
     free(this);
 }
 
+SOLOCAL void
+modrepo_reloadModules(Modrepo *this)
+{
+    Modentry *entry;
+    Modinstance *current;
+
+    for (current = this->instances; current; current = current->next)
+    {
+        current->mod->delete(current->mod);
+        entry = findModule(this, current->id);
+        current->mod = entry->instance();
+        this->callback(this->owner, current->mod);
+    }
+}
+
 SOEXPORT IModule *
 modrepo_moduleInstance(Modrepo *this, const char *id)
 {
