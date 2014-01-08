@@ -2,10 +2,13 @@
 #
 # This makefile needs GNU make.
 #
-# build module with 'make MKD64=/path/to/mkd64sdk' or adjust MKD64 variable
-# here:
+# build module with 'make MKD64=/path/to/mkd64'. The path can be either the
+# source tree, the mkd64sdk or the installation prefix of an installed version.
+# On windows, only the mkd64sdk will work.
+#
+# Set a default directory here:
 
-MKD64=/usr/include
+MKD64=/usr
 
 # the name of the module shared object:
 MODULE=example
@@ -25,9 +28,6 @@ else
 SO = .so
 PSEP = /
 RMF = rm -f
-XIF = if [ -x
-XTHEN = ]; then
-XFI = ; fi
 
 mod_CFLAGS = -fPIC
 mod_LIBS =
@@ -43,7 +43,7 @@ CFLAGS += -g0 -O3 -flto
 LDFLAGS += -flto
 endif
 
-INCLUDES = -I$(MKD64)
+INCLUDES = -I$(MKD64)$(PSEP)include
 
 OUTPUT = $(MODULE)$(SO)
 
