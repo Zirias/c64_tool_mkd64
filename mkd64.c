@@ -461,6 +461,8 @@ mkd64_run_mainloop:
         collectFiles();
     }
 
+    modrepo_allImageComplete(mkd64.modrepo);
+
     if (mkd64.suggestions)
     {
         printSuggestions(mkd64.suggestions);

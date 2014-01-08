@@ -92,6 +92,18 @@ module, the pointer can be left NULL.
   If your module needs to keep a record of used/free blocks, use this. The
   'cbmdos' module updates the BAM here.
 
+- int (*requestReservedBlock)(IModule *this, const BlockPosition *pos)
+  This is called when mkd64 runs out of blocks for blocks that are reserved
+  by the module. It should return 1 if it is ok to unreserve the block at
+  track/sector 'pos', so it can be used for writing files. If the module needs
+  to keep the block reserved, it should return 0. If this is not implemented,
+  is it treated as returning 0 (rejecting the request for the block).
+
+- void (*imageComplete)(IModule *this)
+  This is called after the image generation is complete, but before it is
+  written to the output file. Use this for example to suggest better options
+  by calling mkd64_suggestOption().
+
 3. mkd64 public API
 
 Every module can call mkd64 methods and functions. You find the public

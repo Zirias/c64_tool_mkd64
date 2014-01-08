@@ -32,6 +32,8 @@ struct iModule
     void (*statusChanged)(IModule *this, const BlockPosition *pos);
 
     int (*requestReservedBlock)(IModule *this, const BlockPosition *pos);
+
+    void (*imageComplete)(IModule *this);
 };
 
 #endif

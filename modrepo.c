@@ -570,6 +570,17 @@ modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
     }
 }
 
+SOLOCAL void
+modrepo_allImageComplete(Modrepo *this)
+{
+    Modinstance *current;
+    for (current = this->instances; current; current = current->next)
+    {
+        if (current->mod->imageComplete)
+            current->mod->imageComplete(current->mod);
+    }
+}
+
 SOLOCAL const char *
 modrepo_nextAvailableModule(Modrepo *this, const char *id)
 {
