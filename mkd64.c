@@ -22,7 +22,7 @@ struct suggestedOption
     IModule *suggestedBy;
     int fileNo;
     char opt;
-    const char *arg;
+    char *arg;
     const char *reason;
 };
 
@@ -57,6 +57,7 @@ deleteSuggestions(SuggestedOption *suggestions)
     while (tmp)
     {
         suggestions = suggestions->next;
+        free(tmp->arg);
         free(tmp);
         tmp = suggestions;
     }
@@ -311,14 +312,14 @@ printSuggestions(SuggestedOption *suggestions)
         if (suggestions->fileNo > 0)
         {
             fprintf(stderr,
-                    "[Hint] %s suggests option -%s%s for file #%d: %s\n",
+                    "[Hint] %s suggests option -%c%s for file #%d: %s\n",
                     suggestions->suggestedBy->id(), suggestions->opt,
                     suggestions->arg ? suggestions->arg : empty,
                     suggestions->fileNo, suggestions->reason);
         }
         else
         {
-            fprintf(stderr, "[Hint] %s suggests global option -%s%s: %s\n",
+            fprintf(stderr, "[Hint] %s suggests global option -%c%s: %s\n",
                     suggestions->suggestedBy->id(), suggestions->opt,
                     suggestions->arg ? suggestions->arg : empty,
                     suggestions->reason);
@@ -444,6 +445,7 @@ mkd64_run_mainloop:
                 {
                     mkd64.maxPasses = 5;
                 }
+                break;
             case 'f':
                 fileFound = 1;
                 break;
@@ -545,7 +547,7 @@ mkd64_suggestOption(IModule *mod, int fileNo,
     sopt->suggestedBy = mod;
     sopt->fileNo = fileNo;
     sopt->opt = opt;
-    sopt->arg = arg;
+    sopt->arg = arg ? strdup(arg) : 0;
     sopt->reason = reason;
 
     if (!mkd64.suggestions) mkd64.suggestions = sopt;
