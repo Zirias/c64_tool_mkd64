@@ -86,12 +86,10 @@ struct image
     Track *tracks[IMAGE_NUM_TRACKS];
 };
 
-SOLOCAL Image *
-image_new(void)
+static void _initImage(Image *this)
 {
     int i;
 
-    Image *this = malloc(sizeof(Image));
     for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
     {
         this->tracks[i] = track_new(i+1, num_sectors[i]);
@@ -99,11 +97,17 @@ image_new(void)
     this->num_tracks = IMAGE_NUM_TRACKS;
     this->allocator = &_defaultAllocator;
     this->map = filemap_new();
+}
+
+SOLOCAL Image *
+image_new(void)
+{
+    Image *this = malloc(sizeof(Image));
+    _initImage(this);
     return this;
 }
 
-SOLOCAL void
-image_delete(Image *this)
+static void _cleanupImage(Image *this)
 {
     int i;
 
@@ -112,6 +116,12 @@ image_delete(Image *this)
         track_delete(this->tracks[i]);
     }
     filemap_delete(this->map);
+}
+
+SOLOCAL void
+image_delete(Image *this)
+{
+    _cleanupImage(this);
     free(this);
 }
 
@@ -173,6 +183,13 @@ image_nextFileBlock(Image *this, int interleave, BlockPosition *pos)
         return this->allocator->nextFileBlock(
                 this->allocator, this, interleave, pos, 1);
     }
+}
+
+SOLOCAL void
+image_reset(Image *this)
+{
+    _cleanupImage(this);
+    _initImage(this);
 }
 
 SOLOCAL int

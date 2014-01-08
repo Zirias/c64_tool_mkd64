@@ -29,6 +29,8 @@ struct suggestedOption
 typedef struct
 {
     int initialized;
+    int currentPass;
+    int maxPasses;
     int currentFileNo;
     Image *image;
     Cmdline *cmdline;
@@ -163,7 +165,11 @@ printHelp(const char *modId)
 "                 be given to actually write something.\n"
 "  -M MAPFILE     Write file map of the generated disk image to MAPFILE. The\n"
 "                 map file format is one line per file on disk:\n"
-"                 [startTrack];[startSector];[filename]\n\n"
+"                 [startTrack];[startSector];[filename]\n"
+"  -P [MAXPASSES] Allow up to {MAXPASSES} passes, automatically applying\n"
+"                 options suggested by modules. The default is only one pass\n"
+"                 if this option is not given or up to 5 passes if it is\n"
+"                 given without an argument.\n\n"
 "FILE options:\n"
 "  -f [FILENAME]  Start a new file. {FILENAME} is the name on your PC. It\n"
 "                 can be omitted for special emtpy files.\n"
@@ -295,6 +301,32 @@ processSuggestions(void)
     }
 }
 
+static void
+printSuggestions(SuggestedOption *suggestions)
+{
+    static const char *empty = "";
+
+    while (suggestions)
+    {
+        if (suggestions->fileNo > 0)
+        {
+            fprintf(stderr,
+                    "[Hint] %s suggests option -%s%s for file #%d: %s\n",
+                    suggestions->suggestedBy->id(), suggestions->opt,
+                    suggestions->arg ? suggestions->arg : empty,
+                    suggestions->fileNo, suggestions->reason);
+        }
+        else
+        {
+            fprintf(stderr, "[Hint] %s suggests global option -%s%s: %s\n",
+                    suggestions->suggestedBy->id(), suggestions->opt,
+                    suggestions->arg ? suggestions->arg : empty,
+                    suggestions->reason);
+        }
+        suggestions = suggestions->next;
+    }
+}
+
 SOLOCAL int
 mkd64_run(void)
 {
@@ -355,12 +387,16 @@ mkd64_run(void)
         return 0;
     }
 
+    mkd64.currentPass = 1;
+    mkd64.maxPasses = 1;
+
 mkd64_run_mainloop:
     do
     {
         switch (cmdline_opt(mkd64.cmdline))
         {
             case 'm':
+                if (mkd64.currentPass > 1) break;
                 if (!modrepo_createInstance(mkd64.modrepo,
                         cmdline_arg(mkd64.cmdline)))
                 {
@@ -370,6 +406,7 @@ mkd64_run_mainloop:
                 }
                 break;
             case 'o':
+                if (mkd64.currentPass > 1) break;
                 if (mkd64.d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
@@ -383,6 +420,7 @@ mkd64_run_mainloop:
                 }
                 break;
             case 'M':
+                if (mkd64.currentPass > 1) break;
                 if (mkd64.map)
                 {
                     fputs("Error: file map output file specified twice.\n",
@@ -396,6 +434,16 @@ mkd64_run_mainloop:
                     goto mkd64_run_error;
                 }
                 break;
+            case 'P':
+                if (mkd64.currentPass > 1) break;
+                if (cmdline_arg(mkd64.cmdline))
+                {
+                    mkd64.maxPasses = atoi(cmdline_arg(mkd64.cmdline));
+                }
+                else
+                {
+                    mkd64.maxPasses = 5;
+                }
             case 'f':
                 fileFound = 1;
                 break;
@@ -411,6 +459,22 @@ mkd64_run_mainloop:
     {
         processSuggestions();
         collectFiles();
+    }
+
+    if (mkd64.suggestions)
+    {
+        printSuggestions(mkd64.suggestions);
+        if (mkd64.currentPass < mkd64.maxPasses)
+        {
+            fputs("[Info] rerunning using the above suggestions ...\n", stderr);
+            image_reset(mkd64.image);
+            cmdline_moveNext(mkd64.cmdline);
+            deleteSuggestions(mkd64.currentSuggestions);
+            mkd64.currentSuggestions = mkd64.suggestions;
+            mkd64.suggestions = 0;
+            fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+            goto mkd64_run_mainloop;
+        }
     }
 
     if (mkd64.d64)
