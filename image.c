@@ -180,6 +180,7 @@ image_nextFileBlock(Image *this, int interleave, BlockPosition *pos)
     }
     else
     {
+        pos->track = 0; /* restart search */
         return this->allocator->nextFileBlock(
                 this->allocator, this, interleave, pos, 1);
     }

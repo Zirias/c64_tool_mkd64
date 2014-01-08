@@ -218,8 +218,8 @@ processFileSuggestions(Diskfile *file, BlockPosition *pos)
     }
 }
 
-static void
-collectFiles(void)
+static int
+processFiles(void)
 {
     Diskfile *currentFile = 0;
     BlockPosition pos;
@@ -275,7 +275,14 @@ collectFiles(void)
                     processFileSuggestions(currentFile, &pos);
                     if (!diskfile_name(currentFile))
                         diskfile_setName(currentFile, hostFileName);
-                    diskfile_write(currentFile, mkd64.image, &pos);
+                    if (!diskfile_write(currentFile, mkd64.image, &pos))
+                    {
+                        fprintf(stderr,
+                                "Error: Disk full while writing file #%d.",
+                                mkd64.currentFileNo);
+                        diskfile_delete(currentFile);
+                        return 0;
+                    }
                     currentFile = 0;
                 }
         }
@@ -285,6 +292,7 @@ collectFiles(void)
                     cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
         }
     } while (cmdline_moveNext(mkd64.cmdline));
+    return 1;
 }
 
 static void
@@ -460,7 +468,7 @@ mkd64_run_mainloop:
     if (fileFound)
     {
         processSuggestions();
-        collectFiles();
+        if (!processFiles()) goto mkd64_run_error;
     }
 
     modrepo_allImageComplete(mkd64.modrepo);
