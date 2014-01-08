@@ -8,6 +8,7 @@
 #ifdef WIN32
 #include <windows.h>
 #include <shlwapi.h>
+#define LOAD_MOD(name) LoadLibrary(name)
 #define GET_MOD_METHOD(so, name) GetProcAddress(so, name)
 #define UNLOAD_MOD(so) FreeLibrary(so)
 #define dlerror(x) "Error loading module"
@@ -17,6 +18,7 @@
 #include <stdlib.h>
 #include <libgen.h>
 #include <dlfcn.h>
+#define LOAD_MOD(name) dlopen(name, RTLD_NOW)
 #define GET_MOD_METHOD(so, name) dlsym(so, name)
 #define UNLOAD_MOD(so) dlclose(so)
 #endif
@@ -198,12 +200,34 @@ _endsWith(const char *value, const char *pattern)
 }
 #endif
 
+static int
+_checkApiVersion(const char *name, const int *ver)
+{
+    if (ver[0] >= API_VER_MAJOR && ver[1] > API_VER_MINOR)
+    {
+        fprintf(stderr, "Warning: module `%s' needs a newer version of mkd64. "
+                "(mkd64 API %d.%d, %s API %d.%d)\n", name,
+                API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+        return 0;
+    }
+    else if (ver[0] < API_VER_MAJOR)
+    {
+        fprintf(stderr, "Warning: module `%s' is outdated. "
+                "(mkd64 API %d.%d, %s API %d.%d)\n", name,
+                API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+        return 0;
+    }
+    return 1;
+}
+
 SOLOCAL Modrepo *
 modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 {
     Modrepo *this = calloc(1, sizeof(Modrepo));
     Modentry *current = 0;
     Modentry *next;
+    const int *apiVer;
+    const char *name;
 
 #ifdef WIN32
     HANDLE findHdl;
@@ -239,7 +263,7 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
     do
     {
-        modso = LoadLibrary(findData.cFileName);
+        name = findData.cFileName;
 #else
     glob_t glb;
     char **pathvp;
@@ -264,17 +288,36 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
 
     for (pathvp = glb.gl_pathv; pathvp && *pathvp; ++pathvp)
     {
-        modso = dlopen(*pathvp, RTLD_NOW);
+        name = *pathvp;
 #endif
+        modso = LOAD_MOD(name);
         if (!modso)
         {
             DBG(dlerror());
             continue;
         }
 
+        modopt = GET_MOD_METHOD(modso, "mkd64ApiVersion");
+        if (!modopt)
+        {
+            DBGs1("Not an mkd64 module:", name);
+            UNLOAD_MOD(modso);
+            continue;
+        }
+
+        apiVer = ((const int *(*)(void))modopt)();
+
+        if (!_checkApiVersion(name, apiVer))
+        {
+            UNLOAD_MOD(modso);
+            continue;
+        }
+
         modid = GET_MOD_METHOD(modso, "id");
         if (!modid)
         {
+            fprintf(stderr, "Warning: Erroneous module `%s', missing "
+                    "'const char *id()' export.\n", name);
             UNLOAD_MOD(modso);
             continue;
         }
@@ -282,6 +325,8 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
         modinst = GET_MOD_METHOD(modso, "instance");
         if (!modinst)
         {
+            fprintf(stderr, "Warning: Erroneous module `%s', missing "
+                    "'IModule *instance()' export.\n", name);
             UNLOAD_MOD(modso);
             continue;
         }

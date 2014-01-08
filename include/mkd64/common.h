@@ -26,6 +26,17 @@
 typedef unsigned char uint8_t;
 #endif
 
+#define API_VER_MAJOR 1
+#define API_VER_MINOR 0
+
+#ifndef BUILDING_MKD64
+static const int _mkd64_module_apiver[] = { API_VER_MAJOR, API_VER_MINOR };
+SOEXPORT const int *mkd64ApiVersion(void)
+{
+    return _mkd64_module_apiver;
+}
+#endif
+
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4
 */
