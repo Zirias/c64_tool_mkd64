@@ -16,6 +16,7 @@
 typedef struct
 {
     int initialized;
+    int currentFileNo;
     Image *image;
     Cmdline *cmdline;
     Modrepo *modrepo;
@@ -156,6 +157,8 @@ collectFiles(void)
     const char *hostFileName;
     FILE *hostFile;
 
+    mkd64.currentFileNo = 0;
+
     do
     {
         switch(cmdline_opt(mkd64.cmdline))
@@ -183,6 +186,7 @@ collectFiles(void)
                 {
                     currentFile = diskfile_new();
                 }
+                diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
                 pos.track = 0;
                 pos.sector = 0;
                 break;
@@ -273,6 +277,7 @@ mkd64_run(void)
         return 0;
     }
 
+mkd64_run_mainloop:
     do
     {
         switch (cmdline_opt(mkd64.cmdline))
