@@ -13,6 +13,19 @@
 #include <errno.h>
 #include <string.h>
 
+struct suggestedOption;
+typedef struct suggestedOption SuggestedOption;
+
+struct suggestedOption
+{
+    SuggestedOption *next;
+    IModule *suggestedBy;
+    int fileNo;
+    char opt;
+    const char *arg;
+    const char *reason;
+};
+
 typedef struct
 {
     int initialized;
@@ -20,16 +33,31 @@ typedef struct
     Image *image;
     Cmdline *cmdline;
     Modrepo *modrepo;
+    SuggestedOption *suggestions;
+    SuggestedOption *currentSuggestions;
     FILE *d64;
     FILE *map;
 } Mkd64;
 
 static Mkd64 mkd64 = {0};
 
-static void moduleLoaded(void *owner, IModule *mod)
+static void
+moduleLoaded(void *owner, IModule *mod)
 {
     Mkd64 *this = owner;
     mod->initImage(mod, this->image);
+}
+
+static void
+deleteSuggestions(SuggestedOption *suggestions)
+{
+    SuggestedOption *tmp = suggestions;
+    while (tmp)
+    {
+        suggestions = suggestions->next;
+        free(tmp);
+        tmp = suggestions;
+    }
 }
 
 SOLOCAL int
@@ -40,6 +68,8 @@ mkd64_init(int argc, char **argv)
     cmdline_parse(mkd64.cmdline, argc, argv);
     mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline),
             &mkd64, &moduleLoaded);
+    mkd64.suggestions = 0;
+    mkd64.currentSuggestions = 0;
     mkd64.d64 = 0;
     mkd64.map = 0;
     mkd64.initialized = 1;
@@ -363,6 +393,8 @@ mkd64_done(void)
     modrepo_delete(mkd64.modrepo);
     cmdline_delete(mkd64.cmdline);
     image_delete(mkd64.image);
+    deleteSuggestions(mkd64.suggestions);
+    deleteSuggestions(mkd64.currentSuggestions);
 }
 
 SOLOCAL Image *
@@ -381,6 +413,29 @@ SOEXPORT Modrepo *
 mkd64_modrepo(void)
 {
     return mkd64.initialized ? mkd64.modrepo : 0;
+}
+
+SOEXPORT void
+mkd64_suggestOption(IModule *mod, int fileNo,
+        char opt, const char *arg, const char *reason)
+{
+    SuggestedOption *sopt = malloc(sizeof(SuggestedOption));
+    SuggestedOption *parent;
+
+    sopt->next = 0;
+    sopt->suggestedBy = mod;
+    sopt->fileNo = fileNo;
+    sopt->opt = opt;
+    sopt->arg = arg;
+    sopt->reason = reason;
+
+    if (!mkd64.suggestions) mkd64.suggestions = sopt;
+    else
+    {
+        parent = mkd64.suggestions;
+        while (parent->next) parent = parent->next;
+        parent->next = sopt;
+    }
 }
 
 int main(int argc, char **argv)
