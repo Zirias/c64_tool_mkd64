@@ -1,6 +1,10 @@
 mkd64 module API
 ----------------
 
+To start creating your own module, use "Makefile" and "module.c" from
+examples/modules. These files are found in the source tree, the mkd64 SDK, and
+are typically installed to $(prefix)/share/doc/mkd64.
+
 1. static module interface
 
 mkd64 tries to load all modules in its directory at startup. To be able to
@@ -111,8 +115,8 @@ functions in include/mkd64/. Most of the time, it should be possible to figure
 out what they are doing just from their names and arguments. Nevertheless,
 those headers will eventuelly get commented.
 
-4. example
+4. bigger examples
 
-See the implementation of the cbmdos module (in modules/cbmdos.c) for an
-example how to create an mkd64 module.
+See the implementation of the cbmdos module and the xtracks module (in the
+modules directory of the source tree) for examples how to create mkd64 modules.
 

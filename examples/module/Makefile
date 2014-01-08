@@ -18,7 +18,7 @@ RMF = del /f /q
 
 CFLAGS += -DWIN32
 mod_CFLAGS =
-mod_LIBS = $(MKD64)\\lib\\mkd64.a
+mod_LIBS = $(MKD64)\\lib\\mkd64\\mkd64.a
 
 else
 

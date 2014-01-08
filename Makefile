@@ -113,12 +113,13 @@ install: strip
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(INSTALL) -d $(DESTDIR)$(includedir)
-	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) mkd64$(EXE) $(DESTDIR)$(bindir)
-	$(INSTALL) *$(SO) $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)/examples/module
+	$(INSTALL) mkd64 $(DESTDIR)$(bindir)
+	$(INSTALL) *.so $(DESTDIR)$(libdir)
 	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
 	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 examples/module/* $(DESTDIR)$(docdir)/examples/module
 
 endif
 
