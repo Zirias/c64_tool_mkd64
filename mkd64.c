@@ -368,7 +368,7 @@ mkd64_run(void)
             && (arg = cmdline_arg(mkd64.cmdline)))
     {
         argDup = strdup(arg);
-        cmdfile = fopen(argDup, "r");
+        cmdfile = fopen(argDup, "rb");
         if (!cmdfile)
         {
             perror("Error opening commandline file");
