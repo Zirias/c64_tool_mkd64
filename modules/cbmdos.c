@@ -242,7 +242,11 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
     switch (opt)
     {
         case 'f':
-            if (!dos->directory) _reserveDirBlocks(dos);
+            if (dos->reservedDirBlocks &&
+                    !dos->directory && !dos->usedDirBlocks)
+            {
+                _reserveDirBlocks(dos);
+            }
             diskfile_setInterleave(file, 10);
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
@@ -338,7 +342,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
             }
             if (_nextDirBlock(dos, &pos, 1))
             {
-                DBGd2("cbmdos: reserved extra directory block",
+                DBGd2("cbmdos: allocated extra directory block",
                         pos.track, pos.sector);
                 nextBlock = image_block(dos->image, &pos);
                 ++(dos->extraDirBlocks);
