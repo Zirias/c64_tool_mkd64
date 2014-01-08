@@ -180,6 +180,38 @@ printHelp(const char *modId)
 }
 
 static void
+processFileSuggestions(Diskfile *file, BlockPosition *pos)
+{
+    int fileNo = diskfile_fileNo(file);
+    SuggestedOption *sopt = mkd64.currentSuggestions;
+
+    while (sopt)
+    {
+        if (sopt->fileNo == fileNo)
+        {
+            switch (sopt->opt)
+            {
+                case 't':
+                    pos->track = atoi(sopt->arg);
+                    break;
+                case 's':
+                    pos->sector = atoi(sopt->arg);
+                    break;
+                case 'i':
+                    diskfile_setInterleave(file, atoi(sopt->arg));
+                    break;
+            }
+            if (sopt->opt != 'w')
+            {
+                modrepo_allFileOption(mkd64.modrepo, file,
+                        sopt->opt, sopt->arg);
+            }
+        }
+        sopt = sopt->next;
+    }
+}
+
+static void
 collectFiles(void)
 {
     Diskfile *currentFile = 0;
@@ -191,7 +223,7 @@ collectFiles(void)
 
     do
     {
-        switch(cmdline_opt(mkd64.cmdline))
+        switch (cmdline_opt(mkd64.cmdline))
         {
             case 'f':
                 if (currentFile) diskfile_delete(currentFile);
@@ -233,6 +265,7 @@ collectFiles(void)
             case 'w':
                 if (currentFile)
                 {
+                    processFileSuggestions(currentFile, &pos);
                     if (!diskfile_name(currentFile))
                         diskfile_setName(currentFile, hostFileName);
                     diskfile_write(currentFile, mkd64.image, &pos);
@@ -245,6 +278,21 @@ collectFiles(void)
                     cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
         }
     } while (cmdline_moveNext(mkd64.cmdline));
+}
+
+static void
+processSuggestions(void)
+{
+    SuggestedOption *sopt = mkd64.currentSuggestions;
+
+    while (sopt)
+    {
+        if (sopt->fileNo == 0)
+        {
+            modrepo_allGlobalOption(mkd64.modrepo, sopt->opt, sopt->arg);
+        }
+        sopt = sopt->next;
+    }
 }
 
 SOLOCAL int
@@ -359,7 +407,11 @@ mkd64_run_mainloop:
         }
     } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
 
-    if (fileFound) collectFiles();
+    if (fileFound)
+    {
+        processSuggestions();
+        collectFiles();
+    }
 
     if (mkd64.d64)
     {
