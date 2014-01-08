@@ -5,6 +5,13 @@ To start creating your own module, use "Makefile" and "module.c" from
 examples/modules. These files are found in the source tree, the mkd64 SDK, and
 are typically installed to $(prefix)/share/doc/mkd64.
 
+Modules automatically get an mkd64ApiVersion() call. The API version consists
+of a MAJOR and MINOR number. The MINOR number is increased whenever there
+are additions to the API that don't break compatibility. When compatibility
+is broken by an API change, the MAJOR number is increased and the MINOR number
+restarts at 0. The mkd64 module loader will consider any module with the same
+API version or an older but compatible one.
+
 1. static module interface
 
 mkd64 tries to load all modules in its directory at startup. To be able to
