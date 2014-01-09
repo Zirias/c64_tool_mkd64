@@ -56,6 +56,12 @@ cmdline_delete(Cmdline *this)
     free(this);
 }
 
+static void
+_warnLooseArg(const char *arg)
+{
+    fprintf(stderr, "Warning: loose argument `%s' ignored.\n", arg);
+}
+
 SOLOCAL void
 cmdline_parse(Cmdline *this, int argc, char **argv)
 {
@@ -86,6 +92,7 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
             }
             ++(this->count);
         }
+        else _warnLooseArg(*argvp);
     }
 }
 
@@ -220,6 +227,7 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
         }
         else
         {
+            _warnLooseArg(tok);
             tok = _cmdtok(0, delim, quote);
         }
     }
@@ -258,5 +266,10 @@ cmdline_exe(const Cmdline *this)
     return this->exe;
 }
 
+SOLOCAL int
+cmdline_count(const Cmdline *this)
+{
+    return this->count;
+}
 /* vim: et:si:ts=4:sts=4:sw=4
 */
