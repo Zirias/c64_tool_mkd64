@@ -30,6 +30,7 @@ typedef struct
     Block *bam;
     DirBlock *directory;
     int reservedDirBlocks;
+    int dirInterleave;
     int usedDirBlocks;
     Block *currentDirBlock;
     int currentDirSlot;
@@ -129,7 +130,7 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
         return 1;
     }
 
-    pos->sector = (pos->sector + 4) % track_numSectors(t);
+    pos->sector = (pos->sector + this->dirInterleave) % track_numSectors(t);
 
     while (track_blockStatus(t, pos->sector) != BS_NONE)
     {
@@ -230,6 +231,17 @@ globalOption(IModule *this, char opt, const char *arg)
                 dos->reservedDirBlocks = atoi(arg);
             }
             break;
+        case 'I':
+            if (arg)
+            {
+                dos->dirInterleave = atoi(arg);
+                if (dos->dirInterleave < 1)
+                {
+                    fputs("[cbmdos] Warning: directory interleave minimum "
+                            "value is 1, setting to 1\n", stderr);
+                    dos->dirInterleave = 1;
+                }
+            }
     }
 }
 
@@ -496,6 +508,7 @@ instance(void)
     this->mod.imageComplete = &imageComplete;
 
     this->reservedDirBlocks = 18;
+    this->dirInterleave = 3;
     this->usedDirBlocks = 0;
     this->extraDirBlocks = 0;
     this->reclaimedDirBlocks = 0;
@@ -517,9 +530,11 @@ help(void)
 "  -d DISKNAME   The name of the disk, defaults to an empty name.\n"
 "  -i DISKID     The ID of the disk, defaults to two random characters.\n"
 "                This can be up to 5 characters long, in this case it will\n"
-"                overwrite the default `DOS type' string (`2A')\n"
+"                overwrite the default `DOS type' string (`2A').\n"
 "  -R DIRBLOCKS  reserve {DIRBLOCKS} blocks for the directory. The default\n"
-"                value is 18, which is exactly the whole track #18\n";
+"                value is 18, which is exactly the whole track #18.\n"
+"  -I INTERLV    Set the directory interleave to {INTERLV}. The default value\n"
+"                for directory interleave is 3.\n";
 }
 
 SOEXPORT const char *
