@@ -318,6 +318,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     DirBlock *tmp;
     Block *nextBlock;
     BlockPosition pos;
+    static const char *unnamed = "----------------";
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
 
@@ -391,6 +392,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     fileEntry[0x04] = start->sector;
 
     fileName = diskfile_name(file);
+    if (!fileName) fileName = unnamed;
     nameLen = strlen(fileName);
     if (nameLen > 16) nameLen = 16;
     memcpy(fileEntry + 0x05, fileName, nameLen);
