@@ -75,7 +75,7 @@ endif
 INCLUDES = -Iinclude
 
 mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
-	     cmdline.o modrepo.o random.o
+	     cmdline.o modrepo.o util.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 mkd64_DEFINES = -DBUILDING_MKD64
 

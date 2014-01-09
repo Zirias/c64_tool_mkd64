@@ -3,7 +3,7 @@
 #include <mkd64/debug.h>
 #include <mkd64/block.h>
 #include <mkd64/track.h>
-#include <mkd64/random.h>
+#include <mkd64/util.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -193,9 +193,9 @@ initImage(IModule *this, Image *image)
     memcpy(data, _initialBam, 256);
 
     /* write random disk id */
-    data[0xa2] = random_num(0x30, 0x53);
+    data[0xa2] = randomNum(0x30, 0x53);
     if (data[0xa2] > 0x39) data[0xa2] += 7;
-    data[0xa3] = random_num(0x30, 0x53);
+    data[0xa3] = randomNum(0x30, 0x53);
     if (data[0xa3] > 0x39) data[0xa3] += 7;
 
     block_allocate(dos->bam);
