@@ -13,6 +13,8 @@ mkd64 (1.1b) unstable; urgency=low
   * cbmdos: allow changing DOS version byte in BAM
   * cbmdos: option for allocating all blocks in BAM
 
+ -- Felix Palmen <felix@palmen-it.de>  Fri, 10 Jan 2014 20:47:36 +0100
+
 mkd64 (1.0) unstable; urgency=low
 
   * First non-beta release
