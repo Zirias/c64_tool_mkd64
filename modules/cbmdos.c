@@ -58,6 +58,7 @@ typedef struct
 {
     CbmdosFileType fileType;
     int writeDirEntry;
+    int forceBlocks;
 } CbmdosFileData;
 
 static const uint8_t _initialBam[256] = {
@@ -333,6 +334,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
     CbmdosFileData *data;
+    int intarg;
 
     switch (opt)
     {
@@ -346,6 +348,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
             data->writeDirEntry = 0;
+            data->forceBlocks = -1;
             diskfile_attachData(file, dos, data, &_deleteFileData);
             return 1;
         case 'n':
@@ -392,6 +395,19 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             data = diskfile_data(file, dos);
             data->fileType |= FT_PROT;
             return 1;
+        case 'S':
+            checkArgAndWarn(opt, arg, 1, 1, _modid);
+            if (tryParseInt(arg, &intarg) && intarg >= 0)
+            {
+                data = diskfile_data(file, dos);
+                data->forceBlocks = intarg;
+            }
+            else
+            {
+                fprintf(stderr, "[cbmdos] Warning: invalid value `%s' for "
+                        "forced blocksize ignored.\n", arg);
+            }
+            return 1;
         default:
             return 0;
     }
@@ -405,6 +421,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     uint8_t *fileEntry;
     const char *fileName;
     size_t nameLen;
+    int blockSize;
     static const char *unnamed = "----------------";
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
@@ -429,8 +446,16 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     if (nameLen > 16) nameLen = 16;
     memcpy(fileEntry + 0x05, fileName, nameLen);
 
-    fileEntry[0x1e] = diskfile_blocks(file) & 0xff;
-    fileEntry[0x1f] = diskfile_blocks(file) >> 8;
+    if (data->forceBlocks >= 0)
+    {
+        blockSize = data->forceBlocks;
+    }
+    else
+    {
+        blockSize = diskfile_blocks(file);
+    }
+    fileEntry[0x1e] = blockSize & 0xff;
+    fileEntry[0x1f] = blockSize >> 8;
 
     dos->dirSlotReserved = 0;
 }
@@ -580,7 +605,8 @@ helpFile(void)
 "                {FILENAME} is given, it is used for the cbmdos directory.\n"
 "  -T FILETYPE   One of `p', `s', `u', `r' or `d' (for PRG, SEQ, USR, REL or\n"
 "                DEL), defaults to PRG.\n"
-"  -P            Make the file write-protected.\n";
+"  -P            Make the file write-protected.\n"
+"  -S BLOCKSIZE  Force the size written to the directory to be {BLOCKSIZE}.\n";
 }
 
 SOEXPORT const char *
