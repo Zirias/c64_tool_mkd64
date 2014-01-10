@@ -14,6 +14,7 @@ XFI = )
 CATIN = copy /b
 CATADD = +
 CATOUT =
+EQ=
 
 CFLAGS += -DWIN32
 dl_LDFLAGS = -lshlwapi 
@@ -36,6 +37,8 @@ XFI = ; fi
 CATIN = cat
 CATADD = 
 CATOUT = >
+EQ="
+#" make vim syntax highlight happy
 
 dl_LDFLAGS = -ldl -Wl,-E
 mod_CFLAGS = -fPIC
@@ -43,7 +46,26 @@ mod_LIBS =
 
 endif
 
-CFLAGS += -Werror=declaration-after-statement -fvisibility=hidden
+V=0
+
+cc__v_0 = @echo $(EQ)  [CC]   $@$(EQ)
+cc__v_1 =
+ld__v_0 = @echo $(EQ)  [LD]   $@$(EQ)
+ld__v_1 =
+ccld__v_0 = @echo $(EQ)  [CCLD] $@$(EQ)
+ccld__v_1 =
+gen__v_0 = @echo $(EQ)  [GEN]  $@$(EQ)
+gen__v_1 =
+r__v_0 = @
+r__v_1 =
+
+VCC = $(cc__v_$(V))
+VLD = $(ld__v_$(V))
+VCCLD = $(ccld__v_$(V))
+VGEN = $(gen__v_$(V))
+VR = $(r__v_$(V))
+
+CFLAGS += -Wall -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
 
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
@@ -135,31 +157,40 @@ sdk:	bin mkd64.a
 	$(CPF) modapi.txt mkd64sdk
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
-	$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
 
 buildid$(EXE):	buildid.c
-	$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
+	$(VCCLD)
+	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
 
 buildid.h:	buildid$(EXE)
-	.$(PSEP)buildid$(EXE) > buildid.h
+	$(VGEN)
+	$(VR).$(PSEP)buildid$(EXE) > buildid.h
 
 modules$(PSEP)buildid.h:	buildid$(EXE)
-	.$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
+	$(VGEN)
+	$(VR).$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
 
 mkd64.a:	$(mkd64_OBJS)
-	-dlltool -l$@ -Dmkd64.exe $^
+	$(VGEN)
+	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
-	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
+	$(VCC)
+	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 %.o:	%.c buildid.h
-	$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
+	$(VCC)
+	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^ $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^ $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 .PHONY: all bin modules strip clean distclean install
 

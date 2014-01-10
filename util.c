@@ -2,6 +2,7 @@
 
 #include <mkd64/util.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -49,6 +50,39 @@ tryParseInt(const char *str, int *result)
     }
 
     if (negative) *result = -*result;
+    return 1;
+}
+
+SOEXPORT int
+checkArgAndWarn(char opt, const char *arg, int isFileOpt,
+        int argExpected, const char *modid)
+{
+    static const char *globalOpt = "global";
+    static const char *fileOpt = "file";
+
+    static const char *formatMissing = "Warning: missing argument for %s "
+        "option -%c, option ignored.\n";
+    static const char *formatMissingMod = "[%s] Warning: missing argument "
+        "for %s option -%c, option ignored.\n";
+    static const char *formatExtra = "Warning: ignored unexpected argument "
+        "`%s' to %s option -%c\n";
+    static const char *formatExtraMod = "[%s] Warning: ignored unexpected "
+        "argument `%s' to %s option -%c\n";
+
+    const char *optType = isFileOpt ? fileOpt : globalOpt;
+
+    if (argExpected && !arg)
+    {
+        if (modid) fprintf(stderr, formatMissingMod, modid, optType, opt);
+        else fprintf(stderr, formatMissing, optType, opt);
+        return 0;
+    }
+    if (!argExpected && arg)
+    {
+        if (modid) fprintf(stderr, formatExtraMod, modid, arg, optType, opt);
+        else fprintf(stderr, formatExtra, arg, optType, opt);
+        return 0;
+    }
     return 1;
 }
 

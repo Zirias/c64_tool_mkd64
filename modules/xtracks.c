@@ -3,6 +3,9 @@
 #include <mkd64/debug.h>
 #include <mkd64/block.h>
 #include <mkd64/track.h>
+#include <mkd64/util.h>
+
+#include <stdio.h>
 
 #include "buildid.h"
 
@@ -54,7 +57,6 @@ static void
 getBam(Xtracks *this)
 {
     BlockPosition pos = { 18, 0 };
-    int i;
 
     if (!this->bam)
     {
@@ -77,7 +79,7 @@ globalOption(IModule *this, char opt, const char *arg)
 
     if (opt == 'X')
     {
-        if (arg)
+        if (checkArgAndWarn(opt, arg, 0, 1, modid))
         {
             for (argopt = arg; *argopt; ++argopt)
             {
@@ -94,7 +96,7 @@ globalOption(IModule *this, char opt, const char *arg)
                     }
                     dos->doDolphinDosBam = 1;
                 }
-                if (*argopt == 's' || *argopt == 'S')
+                else if (*argopt == 's' || *argopt == 'S')
                 {
                     getBam(dos);
                     for (i = 0; i < 5; ++i)
@@ -106,6 +108,11 @@ globalOption(IModule *this, char opt, const char *arg)
                         bamEntry[3] = 0x01;
                     }
                     dos->doSpeedDosBam = 1;
+                }
+                else
+                {
+                    fprintf(stderr, "[xtracks] Warning: unknown extended bam "
+                            "entry type `%c' ignored.\n", *argopt);
                 }
             }
         }

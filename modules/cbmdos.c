@@ -1,4 +1,5 @@
 #include <mkd64/common.h>
+#include <mkd64/mkd64.h>
 #include <mkd64/imodule.h>
 #include <mkd64/debug.h>
 #include <mkd64/block.h>
@@ -205,12 +206,12 @@ static int
 globalOption(IModule *this, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
-    int arglen;
+    int intarg, arglen;
 
     switch (opt)
     {
         case 'd':
-            if (arg)
+            if (checkArgAndWarn(opt, arg, 0, 1, modid))
             {
                 arglen = strlen(arg);
                 if (arglen > 16) arglen = 16;
@@ -218,7 +219,7 @@ globalOption(IModule *this, char opt, const char *arg)
             }
             return 1;
         case 'i':
-            if (arg)
+            if (checkArgAndWarn(opt, arg, 0, 1, modid))
             {
                 arglen = strlen(arg);
                 if (arglen > 5) arglen = 5;
@@ -226,21 +227,25 @@ globalOption(IModule *this, char opt, const char *arg)
             }
             return 1;
         case 'R':
-            if (arg)
+            if (checkArgAndWarn(opt, arg, 0, 1, modid))
             {
-                dos->reservedDirBlocks = atoi(arg);
+                if (!tryParseInt(arg, &intarg) || intarg < 0)
+                {
+                    fprintf(stderr, "[cbmdos] Warning: invalid reserved "
+                            "blocks count `%s' ignored.\n", arg);
+                }
+                dos->reservedDirBlocks = intarg;
             }
             return 1;
         case 'I':
-            if (arg)
+            if (checkArgAndWarn(opt, arg, 0, 1, modid))
             {
-                dos->dirInterleave = atoi(arg);
-                if (dos->dirInterleave < 1)
+                if (!tryParseInt(arg, &intarg) || intarg < 1)
                 {
-                    fputs("[cbmdos] Warning: directory interleave minimum "
-                            "value is 1, setting to 1\n", stderr);
-                    dos->dirInterleave = 1;
+                    fprintf(stderr, "[cbmdos] Warning: invalid directory "
+                            "interleave `%s' ignored.\n", arg);
                 }
+                dos->dirInterleave = intarg;
             }
             return 1;
         default:
@@ -277,7 +282,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             }
             return 1;
         case 'T':
-            if (!arg) return 1;
+            if (!checkArgAndWarn(opt, arg, 1, 1, modid)) return 1;
             data = diskfile_data(file, dos);
             switch (arg[0])
             {
@@ -301,9 +306,13 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
                 case 'R':
                     data->fileType = (data->fileType & FT_PROT) | FT_REL;
                     break;
+                default:
+                    fprintf(stderr, "[cbmdos] Warning: unrecognized file type "
+                            "`%s' ignored.\n", arg);
             }
             return 1;
         case 'P':
+            checkArgAndWarn(opt, arg, 1, 0, modid);
             data = diskfile_data(file, dos);
             data->fileType |= FT_PROT;
             return 1;

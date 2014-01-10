@@ -220,29 +220,6 @@ processFileSuggestions(Diskfile *file, BlockPosition *pos)
 }
 
 static int
-_checkArg(char opt, const char *arg, int isFileOpt, int argExpected)
-{
-    static const char *globalOpt = "global";
-    static const char *fileOpt = "file";
-
-    const char *optType = isFileOpt ? fileOpt : globalOpt;
-
-    if (argExpected && !arg)
-    {
-        fprintf(stderr, "Warning: missing argument for %s option -%c, "
-                "option ignored.\n", optType, opt);
-        return 0;
-    }
-    if (!argExpected && arg)
-    {
-        fprintf(stderr, "Warning: ignored unexpected argument `%s' to %s "
-                "option -%c\n", arg, optType, opt);
-        return 0;
-    }
-    return 1;
-}
-
-static int
 processFiles(void)
 {
     Diskfile *currentFile = 0;
@@ -300,7 +277,7 @@ processFiles(void)
                 handled = 1;
                 break;
             case 't':
-                if (_checkArg(opt, arg, 1, 1))
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
                 {
                     if (tryParseInt(arg, &intarg) || intarg < 1)
                     {
@@ -312,7 +289,7 @@ processFiles(void)
                 handled = 1;
                 break;
             case 's':
-                if (_checkArg(opt, arg, 1, 1))
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
                 {
                     if (!tryParseInt(arg, &intarg) || intarg < 0)
                     {
@@ -324,7 +301,7 @@ processFiles(void)
                 handled = 1;
                 break;
             case 'i':
-                if (_checkArg(opt, arg, 1, 1))
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
                 {
                     if (!tryParseInt(arg, &intarg) || intarg < 1)
                     {
@@ -337,7 +314,7 @@ processFiles(void)
                 handled = 1;
                 break;
             case 'w':
-                _checkArg(opt, arg, 1, 0);
+                checkArgAndWarn(opt, arg, 1, 0, 0);
                 if (currentFile)
                 {
                     processFileSuggestions(currentFile, &pos);
@@ -356,15 +333,23 @@ processFiles(void)
                     fputs("Warning: option -w given without starting a file "
                             "before. Option ignored.\n", stderr);
                 }
+                handled = 1;
+                break;
         }
         if (currentFile)
         {
-            modrepo_allFileOption(mkd64.modrepo, currentFile, opt, arg);
+            if(modrepo_allFileOption(mkd64.modrepo, currentFile, opt, arg))
+                handled = 1;
         }
         else if (opt != 'w')
         {
             fprintf(stderr, "Warning: file option `-%c' given without "
                     "starting a file ignored.\n", opt);
+        }
+        if (!handled)
+        {
+            fprintf(stderr, "Warning: unrecognized file option -%c ignored.\n"
+                   "         Maybe you forgot to load a module?\n", opt);
         }
 
     } while (cmdline_moveNext(mkd64.cmdline));
