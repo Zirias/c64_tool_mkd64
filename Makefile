@@ -14,7 +14,7 @@ XFI = )
 CATIN = copy /b
 CATADD = +
 CATOUT =
-EQ=
+EQT=
 
 CFLAGS += -DWIN32
 dl_LDFLAGS = -lshlwapi 
@@ -37,7 +37,7 @@ XFI = ; fi
 CATIN = cat
 CATADD = 
 CATOUT = >
-EQ="
+EQT="
 #" make vim syntax highlight happy
 
 dl_LDFLAGS = -ldl -Wl,-E
@@ -82,22 +82,19 @@ else
 CC = gcc
 endif
 
-cc__v_0 = @echo $(EQ)  $(VTAGS)   [CC]   $@$(EQ)
-cc__v_1 =
-ld__v_0 = @echo $(EQ)  $(VTAGS)   [LD]   $@$(EQ)
-ld__v_1 =
-ccld__v_0 = @echo $(EQ)  $(VTAGS)   [CCLD] $@$(EQ)
-ccld__v_1 =
-gen__v_0 = @echo $(EQ)  $(VTAGS)   [GEN]  $@$(EQ)
-gen__v_1 =
-r__v_0 = @
-r__v_1 =
-
-VCC = $(cc__v_$(V))
-VLD = $(ld__v_$(V))
-VCCLD = $(ccld__v_$(V))
-VGEN = $(gen__v_$(V))
-VR = $(r__v_$(V))
+ifeq ($(V),1)
+VCC =
+VLD =
+VCCLD =
+VGEN =
+VR =
+else
+VCC = @echo $(EQT)  $(VTAGS)   [CC]   $@$(EQT)
+VLD = @echo $(EQT)  $(VTAGS)   [LD]   $@$(EQT)
+VCCLD = @echo $(ETQ)  $(VTAGS)   [CCLD] $@$(EQT)
+VGEN = @echo $(EQT)  $(VTAGS)   [GEN]  $@$(EQT)
+VR = @
+endif
 
 INCLUDES = -Iinclude
 
