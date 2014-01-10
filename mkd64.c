@@ -404,6 +404,7 @@ mkd64_run(void)
     int handled;
     char opt;
     const char *arg, *modid;
+    int intarg;
     char *argDup;
     FILE *cmdfile;
 
@@ -489,6 +490,7 @@ mkd64_run_mainloop:
         switch (opt)
         {
             case 'm':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
                 if (!arg)
                 {
@@ -501,9 +503,9 @@ mkd64_run_mainloop:
                     fprintf(stderr, "Error: module `%s' not found.\n", arg);
                     goto mkd64_run_error;
                 }
-                handled = 1;
                 break;
             case 'o':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
                 if (!arg)
                 {
@@ -522,9 +524,9 @@ mkd64_run_mainloop:
                     perror("Error opening D64 output file");
                     goto mkd64_run_error;
                 }
-                handled = 1;
                 break;
             case 'M':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
                 if (!arg)
                 {
@@ -544,19 +546,24 @@ mkd64_run_mainloop:
                     perror("Error opening file map output file");
                     goto mkd64_run_error;
                 }
-                handled = 1;
                 break;
             case 'P':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
                 if (arg)
                 {
-                    mkd64.maxPasses = atoi(cmdline_arg(mkd64.cmdline));
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Error: invalid maximum passes `%s' "
+                                "given.\n", arg);
+                        goto mkd64_run_error;
+                    }
+                    mkd64.maxPasses = intarg;
                 }
                 else
                 {
                     mkd64.maxPasses = 5;
                 }
-                handled = 1;
                 break;
             case 'f':
                 fileFound = 1;
@@ -596,6 +603,7 @@ mkd64_run_mainloop:
             mkd64.currentSuggestions = mkd64.suggestions;
             mkd64.suggestions = 0;
             fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+            fileFound = 0;
             goto mkd64_run_mainloop;
         }
     }
