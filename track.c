@@ -77,24 +77,25 @@ track_numSectors(const Track *this)
     return this->num_sectors;
 }
 
-SOEXPORT int
-track_freeSectors(const Track *this)
-{
-    return this->free_sectors;
-}
-
-SOEXPORT int
-track_freeSectorsRaw(const Track *this)
+static int
+_freeSectorsRaw(const Track *this, BlockStatus mask)
 {
     int free = 0;
     int i;
 
     for (i = 0; i < this->num_sectors; ++i)
     {
-        if (!(block_status(this->sectors[i]) & BS_ALLOCATED)) ++free;
+        if (!(block_status(this->sectors[i]) & ~mask)) ++free;
     }
 
     return free;
+}
+
+SOEXPORT int
+track_freeSectors(const Track *this, BlockStatus mask)
+{
+    if (mask) return _freeSectorsRaw(this, mask);
+    return this->free_sectors;
 }
 
 SOEXPORT int

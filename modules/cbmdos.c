@@ -10,10 +10,11 @@
 #include <string.h>
 
 #include "buildid.h"
+#include "cbmdos/alloc.h"
+
+MKD64_MODULE("cbmdos")
 
 #define MODVERSION "1.0"
-
-static const char *modid = "cbmdos";
 
 struct dirBlock;
 typedef struct dirBlock DirBlock;
@@ -38,6 +39,7 @@ typedef struct
     int extraDirBlocks;
     int reclaimedDirBlocks;
     int directoryOverflow;
+    IBlockAllocator *alloc;
 } Cbmdos;
 
 typedef enum
@@ -105,7 +107,7 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
     }
 
     t = image_track(this->image, pos->track);
-    while (t && !track_freeSectors(t))
+    while (t && !track_freeSectors(t, BS_NONE))
     {
         trackChanged = 1;
         ++(pos->track);
@@ -116,7 +118,7 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
         trackChanged = 1;
         pos->track = 17;
         t = image_track(this->image, pos->track);
-        while (t && !track_freeSectors(t))
+        while (t && !track_freeSectors(t, BS_NONE))
         {
             --(pos->track);
             t = image_track(this->image, pos->track);
@@ -177,6 +179,8 @@ delete(IModule *this)
         free(tmp);
     }
 
+    cbmdosAllocator_delete(dos->alloc);
+
     free(this);
 }
 
@@ -200,6 +204,8 @@ initImage(IModule *this, Image *image)
     if (data[0xa3] > 0x39) data[0xa3] += 7;
 
     block_allocate(dos->bam);
+
+    image_setAllocator(image, dos->alloc);
 }
 
 static int
@@ -211,7 +217,7 @@ globalOption(IModule *this, char opt, const char *arg)
     switch (opt)
     {
         case 'd':
-            if (checkArgAndWarn(opt, arg, 0, 1, modid))
+            if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
                 arglen = strlen(arg);
                 if (arglen > 16) arglen = 16;
@@ -219,7 +225,7 @@ globalOption(IModule *this, char opt, const char *arg)
             }
             return 1;
         case 'i':
-            if (checkArgAndWarn(opt, arg, 0, 1, modid))
+            if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
                 arglen = strlen(arg);
                 if (arglen > 5) arglen = 5;
@@ -227,7 +233,7 @@ globalOption(IModule *this, char opt, const char *arg)
             }
             return 1;
         case 'R':
-            if (checkArgAndWarn(opt, arg, 0, 1, modid))
+            if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
                 if (!tryParseInt(arg, &intarg) || intarg < 0)
                 {
@@ -238,7 +244,7 @@ globalOption(IModule *this, char opt, const char *arg)
             }
             return 1;
         case 'I':
-            if (checkArgAndWarn(opt, arg, 0, 1, modid))
+            if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
                 if (!tryParseInt(arg, &intarg) || intarg < 1)
                 {
@@ -282,7 +288,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             }
             return 1;
         case 'T':
-            if (!checkArgAndWarn(opt, arg, 1, 1, modid)) return 1;
+            if (!checkArgAndWarn(opt, arg, 1, 1, _modid)) return 1;
             data = diskfile_data(file, dos);
             switch (arg[0])
             {
@@ -312,7 +318,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             }
             return 1;
         case 'P':
-            checkArgAndWarn(opt, arg, 1, 0, modid);
+            checkArgAndWarn(opt, arg, 1, 0, _modid);
             data = diskfile_data(file, dos);
             data->fileType |= FT_PROT;
             return 1;
@@ -429,7 +435,8 @@ statusChanged(IModule *this, const BlockPosition *pos)
     if (pos->track < 1 || pos->track > 35) return;
 
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
-    bamEntry[0] = track_freeSectorsRaw(image_track(dos->image, pos->track));
+    bamEntry[0] = track_freeSectors(image_track(dos->image, pos->track),
+            ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
     if (image_blockStatus(dos->image, pos) & BS_ALLOCATED)
@@ -448,6 +455,9 @@ requestReservedBlock(IModule *this, const BlockPosition *pos)
     Cbmdos *dos = (Cbmdos *)this;
     DirBlock *parent = 0;
     DirBlock *current;
+
+    /* never give first directory block away */
+    if (pos->track == 18 && pos->sector == 1) return 0;
 
     for (current = dos->directory; current;
             parent = current, current = current->next)
@@ -502,12 +512,6 @@ imageComplete(IModule *this)
     }
 }
 
-SOEXPORT const char *
-id(void)
-{
-    return modid;
-}
-
 SOEXPORT IModule *
 instance(void)
 {
@@ -533,6 +537,8 @@ instance(void)
     this->directoryOverflow = 0;
     this->currentDirSlot = 7; /* force new dir block allocation */
 
+    this->alloc = cbmdosAllocator_new();
+    
     return (IModule *) this;
 }
 

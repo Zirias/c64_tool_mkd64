@@ -9,6 +9,7 @@
 #include "image.h"
 #include "block.h"
 #include "filemap.h"
+#include "defalloc.h"
 
 #define IMAGE_NUM_TRACKS 35
 
@@ -18,64 +19,6 @@ static size_t num_sectors[] =
     19,19,19,19,19,19,19,
     18,18,18,18,18,18,
     17,17,17,17,17
-};
-
-static int
-_nextFileBlock(IBlockAllocator *this, Image *image, int interleave,
-        BlockPosition *pos, int considerReserved)
-{
-    BlockPosition currentp = { pos->track, pos->sector };
-    BlockStatus s;
-    Track *t;
-    int foundSector;
-
-    if (currentp.track == 0)
-    {
-        currentp.track = 17;
-        currentp.sector = 0;
-        t = image_track(image, currentp.track);
-    }
-    else
-    {
-        t = image_track(image, currentp.track);
-        s = track_blockStatus(t, currentp.sector);
-        if (considerReserved) s |= ~BS_RESERVED;
-        if (s != BS_NONE)
-        {
-            currentp.sector =
-                (currentp.sector + interleave) % track_numSectors(t);
-        }
-    }
-
-    while (t && (foundSector = track_allocateFirstFreeFrom(t,
-                    currentp.sector, considerReserved)) < 0)
-    {
-        if (currentp.track == 1)
-        {
-            currentp.track = 18;
-        }
-        else if (currentp.track < 18)
-        {
-            --(currentp.track);
-        }
-        else
-        {
-            ++(currentp.track);
-        }
-        t = image_track(image, currentp.track);
-    }
-
-    if (!t) return 0;
-
-    pos->track = currentp.track;
-    pos->sector = foundSector;
-
-    return 1;
-}
-
-static IBlockAllocator _defaultAllocator =
-{
-    &_nextFileBlock
 };
 
 struct image
@@ -95,8 +38,9 @@ static void _initImage(Image *this)
         this->tracks[i] = track_new(i+1, num_sectors[i]);
     }
     this->num_tracks = IMAGE_NUM_TRACKS;
-    this->allocator = &_defaultAllocator;
+    this->allocator = &defaultAllocator;
     this->map = filemap_new();
+    defaultAllocator.setImage(&defaultAllocator, this);
 }
 
 SOLOCAL Image *
@@ -151,7 +95,7 @@ image_track(const Image *this, int track)
 }
 
 SOEXPORT Block *
-image_block(const Image *this, BlockPosition *pos)
+image_block(const Image *this, const BlockPosition *pos)
 {
     Track *t = image_track(this, pos->track);
     if (!t) return 0;
@@ -167,23 +111,14 @@ image_filemap(const Image *this)
 SOEXPORT void
 image_setAllocator(Image *this, IBlockAllocator *allocator)
 {
+    allocator->setImage(allocator, this);
     this->allocator = allocator;
 }
 
-SOEXPORT int
-image_nextFileBlock(Image *this, int interleave, BlockPosition *pos)
+SOEXPORT IBlockAllocator *
+image_allocator(Image *this)
 {
-    if (this->allocator->nextFileBlock(
-                this->allocator, this, interleave, pos, 0))
-    {
-        return 1;
-    }
-    else
-    {
-        pos->track = 0; /* restart search */
-        return this->allocator->nextFileBlock(
-                this->allocator, this, interleave, pos, 1);
-    }
+    return this->allocator;
 }
 
 SOLOCAL void

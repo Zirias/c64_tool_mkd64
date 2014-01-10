@@ -9,9 +9,9 @@
 
 #include "buildid.h"
 
-#define MODVERSION "1.0"
+MKD64_MODULE("xtracks")
 
-static const char *modid = "xtracks";
+#define MODVERSION "1.0"
 
 typedef struct
 {
@@ -79,7 +79,7 @@ globalOption(IModule *this, char opt, const char *arg)
 
     if (opt == 'X')
     {
-        if (checkArgAndWarn(opt, arg, 0, 1, modid))
+        if (checkArgAndWarn(opt, arg, 0, 1, _modid))
         {
             for (argopt = arg; *argopt; ++argopt)
             {
@@ -135,7 +135,8 @@ updateBam(Xtracks *this, uint8_t *bamEntry, const BlockPosition *pos)
 {
     int bamByte, bamBit;
 
-    bamEntry[0] = track_freeSectorsRaw(image_track(this->image, pos->track));
+    bamEntry[0] = track_freeSectors(image_track(this->image, pos->track),
+            ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
     if (image_blockStatus(this->image, pos) & BS_ALLOCATED)
@@ -170,12 +171,6 @@ statusChanged(IModule *this, const BlockPosition *pos)
         bamEntry = block_rawData(dos->bam) + 0xc0 + 4 * (pos->track-36);
         updateBam(dos, bamEntry, pos);
     }
-}
-
-SOEXPORT const char *
-id(void)
-{
-    return modid;
 }
 
 SOEXPORT IModule *

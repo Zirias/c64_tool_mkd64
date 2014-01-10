@@ -98,14 +98,14 @@ endif
 
 INCLUDES = -Iinclude
 
-mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
+mkd64_OBJS = mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
 	     cmdline.o modrepo.o util.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 mkd64_DEFINES = -DBUILDING_MKD64
 
 MODULES = cbmdos$(SO) xtracks$(SO)
 
-cbmdos_OBJS = modules$(PSEP)cbmdos.o
+cbmdos_OBJS = modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
 
 xtracks_OBJS = modules$(PSEP)xtracks.o
 
@@ -182,7 +182,7 @@ modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
-%.o:	%.c buildid.h
+%.o: .$(PSEP)%.c buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
