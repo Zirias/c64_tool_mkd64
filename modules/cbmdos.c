@@ -94,6 +94,12 @@ static const uint8_t _initialBam[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+static void
+_deleteFileData(void *owner, void *data)
+{
+    free(data);
+}
+
 static int
 _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
 {
@@ -277,7 +283,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
             data->writeDirEntry = 0;
-            diskfile_attachData(file, dos, data);
+            diskfile_attachData(file, dos, data, &_deleteFileData);
             return 1;
         case 'n':
             data = diskfile_data(file, dos);
@@ -342,13 +348,9 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
 
-    data = diskfile_removeData(file, dos);
+    data = diskfile_data(file, dos);
 
-    if (!data->writeDirEntry)
-    {
-        free(data);
-        return;
-    }
+    if (!data->writeDirEntry) return;
 
     ++(dos->currentDirSlot);
     if (dos->currentDirSlot > 7)
@@ -419,8 +421,6 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 
     fileEntry[0x1e] = diskfile_blocks(file) & 0xff;
     fileEntry[0x1f] = diskfile_blocks(file) >> 8;
-
-    free(data);
 }
 
 static void

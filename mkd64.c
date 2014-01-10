@@ -629,9 +629,9 @@ mkd64_done(void)
 {
     if (!mkd64.initialized) return;
     mkd64.initialized = 0;
-    modrepo_delete(mkd64.modrepo);
-    cmdline_delete(mkd64.cmdline);
     image_delete(mkd64.image);
+    cmdline_delete(mkd64.cmdline);
+    modrepo_delete(mkd64.modrepo);
     deleteSuggestions(mkd64.suggestions);
     deleteSuggestions(mkd64.currentSuggestions);
 }
