@@ -67,7 +67,7 @@ getBam(Xtracks *this)
     }
 }
 
-static void
+static int
 globalOption(IModule *this, char opt, const char *arg)
 {
     Xtracks *dos = (Xtracks *)this;
@@ -75,38 +75,44 @@ globalOption(IModule *this, char opt, const char *arg)
     uint8_t *bamEntry;
     int i;
 
-    if (opt == 'X' && arg)
+    if (opt == 'X')
     {
-        for (argopt = arg; *argopt; ++argopt)
+        if (arg)
         {
-            if (*argopt == 'd' || *argopt == 'D')
+            for (argopt = arg; *argopt; ++argopt)
             {
-                getBam(dos);
-                for (i = 0; i < 5; ++i)
+                if (*argopt == 'd' || *argopt == 'D')
                 {
-                    bamEntry = block_rawData(dos->bam) + 0xac + 4*i;
-                    bamEntry[0] = 0x11;
-                    bamEntry[1] = 0xff;
-                    bamEntry[2] = 0xff;
-                    bamEntry[3] = 0x01;
+                    getBam(dos);
+                    for (i = 0; i < 5; ++i)
+                    {
+                        bamEntry = block_rawData(dos->bam) + 0xac + 4*i;
+                        bamEntry[0] = 0x11;
+                        bamEntry[1] = 0xff;
+                        bamEntry[2] = 0xff;
+                        bamEntry[3] = 0x01;
+                    }
+                    dos->doDolphinDosBam = 1;
                 }
-                dos->doDolphinDosBam = 1;
-            }
-            if (*argopt == 's' || *argopt == 'S')
-            {
-                getBam(dos);
-                for (i = 0; i < 5; ++i)
+                if (*argopt == 's' || *argopt == 'S')
                 {
-                    bamEntry = block_rawData(dos->bam) + 0xc0 + 4*i;
-                    bamEntry[0] = 0x11;
-                    bamEntry[1] = 0xff;
-                    bamEntry[2] = 0xff;
-                    bamEntry[3] = 0x01;
+                    getBam(dos);
+                    for (i = 0; i < 5; ++i)
+                    {
+                        bamEntry = block_rawData(dos->bam) + 0xc0 + 4*i;
+                        bamEntry[0] = 0x11;
+                        bamEntry[1] = 0xff;
+                        bamEntry[2] = 0xff;
+                        bamEntry[3] = 0x01;
+                    }
+                    dos->doSpeedDosBam = 1;
                 }
-                dos->doSpeedDosBam = 1;
             }
         }
+        return 1;
     }
+
+    return 0;
 }
 
 static Track *

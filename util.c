@@ -25,6 +25,8 @@ tryParseInt(const char *str, int *result)
     int negative = 0;
     const char *p = str;
 
+    if (!p) return 0;
+
     *result = 0;
     if (*p == '-')
     {

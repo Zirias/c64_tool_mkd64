@@ -201,7 +201,7 @@ initImage(IModule *this, Image *image)
     block_allocate(dos->bam);
 }
 
-static void
+static int
 globalOption(IModule *this, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
@@ -216,7 +216,7 @@ globalOption(IModule *this, char opt, const char *arg)
                 if (arglen > 16) arglen = 16;
                 memcpy(block_rawData(dos->bam) + 0x90, arg, arglen);
             }
-            break;
+            return 1;
         case 'i':
             if (arg)
             {
@@ -224,13 +224,13 @@ globalOption(IModule *this, char opt, const char *arg)
                 if (arglen > 5) arglen = 5;
                 memcpy(block_rawData(dos->bam) + 0xa2, arg, arglen);
             }
-            break;
+            return 1;
         case 'R':
             if (arg)
             {
                 dos->reservedDirBlocks = atoi(arg);
             }
-            break;
+            return 1;
         case 'I':
             if (arg)
             {
@@ -242,10 +242,13 @@ globalOption(IModule *this, char opt, const char *arg)
                     dos->dirInterleave = 1;
                 }
             }
+            return 1;
+        default:
+            return 0;
     }
 }
 
-static void
+static int
 fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
@@ -264,7 +267,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             data->fileType = FT_PRG;
             data->writeDirEntry = 0;
             diskfile_attachData(file, dos, data);
-            break;
+            return 1;
         case 'n':
             data = diskfile_data(file, dos);
             data->writeDirEntry = 1;
@@ -272,9 +275,9 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             {
                 diskfile_setName(file, arg);
             }
-            break;
+            return 1;
         case 'T':
-            if (!arg) break;
+            if (!arg) return 1;
             data = diskfile_data(file, dos);
             switch (arg[0])
             {
@@ -299,11 +302,13 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
                     data->fileType = (data->fileType & FT_PROT) | FT_REL;
                     break;
             }
-            break;
+            return 1;
         case 'P':
             data = diskfile_data(file, dos);
             data->fileType |= FT_PROT;
-            break;
+            return 1;
+        default:
+            return 0;
     }
 }
 

@@ -203,18 +203,34 @@ _endsWith(const char *value, const char *pattern)
 static int
 _checkApiVersion(const char *name, const int *ver)
 {
-    if (ver[0] >= API_VER_MAJOR && ver[1] > API_VER_MINOR)
+    if (ver[0] > API_VER_MAJOR ||
+           (ver[0] == API_VER_MAJOR && ver[1] > API_VER_MINOR))
     {
+#ifdef API_VER_BETA
+        fprintf(stderr, "Warning: module `%s' needs a newer version of mkd64. "
+                "(mkd64 API %d.%d (beta), %s API %d.%d)\n", name,
+                API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+#else
         fprintf(stderr, "Warning: module `%s' needs a newer version of mkd64. "
                 "(mkd64 API %d.%d, %s API %d.%d)\n", name,
                 API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+#endif
         return 0;
     }
+#ifdef API_VER_BETA
+    else if (ver[0] < API_VER_MAJOR ||
+            (ver[0] == API_VER_MAJOR && ver[1] < API_VER_MAJOR))
+    {
+        fprintf(stderr, "Warning: module `%s' is outdated. "
+                "(mkd64 API %d.%d (beta), %s API %d.%d)\n", name,
+                API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+#else
     else if (ver[0] < API_VER_MAJOR)
     {
         fprintf(stderr, "Warning: module `%s' is outdated. "
                 "(mkd64 API %d.%d, %s API %d.%d)\n", name,
                 API_VER_MAJOR, API_VER_MINOR, name, ver[0], ver[1]);
+#endif
         return 0;
     }
     return 1;
@@ -552,26 +568,42 @@ modrepo_allInitImage(Modrepo *this, Image *image)
     }
 }
 
-SOLOCAL void
+SOLOCAL int
 modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 {
     Modinstance *current;
+    int handled = 0;
+
     for (current = this->instances; current; current = current->next)
     {
         if (current->mod->globalOption)
-            current->mod->globalOption(current->mod, opt, arg);
+        {
+            if (current->mod->globalOption(current->mod, opt, arg))
+            {
+                handled = 1;
+            }
+        }
     }
+    return handled;
 }
 
-SOLOCAL void
+SOLOCAL int
 modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 {
     Modinstance *current;
+    int handled = 0;
+
     for (current = this->instances; current; current = current->next)
     {
         if (current->mod->fileOption)
-            current->mod->fileOption(current->mod, file, opt, arg);
+        {
+            if (current->mod->fileOption(current->mod, file, opt, arg))
+            {
+                handled = 1;
+            }
+        }
     }
+    return handled;
 }
 
 SOLOCAL Track *

@@ -31,7 +31,9 @@ typedef unsigned char uint8_t;
 #endif
 
 #define API_VER_MAJOR 1
-#define API_VER_MINOR 0
+#define API_VER_MINOR 1
+
+#define API_VER_BETA
 
 #ifndef BUILDING_MKD64
 static const int _mkd64_module_apiver[] = { API_VER_MAJOR, API_VER_MINOR };

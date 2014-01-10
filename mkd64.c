@@ -220,11 +220,35 @@ processFileSuggestions(Diskfile *file, BlockPosition *pos)
 }
 
 static int
+_checkArg(char opt, const char *arg, int isFileOpt, int argExpected)
+{
+    static const char *globalOpt = "global";
+    static const char *fileOpt = "file";
+
+    const char *optType = isFileOpt ? fileOpt : globalOpt;
+
+    if (argExpected && !arg)
+    {
+        fprintf(stderr, "Warning: missing argument for %s option -%c, "
+                "option ignored.\n", optType, opt);
+        return 0;
+    }
+    if (!argExpected && arg)
+    {
+        fprintf(stderr, "Warning: ignored unexpected argument `%s' to %s "
+                "option -%c\n", arg, optType, opt);
+        return 0;
+    }
+    return 1;
+}
+
+static int
 processFiles(void)
 {
     Diskfile *currentFile = 0;
     BlockPosition pos;
     char opt;
+    int handled;
     const char *arg;
     int intarg;
     FILE *hostFile;
@@ -235,6 +259,7 @@ processFiles(void)
     {
         opt = cmdline_opt(mkd64.cmdline);
         arg = cmdline_arg(mkd64.cmdline);
+        handled = 0;
 
         switch (opt)
         {
@@ -272,33 +297,47 @@ processFiles(void)
                 diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
                 pos.track = 0;
                 pos.sector = 0;
+                handled = 1;
                 break;
             case 't':
-                if (!tryParseInt(arg, &intarg) || intarg < 1)
+                if (_checkArg(opt, arg, 1, 1))
                 {
-                    fprintf(stderr, "Warning: invalid track number `%s' "
-                            "ignored.\n", arg);
+                    if (tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Warning: invalid track number `%s' "
+                                "ignored.\n", arg);
+                    }
+                    else if (currentFile) pos.track = intarg;
                 }
-                else if (currentFile) pos.track = intarg;
+                handled = 1;
                 break;
             case 's':
-                if (!tryParseInt(arg, &intarg) || intarg < 0)
+                if (_checkArg(opt, arg, 1, 1))
                 {
-                    fprintf(stderr, "Warning: invalid sector number `%s' "
-                            "ignored.\n", arg);
+                    if (!tryParseInt(arg, &intarg) || intarg < 0)
+                    {
+                        fprintf(stderr, "Warning: invalid sector number `%s' "
+                                "ignored.\n", arg);
+                    }
+                    else if (currentFile) pos.sector = intarg;
                 }
-                else if (currentFile) pos.sector = intarg;
+                handled = 1;
                 break;
             case 'i':
-                if (!tryParseInt(arg, &intarg) || intarg < 1)
+                if (_checkArg(opt, arg, 1, 1))
                 {
-                    fprintf(stderr, "Warning: invalid interleave number `%s' "
-                            "ignored.\n", arg);
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Warning: invalid interleave number "
+                                "`%s' ignored.\n", arg);
+                    }
+                    else if (currentFile) diskfile_setInterleave(
+                            currentFile, intarg);
                 }
-                else if (currentFile) diskfile_setInterleave(
-                        currentFile, intarg);
+                handled = 1;
                 break;
             case 'w':
+                _checkArg(opt, arg, 1, 0);
                 if (currentFile)
                 {
                     processFileSuggestions(currentFile, &pos);
@@ -377,6 +416,7 @@ SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
+    int handled;
     char opt;
     const char *arg, *modid;
     char *argDup;
@@ -459,6 +499,7 @@ mkd64_run_mainloop:
     {
         opt = cmdline_opt(mkd64.cmdline);
         arg = cmdline_arg(mkd64.cmdline);
+        handled = 0;
 
         switch (opt)
         {
@@ -475,6 +516,7 @@ mkd64_run_mainloop:
                     fprintf(stderr, "Error: module `%s' not found.\n", arg);
                     goto mkd64_run_error;
                 }
+                handled = 1;
                 break;
             case 'o':
                 if (mkd64.currentPass > 1) break;
@@ -495,6 +537,7 @@ mkd64_run_mainloop:
                     perror("Error opening D64 output file");
                     goto mkd64_run_error;
                 }
+                handled = 1;
                 break;
             case 'M':
                 if (mkd64.currentPass > 1) break;
@@ -516,6 +559,7 @@ mkd64_run_mainloop:
                     perror("Error opening file map output file");
                     goto mkd64_run_error;
                 }
+                handled = 1;
                 break;
             case 'P':
                 if (mkd64.currentPass > 1) break;
@@ -527,14 +571,22 @@ mkd64_run_mainloop:
                 {
                     mkd64.maxPasses = 5;
                 }
+                handled = 1;
                 break;
             case 'f':
                 fileFound = 1;
+                handled = 1;
                 break;
         }
         if (!fileFound)
         {
-            modrepo_allGlobalOption(mkd64.modrepo, opt, arg);
+            if (modrepo_allGlobalOption(mkd64.modrepo, opt, arg))
+                handled = 1;
+        }
+        if (!handled)
+        {
+            fprintf(stderr, "Warning: unrecognized global option -%c ignored.\n"
+                   "         Maybe you forgot to load a module?\n", opt);
         }
     } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
 
