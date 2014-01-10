@@ -36,8 +36,9 @@ typedef unsigned char uint8_t;
 #define API_VER_BETA
 
 #ifndef BUILDING_MKD64
-#define MKD64_MODULE(modname) extern const int *mkd64ApiVersion(void); \
-static const int _mkd64_module_apiver[] = { API_VER_MAJOR, API_VER_MINOR }; \
+#define MKD64_MODULE(modname) static const int _mkd64_module_apiver[] = \
+    { API_VER_MAJOR, API_VER_MINOR }; \
+\
 SOEXPORT const int *mkd64ApiVersion(void) \
 { \
     return _mkd64_module_apiver; \
