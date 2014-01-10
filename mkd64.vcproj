@@ -221,6 +221,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\defalloc.c"
+				>
+			</File>
+			<File
 				RelativePath=".\diskfile.c"
 				>
 			</File>
@@ -241,11 +245,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\random.c"
+				RelativePath=".\track.c"
 				>
 			</File>
 			<File
-				RelativePath=".\track.c"
+				RelativePath=".\util.c"
 				>
 			</File>
 		</Filter>
