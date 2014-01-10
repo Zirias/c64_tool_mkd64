@@ -36,6 +36,7 @@ typedef struct
     int usedDirBlocks;
     Block *currentDirBlock;
     int currentDirSlot;
+    int dirSlotReserved;
     int extraDirBlocks;
     int reclaimedDirBlocks;
     int directoryOverflow;
@@ -173,6 +174,68 @@ _reserveDirBlocks(Cbmdos *this)
 }
 
 static void
+_reserveDirSlot(Cbmdos *this)
+{
+    Block *nextBlock;
+    BlockPosition pos;
+    DirBlock *tmp;
+
+    if (this->dirSlotReserved) return;
+
+    ++(this->currentDirSlot);
+    if (this->currentDirSlot > 7)
+    {
+        if (this->directory)
+        {
+            nextBlock = image_block(this->image, &(this->directory->pos));
+            block_allocate(nextBlock);
+            tmp = this->directory;
+            this->directory = tmp->next;
+            free(tmp);
+        }
+        else
+        {
+            if (this->currentDirBlock)
+            {
+                pos.track = block_position(this->currentDirBlock)->track;
+                pos.sector = block_position(this->currentDirBlock)->sector;
+            }
+            else
+            {
+                pos.track = 0;
+                pos.sector = 0;
+            }
+            if (_nextDirBlock(this, &pos, 1))
+            {
+                DBGd2("cbmdos: allocated extra directory block",
+                        pos.track, pos.sector);
+                nextBlock = image_block(this->image, &pos);
+                ++(this->extraDirBlocks);
+            }
+            else
+            {
+                fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
+                --(this->currentDirSlot);
+                this->directoryOverflow = 1;
+                return;
+            }
+        }
+        if (this->currentDirBlock)
+        {
+            block_setNextTrack(this->currentDirBlock,
+                    block_position(nextBlock)->track);
+            block_setNextSector(this->currentDirBlock,
+                    block_position(nextBlock)->sector);
+        }
+        this->currentDirBlock = nextBlock;
+        memset(block_rawData(this->currentDirBlock), 0, 256);
+        this->currentDirSlot = 0;
+        ++(this->usedDirBlocks);
+    }
+    this->dirSlotReserved = 1;
+}
+
+static void
 delete(IModule *this)
 {
     Cbmdos *dos = (Cbmdos *)this;
@@ -292,6 +355,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             {
                 diskfile_setName(file, arg);
             }
+            _reserveDirSlot(dos);
             return 1;
         case 'T':
             if (!checkArgAndWarn(opt, arg, 1, 1, _modid)) return 1;
@@ -341,9 +405,6 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     uint8_t *fileEntry;
     const char *fileName;
     size_t nameLen;
-    DirBlock *tmp;
-    Block *nextBlock;
-    BlockPosition pos;
     static const char *unnamed = "----------------";
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
@@ -351,57 +412,6 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     data = diskfile_data(file, dos);
 
     if (!data->writeDirEntry) return;
-
-    ++(dos->currentDirSlot);
-    if (dos->currentDirSlot > 7)
-    {
-        if (dos->directory)
-        {
-            nextBlock = image_block(dos->image, &(dos->directory->pos));
-            block_allocate(nextBlock);
-            tmp = dos->directory;
-            dos->directory = tmp->next;
-            free(tmp);
-        }
-        else
-        {
-            if (dos->currentDirBlock)
-            {
-                pos.track = block_position(dos->currentDirBlock)->track;
-                pos.sector = block_position(dos->currentDirBlock)->sector;
-            }
-            else
-            {
-                pos.track = 0;
-                pos.sector = 0;
-            }
-            if (_nextDirBlock(dos, &pos, 1))
-            {
-                DBGd2("cbmdos: allocated extra directory block",
-                        pos.track, pos.sector);
-                nextBlock = image_block(dos->image, &pos);
-                ++(dos->extraDirBlocks);
-            }
-            else
-            {
-                fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
-                --(dos->currentDirSlot);
-                dos->directoryOverflow = 1;
-                return;
-            }
-        }
-        if (dos->currentDirBlock)
-        {
-            block_setNextTrack(dos->currentDirBlock,
-                    block_position(nextBlock)->track);
-            block_setNextSector(dos->currentDirBlock,
-                    block_position(nextBlock)->sector);
-        }
-        dos->currentDirBlock = nextBlock;
-        memset(block_rawData(dos->currentDirBlock), 0, 256);
-        dos->currentDirSlot = 0;
-        ++(dos->usedDirBlocks);
-    }
 
     fileEntry = block_rawData(dos->currentDirBlock)
         + dos->currentDirSlot * 0x20;
@@ -421,6 +431,8 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 
     fileEntry[0x1e] = diskfile_blocks(file) & 0xff;
     fileEntry[0x1f] = diskfile_blocks(file) >> 8;
+
+    dos->dirSlotReserved = 0;
 }
 
 static void
@@ -536,6 +548,7 @@ instance(void)
     this->currentDirBlock = 0;
     this->directoryOverflow = 0;
     this->currentDirSlot = 7; /* force new dir block allocation */
+    this->dirSlotReserved = 0;
 
     this->alloc = cbmdosAllocator_new();
     
