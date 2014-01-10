@@ -46,29 +46,14 @@ mod_LIBS =
 
 endif
 
-V=0
-
-cc__v_0 = @echo $(EQ)  [CC]   $@$(EQ)
-cc__v_1 =
-ld__v_0 = @echo $(EQ)  [LD]   $@$(EQ)
-ld__v_1 =
-ccld__v_0 = @echo $(EQ)  [CCLD] $@$(EQ)
-ccld__v_1 =
-gen__v_0 = @echo $(EQ)  [GEN]  $@$(EQ)
-gen__v_1 =
-r__v_0 = @
-r__v_1 =
-
-VCC = $(cc__v_$(V))
-VLD = $(ld__v_$(V))
-VCCLD = $(ccld__v_$(V))
-VGEN = $(gen__v_$(V))
-VR = $(r__v_$(V))
-
 CFLAGS += -Wall -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
+
+VTAGS =
+V=0
 
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
+VTAGS += [DBG]
 else
 CFLAGS += -g0 -O3 -flto
 LDFLAGS += -flto
@@ -85,14 +70,34 @@ docdir = $(docbasedir)/mkd64
 
 INSTALL = install
 CFLAGS += -DMODDIR="\"$(libdir)\""
+else
+VTAGS += [PRT]
 endif
 
 ifdef GCC32
 CC = gcc -m32
 CFLAGS += -DGCC32BIT
+VTAGS += [32]
 else
 CC = gcc
 endif
+
+cc__v_0 = @echo $(EQ)  $(VTAGS)   [CC]   $@$(EQ)
+cc__v_1 =
+ld__v_0 = @echo $(EQ)  $(VTAGS)   [LD]   $@$(EQ)
+ld__v_1 =
+ccld__v_0 = @echo $(EQ)  $(VTAGS)   [CCLD] $@$(EQ)
+ccld__v_1 =
+gen__v_0 = @echo $(EQ)  $(VTAGS)   [GEN]  $@$(EQ)
+gen__v_1 =
+r__v_0 = @
+r__v_1 =
+
+VCC = $(cc__v_$(V))
+VLD = $(ld__v_$(V))
+VCCLD = $(ccld__v_$(V))
+VGEN = $(gen__v_$(V))
+VR = $(r__v_$(V))
 
 INCLUDES = -Iinclude
 
