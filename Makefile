@@ -91,7 +91,7 @@ VR =
 else
 VCC = @echo $(EQT)  $(VTAGS)   [CC]   $@$(EQT)
 VLD = @echo $(EQT)  $(VTAGS)   [LD]   $@$(EQT)
-VCCLD = @echo $(ETQ)  $(VTAGS)   [CCLD] $@$(EQT)
+VCCLD = @echo $(EQT)  $(VTAGS)   [CCLD] $@$(EQT)
 VGEN = @echo $(EQT)  $(VTAGS)   [GEN]  $@$(EQT)
 VR = @
 endif
