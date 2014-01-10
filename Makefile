@@ -14,6 +14,7 @@ XFI = )
 CATIN = copy /b
 CATADD = +
 CATOUT =
+EQT=
 
 CFLAGS += -DWIN32
 dl_LDFLAGS = -lshlwapi 
@@ -36,6 +37,8 @@ XFI = ; fi
 CATIN = cat
 CATADD = 
 CATOUT = >
+EQT="
+#" make vim syntax highlight happy
 
 dl_LDFLAGS = -ldl -Wl,-E
 mod_CFLAGS = -fPIC
@@ -43,10 +46,14 @@ mod_LIBS =
 
 endif
 
-CFLAGS += -Werror=declaration-after-statement -fvisibility=hidden
+CFLAGS += -Wall -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
+
+VTAGS =
+V=0
 
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
+VTAGS += [DBG]
 else
 CFLAGS += -g0 -O3 -flto
 LDFLAGS += -flto
@@ -63,25 +70,42 @@ docdir = $(docbasedir)/mkd64
 
 INSTALL = install
 CFLAGS += -DMODDIR="\"$(libdir)\""
+else
+VTAGS += [PRT]
 endif
 
 ifdef GCC32
 CC = gcc -m32
 CFLAGS += -DGCC32BIT
+VTAGS += [32]
 else
 CC = gcc
 endif
 
+ifeq ($(V),1)
+VCC =
+VLD =
+VCCLD =
+VGEN =
+VR =
+else
+VCC = @echo $(EQT)  $(VTAGS)   [CC]   $@$(EQT)
+VLD = @echo $(EQT)  $(VTAGS)   [LD]   $@$(EQT)
+VCCLD = @echo $(EQT)  $(VTAGS)   [CCLD] $@$(EQT)
+VGEN = @echo $(EQT)  $(VTAGS)   [GEN]  $@$(EQT)
+VR = @
+endif
+
 INCLUDES = -Iinclude
 
-mkd64_OBJS = mkd64.o image.o track.o block.o filemap.o diskfile.o \
-	     cmdline.o modrepo.o random.o
+mkd64_OBJS = mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
+	     cmdline.o modrepo.o util.o
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 mkd64_DEFINES = -DBUILDING_MKD64
 
 MODULES = cbmdos$(SO) xtracks$(SO)
 
-cbmdos_OBJS = modules$(PSEP)cbmdos.o
+cbmdos_OBJS = modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
 
 xtracks_OBJS = modules$(PSEP)xtracks.o
 
@@ -135,31 +159,40 @@ sdk:	bin mkd64.a
 	$(CPF) modapi.txt mkd64sdk
 
 mkd64$(EXE):	buildid.h $(mkd64_OBJS)
-	$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
 
 buildid$(EXE):	buildid.c
-	$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
+	$(VCCLD)
+	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
 
 buildid.h:	buildid$(EXE)
-	.$(PSEP)buildid$(EXE) > buildid.h
+	$(VGEN)
+	$(VR).$(PSEP)buildid$(EXE) > buildid.h
 
 modules$(PSEP)buildid.h:	buildid$(EXE)
-	.$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
+	$(VGEN)
+	$(VR).$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
 
 mkd64.a:	$(mkd64_OBJS)
-	-dlltool -l$@ -Dmkd64.exe $^
+	$(VGEN)
+	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
 modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
-	$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
+	$(VCC)
+	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
-%.o:	%.c buildid.h
-	$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
+%.o: .$(PSEP)%.c buildid.h
+	$(VCC)
+	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
 cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^ $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(CC) -shared -o$@ $^ $(LDFLAGS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 .PHONY: all bin modules strip clean distclean install
 

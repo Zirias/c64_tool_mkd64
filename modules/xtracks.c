@@ -3,12 +3,15 @@
 #include <mkd64/debug.h>
 #include <mkd64/block.h>
 #include <mkd64/track.h>
+#include <mkd64/util.h>
+
+#include <stdio.h>
 
 #include "buildid.h"
 
-#define MODVERSION "1.0"
+MKD64_MODULE("xtracks")
 
-static const char *modid = "xtracks";
+#define MODVERSION "1.1b"
 
 typedef struct
 {
@@ -54,7 +57,6 @@ static void
 getBam(Xtracks *this)
 {
     BlockPosition pos = { 18, 0 };
-    int i;
 
     if (!this->bam)
     {
@@ -67,7 +69,7 @@ getBam(Xtracks *this)
     }
 }
 
-static void
+static int
 globalOption(IModule *this, char opt, const char *arg)
 {
     Xtracks *dos = (Xtracks *)this;
@@ -75,38 +77,49 @@ globalOption(IModule *this, char opt, const char *arg)
     uint8_t *bamEntry;
     int i;
 
-    if (opt == 'X' && arg)
+    if (opt == 'X')
     {
-        for (argopt = arg; *argopt; ++argopt)
+        if (checkArgAndWarn(opt, arg, 0, 1, _modid))
         {
-            if (*argopt == 'd' || *argopt == 'D')
+            for (argopt = arg; *argopt; ++argopt)
             {
-                getBam(dos);
-                for (i = 0; i < 5; ++i)
+                if (*argopt == 'd' || *argopt == 'D')
                 {
-                    bamEntry = block_rawData(dos->bam) + 0xac + 4*i;
-                    bamEntry[0] = 0x11;
-                    bamEntry[1] = 0xff;
-                    bamEntry[2] = 0xff;
-                    bamEntry[3] = 0x01;
+                    getBam(dos);
+                    for (i = 0; i < 5; ++i)
+                    {
+                        bamEntry = block_rawData(dos->bam) + 0xac + 4*i;
+                        bamEntry[0] = 0x11;
+                        bamEntry[1] = 0xff;
+                        bamEntry[2] = 0xff;
+                        bamEntry[3] = 0x01;
+                    }
+                    dos->doDolphinDosBam = 1;
                 }
-                dos->doDolphinDosBam = 1;
-            }
-            if (*argopt == 's' || *argopt == 'S')
-            {
-                getBam(dos);
-                for (i = 0; i < 5; ++i)
+                else if (*argopt == 's' || *argopt == 'S')
                 {
-                    bamEntry = block_rawData(dos->bam) + 0xc0 + 4*i;
-                    bamEntry[0] = 0x11;
-                    bamEntry[1] = 0xff;
-                    bamEntry[2] = 0xff;
-                    bamEntry[3] = 0x01;
+                    getBam(dos);
+                    for (i = 0; i < 5; ++i)
+                    {
+                        bamEntry = block_rawData(dos->bam) + 0xc0 + 4*i;
+                        bamEntry[0] = 0x11;
+                        bamEntry[1] = 0xff;
+                        bamEntry[2] = 0xff;
+                        bamEntry[3] = 0x01;
+                    }
+                    dos->doSpeedDosBam = 1;
                 }
-                dos->doSpeedDosBam = 1;
+                else
+                {
+                    fprintf(stderr, "[xtracks] Warning: unknown extended bam "
+                            "entry type `%c' ignored.\n", *argopt);
+                }
             }
         }
+        return 1;
     }
+
+    return 0;
 }
 
 static Track *
@@ -122,7 +135,8 @@ updateBam(Xtracks *this, uint8_t *bamEntry, const BlockPosition *pos)
 {
     int bamByte, bamBit;
 
-    bamEntry[0] = track_freeSectorsRaw(image_track(this->image, pos->track));
+    bamEntry[0] = track_freeSectors(image_track(this->image, pos->track),
+            ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
     if (image_blockStatus(this->image, pos) & BS_ALLOCATED)
@@ -157,12 +171,6 @@ statusChanged(IModule *this, const BlockPosition *pos)
         bamEntry = block_rawData(dos->bam) + 0xc0 + 4 * (pos->track-36);
         updateBam(dos, bamEntry, pos);
     }
-}
-
-SOEXPORT const char *
-id(void)
-{
-    return modid;
 }
 
 SOEXPORT IModule *

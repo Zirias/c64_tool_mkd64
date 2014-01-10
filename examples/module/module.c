@@ -1,9 +1,9 @@
 #include <mkd64/common.h>
 #include <mkd64/imodule.h>
 
-#define MODVERSION "1.0"
+MKD64_MODULE("example")
 
-static const char *modid = "example";
+#define MODVERSION "1.0"
 
 typedef struct
 {
@@ -19,12 +19,6 @@ delete(IModule *this)
     /* add destructor code here, free all memory allocated in instance() */
 
     free(mod);
-}
-
-SOEXPORT const char *
-id(void)
-{
-    return modid;
 }
 
 SOEXPORT IModule *

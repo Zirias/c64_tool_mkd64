@@ -1,3 +1,18 @@
+mkd64 (1.1b) unstable; urgency=low
+
+  * New beta release
+  * core: some API improvements:
+          - new IBlockAllocator interface
+          - utility functions for checking args, parsing ints, etc
+          - minor changes for better stability
+  * checking of options, meaningfull error- and warning-messages
+  * core: new default allocator allocates from track 1 upwards, honouring
+          interleave
+  * cbmdos: own allocator using the same scheme as an original 1541
+  * cbmdos: allow setting "fake" size for files
+  * cbmdos: allow changing DOS version byte in BAM
+  * cbmdos: option for allocating all blocks in BAM
+
 mkd64 (1.0) unstable; urgency=low
 
   * First non-beta release

@@ -19,9 +19,9 @@ struct iModule
 
     void (*initImage)(IModule *this, Image *image);
 
-    void (*globalOption)(IModule *this, char opt, const char *arg);
+    int (*globalOption)(IModule *this, char opt, const char *arg);
 
-    void (*fileOption)(IModule *this,
+    int (*fileOption)(IModule *this,
             Diskfile *file, char opt, const char *arg);
 
     Track *(*getTrack)(IModule *this, int track);

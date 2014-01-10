@@ -23,8 +23,8 @@ char *modrepo_getHelp(Modrepo *this, const char *id);
 char *modrepo_getVersionInfo(Modrepo *this, const char *id);
 
 void modrepo_allInitImage(Modrepo *this, Image *image);
-void modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg);
-void modrepo_allFileOption(Modrepo *this,
+int modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg);
+int modrepo_allFileOption(Modrepo *this,
         Diskfile *file, char opt, const char *arg);
 Track *modrepo_firstGetTrack(Modrepo *this, int track);
 void modrepo_allFileWritten(Modrepo *this,

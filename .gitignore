@@ -9,7 +9,7 @@ mkd64.exe
 buildid
 buildid.exe
 buildid.h
-!include/
+!include/mkd64/
 Debug/*
 Release/*
 ipch/*

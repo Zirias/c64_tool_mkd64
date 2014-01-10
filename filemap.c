@@ -79,7 +79,7 @@ filemap_dump(const Filemap *this, FILE *out)
     {
         name = diskfile_name(current->file);
         if (!name) name = unnamed;
-        if (fprintf(out, "%hhu;%hhu;%s\n",
+        if (fprintf(out, "%u;%u;%s\n",
                 current->startPosition->track,
                 current->startPosition->sector,
                 name) < 0)

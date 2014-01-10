@@ -1,5 +1,6 @@
 #include <mkd64/common.h>
 #include <mkd64/imodule.h>
+#include <mkd64/util.h>
 
 #include "mkd64.h"
 #include "image.h"
@@ -146,7 +147,7 @@ printHelp(const char *modId)
 "Global options must come before all file options on the command line.\n\n"
 "Modules can provide their own global and file options, check their help\n"
 "messages (-h MODULE) for reference.\n\n"
-"SINGLE options (must be given first, anything following is ignored):\n"
+"SINGLE options (must be the only option to mkd64):\n"
 "  -h [MODULE]    Show this help message or, if given, the help message for\n"
 "                 the module {MODULE}, and exit.\n"
 "  -V [MODULE]    Show version info and exit. If {MODULE} is given, version\n"
@@ -223,32 +224,47 @@ processFiles(void)
 {
     Diskfile *currentFile = 0;
     BlockPosition pos;
-    const char *hostFileName;
+    char opt;
+    int handled;
+    const char *arg;
+    int intarg;
     FILE *hostFile;
 
     mkd64.currentFileNo = 0;
 
     do
     {
-        switch (cmdline_opt(mkd64.cmdline))
+        opt = cmdline_opt(mkd64.cmdline);
+        arg = cmdline_arg(mkd64.cmdline);
+        handled = 0;
+
+        switch (opt)
         {
             case 'f':
-                if (currentFile) diskfile_delete(currentFile);
-                currentFile = 0;
-                hostFileName = cmdline_arg(mkd64.cmdline);
-                if (hostFileName)
+                if (currentFile)
                 {
-                    hostFile = fopen(hostFileName, "rb");
+                    fprintf(stderr, "Warning: new file started before "
+                            "previous file `%s' was written.\n"
+                            "         dropping previous file!\n",
+                            diskfile_name(currentFile));
+                    diskfile_delete(currentFile);
+                    currentFile = 0;
+                    --mkd64.currentFileNo;
+                }
+                if (arg)
+                {
+                    hostFile = fopen(arg, "rb");
                     if (hostFile)
                     {
                         currentFile = diskfile_new();
                         diskfile_readFromHost(currentFile, hostFile);
+                        diskfile_setName(currentFile,arg);
                         fclose(hostFile);
                     }
                     else
                     {
                         fprintf(stderr, "Error opening `%s' for reading: %s\n",
-                                hostFileName, strerror(errno));
+                                arg, strerror(errno));
                     }
                 }
                 else
@@ -258,23 +274,50 @@ processFiles(void)
                 diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
                 pos.track = 0;
                 pos.sector = 0;
+                handled = 1;
                 break;
             case 't':
-                if (currentFile) pos.track = atoi(cmdline_arg(mkd64.cmdline));
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
+                {
+                    if (tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Warning: invalid track number `%s' "
+                                "ignored.\n", arg);
+                    }
+                    else if (currentFile) pos.track = intarg;
+                }
+                handled = 1;
                 break;
             case 's':
-                if (currentFile) pos.sector = atoi(cmdline_arg(mkd64.cmdline));
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
+                {
+                    if (!tryParseInt(arg, &intarg) || intarg < 0)
+                    {
+                        fprintf(stderr, "Warning: invalid sector number `%s' "
+                                "ignored.\n", arg);
+                    }
+                    else if (currentFile) pos.sector = intarg;
+                }
+                handled = 1;
                 break;
             case 'i':
-                if (currentFile) diskfile_setInterleave(currentFile,
-                        atoi(cmdline_arg(mkd64.cmdline)));
+                if (checkArgAndWarn(opt, arg, 1, 1, 0))
+                {
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Warning: invalid interleave number "
+                                "`%s' ignored.\n", arg);
+                    }
+                    else if (currentFile) diskfile_setInterleave(
+                            currentFile, intarg);
+                }
+                handled = 1;
                 break;
             case 'w':
+                checkArgAndWarn(opt, arg, 1, 0, 0);
                 if (currentFile)
                 {
                     processFileSuggestions(currentFile, &pos);
-                    if (!diskfile_name(currentFile))
-                        diskfile_setName(currentFile, hostFileName);
                     if (!diskfile_write(currentFile, mkd64.image, &pos))
                     {
                         fprintf(stderr,
@@ -285,12 +328,30 @@ processFiles(void)
                     }
                     currentFile = 0;
                 }
+                else
+                {
+                    fputs("Warning: option -w given without starting a file "
+                            "before. Option ignored.\n", stderr);
+                }
+                handled = 1;
+                break;
         }
         if (currentFile)
         {
-            modrepo_allFileOption(mkd64.modrepo, currentFile,
-                    cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
+            if(modrepo_allFileOption(mkd64.modrepo, currentFile, opt, arg))
+                handled = 1;
         }
+        else if (opt != 'w')
+        {
+            fprintf(stderr, "Warning: file option `-%c' given without "
+                    "starting a file ignored.\n", opt);
+        }
+        if (!handled)
+        {
+            fprintf(stderr, "Warning: unrecognized file option -%c ignored.\n"
+                   "         Maybe you forgot to load a module?\n", opt);
+        }
+
     } while (cmdline_moveNext(mkd64.cmdline));
     return 1;
 }
@@ -340,7 +401,10 @@ SOLOCAL int
 mkd64_run(void)
 {
     int fileFound = 0;
+    int handled;
+    char opt;
     const char *arg, *modid;
+    int intarg;
     char *argDup;
     FILE *cmdfile;
 
@@ -348,52 +412,69 @@ mkd64_run(void)
 
     if (!cmdline_moveNext(mkd64.cmdline))
     {
+        /* no options given */
+
         printUsage();
         return 0;
     }
 
-    if (cmdline_opt(mkd64.cmdline) == 'V')
+    if (cmdline_count(mkd64.cmdline) == 1)
     {
-        printVersion(cmdline_arg(mkd64.cmdline));
-        return 0;
-    }
+        /* handle single options */
 
-    if (cmdline_opt(mkd64.cmdline) == 'h')
-    {
-        printHelp(cmdline_arg(mkd64.cmdline));
-        return 0;
-    }
-
-    if (cmdline_opt(mkd64.cmdline) == 'C'
-            && (arg = cmdline_arg(mkd64.cmdline)))
-    {
-        argDup = strdup(arg);
-        cmdfile = fopen(argDup, "rb");
-        if (!cmdfile)
+        if (cmdline_opt(mkd64.cmdline) == 'V')
         {
-            perror("Error opening commandline file");
+            printVersion(cmdline_arg(mkd64.cmdline));
             return 0;
         }
-        cmdline_parseFile(mkd64.cmdline, cmdfile);
-        fclose(cmdfile);
-        if (!cmdline_moveNext(mkd64.cmdline))
+
+        if (cmdline_opt(mkd64.cmdline) == 'h')
         {
-            fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
+            printHelp(cmdline_arg(mkd64.cmdline));
+            return 0;
+        }
+
+        if (cmdline_opt(mkd64.cmdline) == 'C')
+        {
+            arg = cmdline_arg(mkd64.cmdline);
+            if (!arg)
+            {
+                fputs("Error: missing argument to single option -C.\n", stderr);
+                return 0;
+            }
+            argDup = strdup(arg);
+            cmdfile = fopen(argDup, "rb");
+            if (!cmdfile)
+            {
+                perror("Error opening commandline file");
+                return 0;
+            }
+            cmdline_parseFile(mkd64.cmdline, cmdfile);
+            fclose(cmdfile);
+            if (!cmdline_moveNext(mkd64.cmdline))
+            {
+                fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
+                free(argDup);
+                return 0;
+            }
             free(argDup);
+        }
+
+        if (cmdline_opt(mkd64.cmdline) == 'M')
+        {
+            if (cmdline_arg(mkd64.cmdline))
+            {
+                fputs("Warning: argument to single option -M ignored.\n",
+                        stderr);
+            }
+            fputs("Available modules:\n", stderr);
+            modid = 0;
+            while ((modid = modrepo_nextAvailableModule(mkd64.modrepo, modid)))
+            {
+                fprintf(stderr, "  %s\n", modid);
+            }
             return 0;
         }
-        free(argDup);
-    }
-
-    if (cmdline_opt(mkd64.cmdline) == 'M')
-    {
-        fputs("Available modules:\n", stderr);
-        modid = 0;
-        while ((modid = modrepo_nextAvailableModule(mkd64.modrepo, modid)))
-        {
-            fprintf(stderr, "  %s\n", modid);
-        }
-        return 0;
     }
 
     mkd64.currentPass = 1;
@@ -402,26 +483,42 @@ mkd64_run(void)
 mkd64_run_mainloop:
     do
     {
-        switch (cmdline_opt(mkd64.cmdline))
+        opt = cmdline_opt(mkd64.cmdline);
+        arg = cmdline_arg(mkd64.cmdline);
+        handled = 0;
+
+        switch (opt)
         {
             case 'm':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
-                if (!modrepo_createInstance(mkd64.modrepo,
-                        cmdline_arg(mkd64.cmdline)))
+                if (!arg)
                 {
-                    fprintf(stderr, "Error: module `%s' not found.\n",
-                            cmdline_arg(mkd64.cmdline));
+                    fputs("Error: missing argument to global option -m.\n",
+                            stderr);
+                    goto mkd64_run_error;
+                }
+                if (!modrepo_createInstance(mkd64.modrepo, arg))
+                {
+                    fprintf(stderr, "Error: module `%s' not found.\n", arg);
                     goto mkd64_run_error;
                 }
                 break;
             case 'o':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
+                if (!arg)
+                {
+                    fputs("Error: missing argument to global option -o.\n",
+                            stderr);
+                    goto mkd64_run_error;
+                }
                 if (mkd64.d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
                     goto mkd64_run_error;
                 }
-                mkd64.d64 = fopen(cmdline_arg(mkd64.cmdline), "wb");
+                mkd64.d64 = fopen(arg, "wb");
                 if (!mkd64.d64)
                 {
                     perror("Error opening D64 output file");
@@ -429,14 +526,21 @@ mkd64_run_mainloop:
                 }
                 break;
             case 'M':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
+                if (!arg)
+                {
+                    fputs("Error: missing argument to global option -M.\n",
+                            stderr);
+                    goto mkd64_run_error;
+                }
                 if (mkd64.map)
                 {
                     fputs("Error: file map output file specified twice.\n",
                             stderr);
                     goto mkd64_run_error;
                 }
-                mkd64.map = fopen(cmdline_arg(mkd64.cmdline), "w");
+                mkd64.map = fopen(arg, "w");
                 if (!mkd64.map)
                 {
                     perror("Error opening file map output file");
@@ -444,10 +548,17 @@ mkd64_run_mainloop:
                 }
                 break;
             case 'P':
+                handled = 1;
                 if (mkd64.currentPass > 1) break;
-                if (cmdline_arg(mkd64.cmdline))
+                if (arg)
                 {
-                    mkd64.maxPasses = atoi(cmdline_arg(mkd64.cmdline));
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
+                    {
+                        fprintf(stderr, "Error: invalid maximum passes `%s' "
+                                "given.\n", arg);
+                        goto mkd64_run_error;
+                    }
+                    mkd64.maxPasses = intarg;
                 }
                 else
                 {
@@ -456,12 +567,18 @@ mkd64_run_mainloop:
                 break;
             case 'f':
                 fileFound = 1;
+                handled = 1;
                 break;
         }
         if (!fileFound)
         {
-            modrepo_allGlobalOption(mkd64.modrepo,
-                    cmdline_opt(mkd64.cmdline), cmdline_arg(mkd64.cmdline));
+            if (modrepo_allGlobalOption(mkd64.modrepo, opt, arg))
+                handled = 1;
+        }
+        if (!handled)
+        {
+            fprintf(stderr, "Warning: unrecognized global option -%c ignored.\n"
+                   "         Maybe you forgot to load a module?\n", opt);
         }
     } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
 
@@ -486,6 +603,7 @@ mkd64_run_mainloop:
             mkd64.currentSuggestions = mkd64.suggestions;
             mkd64.suggestions = 0;
             fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+            fileFound = 0;
             goto mkd64_run_mainloop;
         }
     }
@@ -519,9 +637,9 @@ mkd64_done(void)
 {
     if (!mkd64.initialized) return;
     mkd64.initialized = 0;
-    modrepo_delete(mkd64.modrepo);
-    cmdline_delete(mkd64.cmdline);
     image_delete(mkd64.image);
+    cmdline_delete(mkd64.cmdline);
+    modrepo_delete(mkd64.modrepo);
     deleteSuggestions(mkd64.suggestions);
     deleteSuggestions(mkd64.currentSuggestions);
 }

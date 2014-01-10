@@ -14,8 +14,7 @@ DECLEXPORT void track_delete(Track *this);
 
 DECLEXPORT BlockStatus track_blockStatus(const Track *this, int sector);
 DECLEXPORT size_t track_numSectors(const Track *this);
-DECLEXPORT int track_freeSectors(const Track *this);
-DECLEXPORT int track_freeSectorsRaw(const Track *this);
+DECLEXPORT int track_freeSectors(const Track *this, BlockStatus mask);
 
 DECLEXPORT int track_reserveBlock(Track *this, int sector, IModule *by);
 DECLEXPORT int track_allocateBlock(Track *this, int sector);
