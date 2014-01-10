@@ -22,10 +22,20 @@ DECLEXPORT int randomNum(int min, int max);
  * decimal digits and an optional minus ('-') at the beginning. Otherwise
  * it will return false and the content of the result is undefined.
  * @param str the string to parse
- * @param result pointer an integer for placing the result
+ * @param result pointer to an integer for placing the result
  * @return 1 (true) if parsed correctly, 0 (false) otherwise
  */
 DECLEXPORT int tryParseInt(const char *str, int *result);
+
+/** Try parsing an integer from a given hexadecimal string
+ * For tryParseIntHex, the string must contain a number represented only by
+ * hexadecimal digits (0-9, a-z). Otherwise it will return false and the
+ * content of the result is undefined.
+ * @param str the string to parse
+ * @param result pointer to an unsigned integer for placing the result
+ * @return 1 (true) if parsed correctly, 0 (false) otherwise
+ */
+DECLEXPORT int tryParseIntHex(const char *str, unsigned int *result);
 
 /** Check for presence of a argument and emit warning message
  * This is a convenience function that checks whether an option has an

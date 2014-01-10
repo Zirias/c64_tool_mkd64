@@ -54,6 +54,40 @@ tryParseInt(const char *str, int *result)
 }
 
 SOEXPORT int
+tryParseIntHex(const char *str, unsigned int *result)
+{
+    const char *p = str;
+
+    if (!p) return 0;
+
+    *result = 0;
+
+    while (*p)
+    {
+        *result <<= 4;
+        if (*p >= '0' && *p <= '9')
+        {
+            *result += (*p - '0');
+        }
+        else if (*p >= 'a' && *p <= 'f')
+        {
+            *result += (*p - 'a' + 0xa);
+        }
+        else if (*p >= 'A' && *p <= 'F')
+        {
+            *result += (*p - 'A' + 0xa);
+        }
+        else
+        {
+            return 0;
+        }
+        ++p;
+    }
+
+    return 1;
+}
+
+SOEXPORT int
 checkArgAndWarn(char opt, const char *arg, int isFileOpt,
         int argExpected, const char *modid)
 {

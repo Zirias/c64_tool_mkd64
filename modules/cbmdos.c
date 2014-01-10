@@ -31,6 +31,7 @@ typedef struct
     Image *image;
     Block *bam;
     DirBlock *directory;
+    int allocateAllBlocks;
     int reservedDirBlocks;
     int dirInterleave;
     int usedDirBlocks;
@@ -237,6 +238,23 @@ _reserveDirSlot(Cbmdos *this)
 }
 
 static void
+_setDosVersion(Cbmdos *this, uint8_t version)
+{
+    BlockPosition pos = { 18, 0 };
+    Block *bam = image_block(this->image, &pos);
+    block_rawData(bam)[2] = version;
+}
+
+static void
+_allocateAll(Cbmdos *this)
+{
+    BlockPosition pos = { 18, 0 };
+    Block *bam = image_block(this->image, &pos);
+    this->allocateAllBlocks = 1;
+    memset(block_rawData(bam)+4, 0, 0x8b);
+}
+
+static void
 delete(IModule *this)
 {
     Cbmdos *dos = (Cbmdos *)this;
@@ -283,6 +301,7 @@ globalOption(IModule *this, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
     int intarg, arglen;
+    unsigned int uintarg;
 
     switch (opt)
     {
@@ -305,24 +324,49 @@ globalOption(IModule *this, char opt, const char *arg)
         case 'R':
             if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
-                if (!tryParseInt(arg, &intarg) || intarg < 0)
+                if (tryParseInt(arg, &intarg) && intarg >= 0)
+                {
+                    dos->reservedDirBlocks = intarg;
+                }
+                else
                 {
                     fprintf(stderr, "[cbmdos] Warning: invalid reserved "
                             "blocks count `%s' ignored.\n", arg);
                 }
-                dos->reservedDirBlocks = intarg;
             }
             return 1;
         case 'I':
             if (checkArgAndWarn(opt, arg, 0, 1, _modid))
             {
-                if (!tryParseInt(arg, &intarg) || intarg < 1)
+                if (tryParseInt(arg, &intarg) && intarg >= 1)
+                {
+                    dos->dirInterleave = intarg;
+                }
+                else
                 {
                     fprintf(stderr, "[cbmdos] Warning: invalid directory "
                             "interleave `%s' ignored.\n", arg);
                 }
-                dos->dirInterleave = intarg;
             }
+            return 1;
+        case 'D':
+            if (checkArgAndWarn(opt, arg, 0, 1, _modid))
+            {
+                if (tryParseIntHex(arg, &uintarg) &&
+                        uintarg >= 0 && uintarg <= 0xff)
+                {
+                    _setDosVersion(dos, (uint8_t)uintarg);
+                }
+                else
+                {
+                    fprintf(stderr, "[cbmdos] Warning: invalid DOS version "
+                            "`%s' ignored.\n", arg);
+                }
+            }
+            return 1;
+        case 'A':
+            checkArgAndWarn(opt, arg, 0, 0, _modid);
+            _allocateAll(dos);
             return 1;
         default:
             return 0;
@@ -469,6 +513,7 @@ statusChanged(IModule *this, const BlockPosition *pos)
 
     DBGd2("cbmdos: statusChanged", pos->track, pos->sector);
 
+    if (dos->allocateAllBlocks) return;
     if (pos->track < 1 || pos->track > 35) return;
 
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
@@ -564,6 +609,7 @@ instance(void)
     this->mod.requestReservedBlock = &requestReservedBlock;
     this->mod.imageComplete = &imageComplete;
 
+    this->allocateAllBlocks = 0;
     this->reservedDirBlocks = 18;
     this->dirInterleave = 3;
     this->usedDirBlocks = 0;
@@ -594,7 +640,12 @@ help(void)
 "  -R DIRBLOCKS  reserve {DIRBLOCKS} blocks for the directory. The default\n"
 "                value is 18, which is exactly the whole track #18.\n"
 "  -I INTERLV    Set the directory interleave to {INTERLV}. The default value\n"
-"                for directory interleave is 3.\n";
+"                for directory interleave is 3.\n"
+"  -D DOSVER     Set the dos version byte to {DOSVER}, given in hexadecimal.\n"
+"                The default value is (hex) 41. This can be used for soft\n"
+"                write protection, the original floppy will refuse any write\n"
+"                attempts if this value is changed.\n"
+"  -A            Allocate all blocks in the BAM.\n";
 }
 
 SOEXPORT const char *
