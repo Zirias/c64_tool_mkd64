@@ -251,7 +251,7 @@ _allocateAll(Cbmdos *this)
     BlockPosition pos = { 18, 0 };
     Block *bam = image_block(this->image, &pos);
     this->allocateAllBlocks = 1;
-    memset(block_rawData(bam)+4, 0, 0x8b);
+    memset(block_rawData(bam)+4, 0, 0x8c);
 }
 
 static void
