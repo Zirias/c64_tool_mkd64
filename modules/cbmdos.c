@@ -597,29 +597,20 @@ imageComplete(IModule *this)
 SOEXPORT IModule *
 instance(void)
 {
-    Cbmdos *this = malloc(sizeof(Cbmdos));
+    Cbmdos *this = calloc(1, sizeof(Cbmdos));
     this->mod.id = &id;
     this->mod.delete = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.fileOption = &fileOption;
-    this->mod.getTrack = 0;
     this->mod.fileWritten = &fileWritten;
     this->mod.statusChanged = &statusChanged;
     this->mod.requestReservedBlock = &requestReservedBlock;
     this->mod.imageComplete = &imageComplete;
 
-    this->allocateAllBlocks = 0;
     this->reservedDirBlocks = 18;
     this->dirInterleave = 3;
-    this->usedDirBlocks = 0;
-    this->extraDirBlocks = 0;
-    this->reclaimedDirBlocks = 0;
-    this->directory = 0;
-    this->currentDirBlock = 0;
-    this->directoryOverflow = 0;
     this->currentDirSlot = 7; /* force new dir block allocation */
-    this->dirSlotReserved = 0;
 
     this->alloc = cbmdosAllocator_new();
     
