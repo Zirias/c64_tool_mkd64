@@ -25,22 +25,29 @@ struct dirBlock
     BlockPosition pos;
 };
 
+typedef enum
+{
+    CDFL_NONE = 0,
+    CDFL_SLOTRESERVED = 1 << 0,
+    CDFL_DIROVERFLOW = 1 << 1,
+    CDFL_ALLOCALL = 1 << 2,
+    CDFL_ZEROFREE = 1 << 3
+} CbmdosFlags;
+
 typedef struct
 {
     IModule mod;
     Image *image;
     Block *bam;
     DirBlock *directory;
-    int allocateAllBlocks;
+    CbmdosFlags flags;
     int reservedDirBlocks;
     int dirInterleave;
     int usedDirBlocks;
     Block *currentDirBlock;
     int currentDirSlot;
-    int dirSlotReserved;
     int extraDirBlocks;
     int reclaimedDirBlocks;
-    int directoryOverflow;
     IBlockAllocator *alloc;
 } Cbmdos;
 
@@ -182,7 +189,7 @@ _reserveDirSlot(Cbmdos *this)
     BlockPosition pos;
     DirBlock *tmp;
 
-    if (this->dirSlotReserved) return;
+    if (this->flags & CDFL_SLOTRESERVED) return;
 
     ++(this->currentDirSlot);
     if (this->currentDirSlot > 7)
@@ -218,7 +225,7 @@ _reserveDirSlot(Cbmdos *this)
             {
                 fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
                 --(this->currentDirSlot);
-                this->directoryOverflow = 1;
+                this->flags |= CDFL_DIROVERFLOW;
                 return;
             }
         }
@@ -234,7 +241,7 @@ _reserveDirSlot(Cbmdos *this)
         this->currentDirSlot = 0;
         ++(this->usedDirBlocks);
     }
-    this->dirSlotReserved = 1;
+    this->flags |= CDFL_SLOTRESERVED;
 }
 
 static void
@@ -250,7 +257,7 @@ _allocateAll(Cbmdos *this)
 {
     BlockPosition pos = { 18, 0 };
     Block *bam = image_block(this->image, &pos);
-    this->allocateAllBlocks = 1;
+    this->flags |= CDFL_ALLOCALL;
     memset(block_rawData(bam)+4, 0, 0x8c);
 }
 
@@ -501,7 +508,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     fileEntry[0x1e] = blockSize & 0xff;
     fileEntry[0x1f] = blockSize >> 8;
 
-    dos->dirSlotReserved = 0;
+    dos->flags &= ~CDFL_SLOTRESERVED;
 }
 
 static void
@@ -513,7 +520,7 @@ statusChanged(IModule *this, const BlockPosition *pos)
 
     DBGd2("cbmdos: statusChanged", pos->track, pos->sector);
 
-    if (dos->allocateAllBlocks) return;
+    if (dos->flags & CDFL_ALLOCALL) return;
     if (pos->track < 1 || pos->track > 35) return;
 
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
@@ -565,7 +572,7 @@ imageComplete(IModule *this)
     Cbmdos *dos = (Cbmdos *)this;
     char buf[8];
 
-    if (dos->directoryOverflow) return;
+    if (dos->flags & CDFL_DIROVERFLOW) return;
 
     if (dos->extraDirBlocks)
     {
