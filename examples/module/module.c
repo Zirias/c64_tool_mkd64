@@ -24,7 +24,7 @@ delete(IModule *this)
 SOEXPORT IModule *
 instance(void)
 {
-    Module *mod = malloc(sizeof(Module));
+    Module *mod = calloc(1, sizeof(Module));
     mod->mod.id = &id;
     mod->mod.delete = &delete;
 
