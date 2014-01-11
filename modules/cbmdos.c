@@ -657,7 +657,7 @@ help(void)
 "                The default value is (hex) 41. This can be used for soft\n"
 "                write protection, the original floppy will refuse any write\n"
 "                attempts if this value is changed.\n"
-"  -A            Allocate all blocks in the BAM.\n";
+"  -A            Allocate all blocks in the BAM.\n"
 "  -0            Set available blocks to 0 in BAM, but still write flags for\n"
 "                individual sectors.\n";
 }
