@@ -48,7 +48,7 @@ static void
 moduleLoaded(void *owner, IModule *mod)
 {
     Mkd64 *this = owner;
-    mod->initImage(mod, this->image);
+    if (mod->initImage) mod->initImage(mod, this->image);
 }
 
 static void
