@@ -39,7 +39,9 @@ typedef struct
     SuggestedOption *suggestions;
     SuggestedOption *currentSuggestions;
     FILE *d64;
+    const char *d64name;
     FILE *map;
+    const char *mapname;
 } Mkd64;
 
 static Mkd64 mkd64 = {0};
@@ -397,6 +399,39 @@ printSuggestions(SuggestedOption *suggestions)
     }
 }
 
+static void
+printResult(void)
+{
+    int tn = 0;
+    int free = 0;
+    int sn;
+    Track *t;
+    BlockStatus s;
+
+    puts("mkd64 image creation complete.\n"
+            "Blocks on disk (. = free, : = reserved, but free, "
+            "# = allocated):");
+
+    while ((t = image_track(mkd64.image, ++tn)))
+    {
+        printf("%02d: ", tn);
+        for (sn = 0; sn < track_numSectors(t); ++sn)
+        {
+            s = track_blockStatus(t, sn);
+            if (s & BS_ALLOCATED) putc('#', stdout);
+            else if (s & BS_RESERVED) putc(':', stdout);
+            else
+            {
+                ++free;
+                putc('.', stdout);
+            }
+        }
+        putc('\n', stdout);
+    }
+
+    printf("%d blocks free.\n", free);
+}
+
 SOLOCAL int
 mkd64_run(void)
 {
@@ -524,6 +559,7 @@ mkd64_run_mainloop:
                     perror("Error opening D64 output file");
                     goto mkd64_run_error;
                 }
+                mkd64.d64name = arg;
                 break;
             case 'M':
                 handled = 1;
@@ -546,6 +582,7 @@ mkd64_run_mainloop:
                     perror("Error opening file map output file");
                     goto mkd64_run_error;
                 }
+                mkd64.mapname = arg;
                 break;
             case 'P':
                 handled = 1;
@@ -610,19 +647,30 @@ mkd64_run_mainloop:
 
     if (mkd64.d64)
     {
-        if (!image_dump(mkd64.image, mkd64.d64))
+        if (image_dump(mkd64.image, mkd64.d64))
+            printf("D64 image written to `%s'.\n", mkd64.d64name);
+        else
             perror("Error writing D64 image");
         fclose(mkd64.d64);
         mkd64.d64 = 0;
     }
+    else
+    {
+        fputs("Warning: no output file specified, use -o to save your created "
+                ".d64.\n", stderr);
+    }
 
     if (mkd64.map)
     {
-        if (!filemap_dump(image_filemap(mkd64.image), mkd64.map))
+        if (filemap_dump(image_filemap(mkd64.image), mkd64.map))
+            printf("File map for image written to `%s'.\n", mkd64.mapname);
+        else
             perror("Error writing file map");
         fclose(mkd64.map);
         mkd64.map = 0;
     }
+
+    printResult();
 
     return 1;
 
