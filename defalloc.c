@@ -57,6 +57,7 @@ allocFirstBlock(IBlockAllocator *this, const BlockPosition *pos)
         /* fixed start position requested */
         b = image_block(_img, pos);
         if (block_status(b) & ~_msk) return 0;
+        block_allocate(b);
         return b;
     }
 
