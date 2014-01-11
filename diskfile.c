@@ -61,6 +61,7 @@ diskfile_delete(Diskfile *this)
         free(tmp);
     }
 
+    free(this->name);
     free(this->content);
     free(this);
 }
