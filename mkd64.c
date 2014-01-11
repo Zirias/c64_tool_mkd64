@@ -279,7 +279,7 @@ processFiles(void)
             case 't':
                 if (checkArgAndWarn(opt, arg, 1, 1, 0))
                 {
-                    if (tryParseInt(arg, &intarg) || intarg < 1)
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
                     {
                         fprintf(stderr, "Warning: invalid track number `%s' "
                                 "ignored.\n", arg);
