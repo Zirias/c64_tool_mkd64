@@ -1,3 +1,10 @@
+mkd64 (1.2b) unstable; urgency=low
+  * New beta release
+  * core: minor API change: diskfile_setName takes copies.
+  * New module `separators' for some standard separators and boxes in PETSCII
+
+ -- Felix Palmen <felix@palmen-it.de>  Sat, 11 Jan 2014 03:16:04 +0100
+
 mkd64 (1.1b) unstable; urgency=low
 
   * New beta release

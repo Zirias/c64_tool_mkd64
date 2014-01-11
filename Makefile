@@ -103,11 +103,13 @@ mkd64_OBJS = mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
 mkd64_LDFLAGS = $(dl_LDFLAGS)
 mkd64_DEFINES = -DBUILDING_MKD64
 
-MODULES = cbmdos$(SO) xtracks$(SO)
+MODULES = cbmdos$(SO) xtracks$(SO) sepgen$(SO)
 
 cbmdos_OBJS = modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
 
 xtracks_OBJS = modules$(PSEP)xtracks.o
+
+sepgen_OBJS = modules$(PSEP)sepgen.o
 
 all:	bin modules
 
@@ -191,6 +193,10 @@ cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
 	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
+
+sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
 	$(VLD)
 	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 

@@ -55,6 +55,12 @@ xtracks
 
 This module provides tracks 36-40 and an option to write BAM entries in DOLPHIN DOS and/or SPEED DOS format
 
+separators
+----------
+
+This module provides an easy-to-use way to add separators and boxes to the
+directory, using PETSCII graphics. Use 'mkd64 -h separators' for details.
+
 module API
 ==========
 

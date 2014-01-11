@@ -5,7 +5,7 @@
 
 #include <mkd64/modrepo.h>
 
-#define MKD64_VERSION "1.1b"
+#define MKD64_VERSION "1.2b"
 
 DECLEXPORT Modrepo *mkd64_modrepo(void);
 

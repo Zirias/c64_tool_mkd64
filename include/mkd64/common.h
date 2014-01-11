@@ -31,7 +31,7 @@ typedef unsigned char uint8_t;
 #endif
 
 #define API_VER_MAJOR 1
-#define API_VER_MINOR 1
+#define API_VER_MINOR 2
 
 #define API_VER_BETA
 

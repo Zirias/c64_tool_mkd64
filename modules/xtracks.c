@@ -11,7 +11,7 @@
 
 MKD64_MODULE("xtracks")
 
-#define MODVERSION "1.1b"
+#define MODVERSION "1.2b"
 
 typedef struct
 {

@@ -29,7 +29,7 @@ struct diskfileData
 
 struct diskfile
 {
-    const char *name;
+    char *name;
     int fileNo;
     size_t size;
     size_t blocks;
@@ -61,6 +61,7 @@ diskfile_delete(Diskfile *this)
         free(tmp);
     }
 
+    free(this->name);
     free(this->content);
     free(this);
 }
@@ -170,7 +171,8 @@ diskfile_interleave(const Diskfile *this)
 SOEXPORT void
 diskfile_setName(Diskfile *this, const char *name)
 {
-    this->name = name;
+    if (this->name) free(this->name);
+    this->name = strdup(name);
 }
 
 SOEXPORT const char *
