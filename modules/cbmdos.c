@@ -247,18 +247,28 @@ _reserveDirSlot(Cbmdos *this)
 static void
 _setDosVersion(Cbmdos *this, uint8_t version)
 {
-    BlockPosition pos = { 18, 0 };
-    Block *bam = image_block(this->image, &pos);
-    block_rawData(bam)[2] = version;
+    block_rawData(this->bam)[2] = version;
 }
 
 static void
 _allocateAll(Cbmdos *this)
 {
-    BlockPosition pos = { 18, 0 };
-    Block *bam = image_block(this->image, &pos);
     this->flags |= CDFL_ALLOCALL;
-    memset(block_rawData(bam)+4, 0, 0x8c);
+    memset(block_rawData(this->bam)+4, 0, 0x8c);
+}
+
+static void
+_setZeroFree(Cbmdos *this)
+{
+    uint8_t *bamData;
+    int i;
+
+    if (!(this->flags & CDFL_ALLOCALL))
+    {
+        bamData = block_rawData(this->bam);
+        for (i = 0x4; i < 0x90; i += 0x4) bamData[i] = 0;
+    }
+    this->flags |= CDFL_ZEROFREE;
 }
 
 static void
@@ -374,6 +384,10 @@ globalOption(IModule *this, char opt, const char *arg)
         case 'A':
             checkArgAndWarn(opt, arg, 0, 0, _modid);
             _allocateAll(dos);
+            return 1;
+        case '0':
+            checkArgAndWarn(opt, arg, 0, 0, _modid);
+            _setZeroFree(dos);
             return 1;
         default:
             return 0;
@@ -524,8 +538,8 @@ statusChanged(IModule *this, const BlockPosition *pos)
     if (pos->track < 1 || pos->track > 35) return;
 
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
-    bamEntry[0] = track_freeSectors(image_track(dos->image, pos->track),
-            ~BS_ALLOCATED);
+    bamEntry[0] = dos->flags & CDFL_ZEROFREE ? 0 :
+        track_freeSectors(image_track(dos->image, pos->track), ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
     if (image_blockStatus(dos->image, pos) & BS_ALLOCATED)
@@ -644,6 +658,8 @@ help(void)
 "                write protection, the original floppy will refuse any write\n"
 "                attempts if this value is changed.\n"
 "  -A            Allocate all blocks in the BAM.\n";
+"  -0            Set available blocks to 0 in BAM, but still write flags for\n"
+"                individual sectors.\n";
 }
 
 SOEXPORT const char *
