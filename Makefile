@@ -48,7 +48,10 @@ mod_LIBS =
 
 endif
 
-CFLAGS += -Wall -std=c99 -pedantic -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
+CFLAGS += -fvisibility=hidden -std=c99 -Wall -pedantic \
+	  -Werror=implicit-int \
+	  -Werror=implicit-function-declaration \
+	  -Werror=declaration-after-statement
 
 VTAGS =
 V=0
@@ -116,11 +119,13 @@ xtracks_OBJS = modules$(PSEP)xtracks.o
 
 sepgen_OBJS = modules$(PSEP)sepgen.o
 
-all:	bin modules
 
-bin:	mkd64$(EXE)
 
-modules:	$(MODULES)
+all: bin modules
+
+bin: mkd64$(EXE)
+
+modules: $(MODULES)
 
 clean:
 	$(RMF) *.o
@@ -139,7 +144,7 @@ distclean: clean
 	$(RMF) modules$(PSEP)*.d
 	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.d
 
-strip:	all
+strip: all
 	strip --strip-all mkd64$(EXE)
 	strip --strip-unneeded *$(SO)
 
@@ -159,7 +164,7 @@ install: strip
 
 endif
 
-sdk:	bin mkd64.a
+sdk: bin mkd64.a
 	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
 	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
 	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
@@ -169,32 +174,44 @@ sdk:	bin mkd64.a
 	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
 	$(CPF) modapi.txt mkd64sdk
 
-mkd64$(EXE):	buildid.h $(mkd64_OBJS)
-	$(VLD)
-	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
-
-buildid$(EXE):	buildid.c
+buildid$(EXE): buildid.c
 	$(VCCLD)
 	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
 
-buildid.h:	buildid$(EXE)
+buildid.h: buildid$(EXE)
 	$(VGEN)
 	$(VR).$(PSEP)buildid$(EXE) > buildid.h
 
-modules$(PSEP)buildid.h:	buildid$(EXE)
+modules$(PSEP)buildid.h: buildid$(EXE)
 	$(VGEN)
 	$(VR).$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
 
-mkd64.a:	$(mkd64_OBJS)
+mkd64$(EXE): buildid.h $(mkd64_OBJS)
+	$(VLD)
+	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
+
+mkd64.a: $(mkd64_OBJS)
 	$(VGEN)
 	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
-modules$(PSEP)%.d:	modules$(PSEP)%.c Makefile | modules$(PSEP)buildid.h
+cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
+
+xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
+
+sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
+	$(VLD)
+	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
+
+modules$(PSEP)%.d: modules$(PSEP)%.c Makefile | modules$(PSEP)buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
 
-%.d:	.$(PSEP)$(PSEP)%.c Makefile | buildid.h
+%.d: .$(PSEP)$(PSEP)%.c Makefile | buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
@@ -210,18 +227,6 @@ modules$(PSEP)%.o: modules$(PSEP)%.c Makefile modules$(PSEP)buildid.h
 %.o: .$(PSEP)%.c Makefile buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
-
-cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
-
-xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
-
-sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
 .PHONY: all bin modules strip clean distclean install
 
