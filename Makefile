@@ -14,7 +14,8 @@ XFI = )
 CATIN = copy /b
 CATADD = +
 CATOUT =
-EQT=
+EQT =
+EN = <nul set /p=
 
 CFLAGS += -DWIN32
 dl_LDFLAGS = -lshlwapi 
@@ -37,8 +38,9 @@ XFI = ; fi
 CATIN = cat
 CATADD = 
 CATOUT = >
-EQT="
+EQT = "
 #" make vim syntax highlight happy
+EN = echo -n
 
 dl_LDFLAGS = -ldl -Wl,-E
 mod_CFLAGS = -fPIC
@@ -84,12 +86,14 @@ endif
 
 ifeq ($(V),1)
 VCC =
+VDEP =
 VLD =
 VCCLD =
 VGEN =
 VR =
 else
 VCC = @echo $(EQT)  $(VTAGS)   [CC]   $@$(EQT)
+VDEP = @echo $(EQT)  $(VTAGS)   [DEP]  $@$(EQT)
 VLD = @echo $(EQT)  $(VTAGS)   [LD]   $@$(EQT)
 VCCLD = @echo $(EQT)  $(VTAGS)   [CCLD] $@$(EQT)
 VGEN = @echo $(EQT)  $(VTAGS)   [GEN]  $@$(EQT)
@@ -119,6 +123,7 @@ modules:	$(MODULES)
 
 clean:
 	$(RMF) *.o
+	$(RMF) *.d
 	$(RMF) *.a
 	$(RMF) *$(SO)
 	$(RMF) modules$(PSEP)*.o
@@ -180,9 +185,16 @@ mkd64.a:	$(mkd64_OBJS)
 	$(VGEN)
 	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
+%.d:	./$(PSEP)%.c buildid.h
+	$(VDEP)
+	$(VR)$(EN) "$@ " >$@ $(CMDSEP) \
+		$(CC) -MM $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
+
 modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
+
+-include $(mkd64_OBJS:.o=.d)
 
 %.o: .$(PSEP)%.c buildid.h
 	$(VCC)
