@@ -53,6 +53,8 @@ CFLAGS += -fvisibility=hidden -std=c99 -Wall -pedantic \
 	  -Werror=implicit-function-declaration \
 	  -Werror=declaration-after-statement
 
+LDFLAGS += -static-libgcc
+
 VTAGS =
 V=0
 
