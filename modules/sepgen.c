@@ -12,7 +12,7 @@
 
 MKD64_MODULE("separators")
 
-#define MODVERSION "1.2b"
+#define MODVERSION "1.3b"
 
 static const char *moddeps[] = { "cbmdos", 0 };
 

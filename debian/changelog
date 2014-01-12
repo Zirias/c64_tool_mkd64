@@ -1,3 +1,19 @@
+mkd64 (1.3b) unstable; urgency=low
+
+  * New beta release
+  * bugfixes: - cbmdos: -A forgot to allocate very last block
+              - core: track number cmdline verification was broken
+  * core: informative output to stdout on successful runs
+  * core: API changes, IBlockAllocator implementations should not bother about
+    allocating at a fixed block position -- new Image method for that.
+  * core: const-correctness in public API
+  * core: public API completely documented in doxy/javadoc format
+  * cbmdos: new flag -0 achieves the same as -A (0 blocks free.), but with
+    otherwise correct BAM bits, so tools like dirmaster will show correctly
+    which blocks are allocated
+
+ -- Felix Palmen <felix@palmen-it.de>  Sun, 12 Jan 2014 12:12:55 +0100
+
 mkd64 (1.2b) unstable; urgency=low
   * New beta release
   * core: minor API change: diskfile_setName takes copies.
