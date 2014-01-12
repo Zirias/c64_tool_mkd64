@@ -127,7 +127,7 @@ clean:
 	$(RMF) *.a
 	$(RMF) *$(SO)
 	$(RMF) modules$(PSEP)*.o
-	$(RMF) modules$(PSEP)*$(PSEP)*.o
+	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.o
 	$(RMF) mkd64$(EXE)
 	$(RMF) buildid$(EXE)
 	$(RMF) buildid.h
@@ -137,7 +137,7 @@ clean:
 distclean: clean
 	$(RMF) *.d
 	$(RMF) modules$(PSEP)*.d
-	$(RMF) modules$(PSEP)*$(PSEP)*.d
+	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.d
 
 strip:	all
 	strip --strip-all mkd64$(EXE)
