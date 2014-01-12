@@ -19,21 +19,21 @@ void modrepo_reloadModules(Modrepo *this);
 int modrepo_createInstance(Modrepo *this, const char *id);
 int modrepo_deleteInstance(Modrepo *this, const char *id);
 
-char *modrepo_getHelp(Modrepo *this, const char *id);
-char *modrepo_getVersionInfo(Modrepo *this, const char *id);
+char *modrepo_getHelp(const Modrepo *this, const char *id);
+char *modrepo_getVersionInfo(const Modrepo *this, const char *id);
 
-void modrepo_allInitImage(Modrepo *this, Image *image);
-int modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg);
-int modrepo_allFileOption(Modrepo *this,
+void modrepo_allInitImage(const Modrepo *this, Image *image);
+int modrepo_allGlobalOption(const Modrepo *this, char opt, const char *arg);
+int modrepo_allFileOption(const Modrepo *this,
         Diskfile *file, char opt, const char *arg);
-Track *modrepo_firstGetTrack(Modrepo *this, int track);
-void modrepo_allFileWritten(Modrepo *this,
+Track *modrepo_firstGetTrack(const Modrepo *this, int track);
+void modrepo_allFileWritten(const Modrepo *this,
         Diskfile *file, const BlockPosition *start);
-void modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos);
-void modrepo_allImageComplete(Modrepo *this);
+void modrepo_allStatusChanged(const Modrepo *this, const BlockPosition *pos);
+void modrepo_allImageComplete(const Modrepo *this);
 
-const char *modrepo_nextAvailableModule(Modrepo *this, const char *id);
-const char *modrepo_nextLoadedModule(Modrepo *this, const char *id);
+const char *modrepo_nextAvailableModule(const Modrepo *this, const char *id);
+const char *modrepo_nextLoadedModule(const Modrepo *this, const char *id);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

@@ -59,7 +59,7 @@ struct modrepo
 };
 
 static Modentry *
-findModule(Modrepo *this, const char *id)
+findModule(const Modrepo *this, const char *id)
 {
     Modentry *current;
 
@@ -496,7 +496,7 @@ modrepo_isActive(const Modrepo *this, const char *id)
 }
 
 SOLOCAL char *
-modrepo_getHelp(Modrepo *this, const char *id)
+modrepo_getHelp(const Modrepo *this, const char *id)
 {
     static const char *mainHelpHeader = "* Module `%s':\n\n";
     static const char *noHelp = "  No help available.\n";
@@ -531,7 +531,7 @@ modrepo_getHelp(Modrepo *this, const char *id)
 }
 
 SOLOCAL char *
-modrepo_getVersionInfo(Modrepo *this, const char *id)
+modrepo_getVersionInfo(const Modrepo *this, const char *id)
 {
     static const char *versionHeader = "* Module `%s':\n\n";
     static const char *noVersion = "  No version info available.\n";
@@ -558,7 +558,7 @@ modrepo_getVersionInfo(Modrepo *this, const char *id)
 }
 
 SOLOCAL void
-modrepo_allInitImage(Modrepo *this, Image *image)
+modrepo_allInitImage(const Modrepo *this, Image *image)
 {
     Modinstance *current;
     for (current = this->instances; current; current = current->next)
@@ -569,7 +569,7 @@ modrepo_allInitImage(Modrepo *this, Image *image)
 }
 
 SOLOCAL int
-modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
+modrepo_allGlobalOption(const Modrepo *this, char opt, const char *arg)
 {
     Modinstance *current;
     int handled = 0;
@@ -588,7 +588,8 @@ modrepo_allGlobalOption(Modrepo *this, char opt, const char *arg)
 }
 
 SOLOCAL int
-modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
+modrepo_allFileOption(const Modrepo *this, Diskfile *file,
+        char opt, const char *arg)
 {
     Modinstance *current;
     int handled = 0;
@@ -607,7 +608,7 @@ modrepo_allFileOption(Modrepo *this, Diskfile *file, char opt, const char *arg)
 }
 
 SOLOCAL Track *
-modrepo_firstGetTrack(Modrepo *this, int track)
+modrepo_firstGetTrack(const Modrepo *this, int track)
 {
     Track *t = 0;
     Modinstance *current;
@@ -625,7 +626,7 @@ modrepo_firstGetTrack(Modrepo *this, int track)
 }
 
 SOLOCAL void
-modrepo_allFileWritten(Modrepo *this,
+modrepo_allFileWritten(const Modrepo *this,
         Diskfile *file, const BlockPosition *start)
 {
     Modinstance *current;
@@ -637,7 +638,7 @@ modrepo_allFileWritten(Modrepo *this,
 }
 
 SOLOCAL void
-modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
+modrepo_allStatusChanged(const Modrepo *this, const BlockPosition *pos)
 {
     Modinstance *current;
     for (current = this->instances; current; current = current->next)
@@ -648,7 +649,7 @@ modrepo_allStatusChanged(Modrepo *this, const BlockPosition *pos)
 }
 
 SOLOCAL void
-modrepo_allImageComplete(Modrepo *this)
+modrepo_allImageComplete(const Modrepo *this)
 {
     Modinstance *current;
     for (current = this->instances; current; current = current->next)
@@ -659,7 +660,7 @@ modrepo_allImageComplete(Modrepo *this)
 }
 
 SOLOCAL const char *
-modrepo_nextAvailableModule(Modrepo *this, const char *id)
+modrepo_nextAvailableModule(const Modrepo *this, const char *id)
 {
     Modentry *found;
     if (!id)
@@ -674,7 +675,7 @@ modrepo_nextAvailableModule(Modrepo *this, const char *id)
 }
 
 SOLOCAL const char *
-modrepo_nextLoadedModule(Modrepo *this, const char *id)
+modrepo_nextLoadedModule(const Modrepo *this, const char *id)
 {
     Modinstance *found;
     if (!id)

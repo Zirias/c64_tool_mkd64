@@ -19,7 +19,7 @@ struct track
 };
 
 static void
-blockStatusChanged(void *owner, Block *block,
+blockStatusChanged(void *owner, const Block *block,
         BlockStatus oldStatus, BlockStatus newStatus)
 {
     Track *this = (Track *) owner;
