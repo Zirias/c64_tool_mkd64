@@ -5,10 +5,23 @@
 
 #include <mkd64/modrepo.h>
 
-#define MKD64_VERSION "1.2b"
+#define MKD64_VERSION "1.3b"
 
+/** Get the current module repository
+ * @return the module repository instance in use
+ */
 DECLEXPORT Modrepo *mkd64_modrepo(void);
 
+/** Suggest a better option to the user
+ * call this from a module if you found a situation where specifying different
+ * options would have resulted in a "better" image (e.g. less fragmentation).
+ * @param mod the module suggesting the option
+ * @param int fileNo the number of the concerned file, or 0 if it is a global
+ *  option
+ * @param opt the option suggested to use
+ * @param arg the option argument suggested to use (may be 0).
+ * @param reason a brief explanation why this is suggested.
+ */
 DECLEXPORT void mkd64_suggestOption(IModule *mod, int fileNo,
         char opt, const char *arg, const char *reason);
 
