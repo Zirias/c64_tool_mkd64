@@ -83,6 +83,7 @@ VTAGS += [32]
 else
 CC = gcc
 endif
+CCDEP = $(CC) -MM
 
 ifeq ($(V),1)
 VCC =
@@ -123,10 +124,10 @@ modules:	$(MODULES)
 
 clean:
 	$(RMF) *.o
-	$(RMF) *.d
 	$(RMF) *.a
 	$(RMF) *$(SO)
 	$(RMF) modules$(PSEP)*.o
+	$(RMF) modules$(PSEP)*$(PSEP)*.o
 	$(RMF) mkd64$(EXE)
 	$(RMF) buildid$(EXE)
 	$(RMF) buildid.h
@@ -134,6 +135,9 @@ clean:
 	$(RMFR) mkd64sdk
 
 distclean: clean
+	$(RMF) *.d
+	$(RMF) modules$(PSEP)*.d
+	$(RMF) modules$(PSEP)*$(PSEP)*.d
 
 strip:	all
 	strip --strip-all mkd64$(EXE)
@@ -185,17 +189,24 @@ mkd64.a:	$(mkd64_OBJS)
 	$(VGEN)
 	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
-%.d:	./$(PSEP)%.c buildid.h
+modules$(PSEP)%.d:	modules$(PSEP)%.c | modules$(PSEP)buildid.h
 	$(VDEP)
-	$(VR)$(EN) "$@ " >$@ $(CMDSEP) \
-		$(CC) -MM $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
+	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
+		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
 
+%.d:	./$(PSEP)%.c | buildid.h
+	$(VDEP)
+	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
+		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
+
+-include $(cbmdos_OBJS:.o=.d)
+-include $(xtracks_OBJS:.o=.d)
+-include $(sepgen_OBJS:.o=.d)
 modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 -include $(mkd64_OBJS:.o=.d)
-
 %.o: .$(PSEP)%.c buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
