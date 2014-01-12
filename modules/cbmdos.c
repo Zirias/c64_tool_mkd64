@@ -14,7 +14,7 @@
 
 MKD64_MODULE("cbmdos")
 
-#define MODVERSION "1.2b"
+#define MODVERSION "1.3b"
 
 struct dirBlock;
 typedef struct dirBlock DirBlock;
@@ -25,22 +25,29 @@ struct dirBlock
     BlockPosition pos;
 };
 
+typedef enum
+{
+    CDFL_NONE = 0,
+    CDFL_SLOTRESERVED = 1 << 0,
+    CDFL_DIROVERFLOW = 1 << 1,
+    CDFL_ALLOCALL = 1 << 2,
+    CDFL_ZEROFREE = 1 << 3
+} CbmdosFlags;
+
 typedef struct
 {
     IModule mod;
     Image *image;
     Block *bam;
     DirBlock *directory;
-    int allocateAllBlocks;
+    CbmdosFlags flags;
     int reservedDirBlocks;
     int dirInterleave;
     int usedDirBlocks;
     Block *currentDirBlock;
     int currentDirSlot;
-    int dirSlotReserved;
     int extraDirBlocks;
     int reclaimedDirBlocks;
-    int directoryOverflow;
     IBlockAllocator *alloc;
 } Cbmdos;
 
@@ -98,7 +105,7 @@ static const uint8_t _initialBam[256] = {
 };
 
 static void
-_deleteFileData(void *owner, void *data)
+_deleteFileData(const void *owner, void *data)
 {
     free(data);
 }
@@ -182,7 +189,7 @@ _reserveDirSlot(Cbmdos *this)
     BlockPosition pos;
     DirBlock *tmp;
 
-    if (this->dirSlotReserved) return;
+    if (this->flags & CDFL_SLOTRESERVED) return;
 
     ++(this->currentDirSlot);
     if (this->currentDirSlot > 7)
@@ -218,7 +225,7 @@ _reserveDirSlot(Cbmdos *this)
             {
                 fputs("[cbmdos] ERROR: no space left for directory!\n", stderr);
                 --(this->currentDirSlot);
-                this->directoryOverflow = 1;
+                this->flags |= CDFL_DIROVERFLOW;
                 return;
             }
         }
@@ -234,24 +241,34 @@ _reserveDirSlot(Cbmdos *this)
         this->currentDirSlot = 0;
         ++(this->usedDirBlocks);
     }
-    this->dirSlotReserved = 1;
+    this->flags |= CDFL_SLOTRESERVED;
 }
 
 static void
 _setDosVersion(Cbmdos *this, uint8_t version)
 {
-    BlockPosition pos = { 18, 0 };
-    Block *bam = image_block(this->image, &pos);
-    block_rawData(bam)[2] = version;
+    block_rawData(this->bam)[2] = version;
 }
 
 static void
 _allocateAll(Cbmdos *this)
 {
-    BlockPosition pos = { 18, 0 };
-    Block *bam = image_block(this->image, &pos);
-    this->allocateAllBlocks = 1;
-    memset(block_rawData(bam)+4, 0, 0x8b);
+    this->flags |= CDFL_ALLOCALL;
+    memset(block_rawData(this->bam)+4, 0, 0x8c);
+}
+
+static void
+_setZeroFree(Cbmdos *this)
+{
+    uint8_t *bamData;
+    int i;
+
+    if (!(this->flags & CDFL_ALLOCALL))
+    {
+        bamData = block_rawData(this->bam);
+        for (i = 0x4; i < 0x90; i += 0x4) bamData[i] = 0;
+    }
+    this->flags |= CDFL_ZEROFREE;
 }
 
 static void
@@ -367,6 +384,10 @@ globalOption(IModule *this, char opt, const char *arg)
         case 'A':
             checkArgAndWarn(opt, arg, 0, 0, _modid);
             _allocateAll(dos);
+            return 1;
+        case '0':
+            checkArgAndWarn(opt, arg, 0, 0, _modid);
+            _setZeroFree(dos);
             return 1;
         default:
             return 0;
@@ -501,7 +522,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     fileEntry[0x1e] = blockSize & 0xff;
     fileEntry[0x1f] = blockSize >> 8;
 
-    dos->dirSlotReserved = 0;
+    dos->flags &= ~CDFL_SLOTRESERVED;
 }
 
 static void
@@ -513,12 +534,12 @@ statusChanged(IModule *this, const BlockPosition *pos)
 
     DBGd2("cbmdos: statusChanged", pos->track, pos->sector);
 
-    if (dos->allocateAllBlocks) return;
+    if (dos->flags & CDFL_ALLOCALL) return;
     if (pos->track < 1 || pos->track > 35) return;
 
     bamEntry = block_rawData(dos->bam) + 4 * pos->track;
-    bamEntry[0] = track_freeSectors(image_track(dos->image, pos->track),
-            ~BS_ALLOCATED);
+    bamEntry[0] = dos->flags & CDFL_ZEROFREE ? 0 :
+        track_freeSectors(image_track(dos->image, pos->track), ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
     if (image_blockStatus(dos->image, pos) & BS_ALLOCATED)
@@ -565,7 +586,7 @@ imageComplete(IModule *this)
     Cbmdos *dos = (Cbmdos *)this;
     char buf[8];
 
-    if (dos->directoryOverflow) return;
+    if (dos->flags & CDFL_DIROVERFLOW) return;
 
     if (dos->extraDirBlocks)
     {
@@ -636,7 +657,9 @@ help(void)
 "                The default value is (hex) 41. This can be used for soft\n"
 "                write protection, the original floppy will refuse any write\n"
 "                attempts if this value is changed.\n"
-"  -A            Allocate all blocks in the BAM.\n";
+"  -A            Allocate all blocks in the BAM.\n"
+"  -0            Set available blocks to 0 in BAM, but still write flags for\n"
+"                individual sectors.\n";
 }
 
 SOEXPORT const char *

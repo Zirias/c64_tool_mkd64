@@ -102,6 +102,23 @@ image_block(const Image *this, const BlockPosition *pos)
     return track_block(t, pos->sector);
 }
 
+SOEXPORT Block *
+image_allocateAt(const Image *this, const BlockPosition *pos)
+{
+    Block *b = image_block(this, pos);
+    BlockStatus s;
+
+    if (!b) return 0;
+    s = block_status(b);
+    if (s & BS_ALLOCATED) return 0;
+    if (s & BS_RESERVED)
+    {
+        if (!block_unReserve(b)) return 0;
+    }
+    block_allocate(b);
+    return b;
+}
+
 SOLOCAL Filemap *
 image_filemap(const Image *this)
 {
@@ -116,7 +133,7 @@ image_setAllocator(Image *this, IBlockAllocator *allocator)
 }
 
 SOEXPORT IBlockAllocator *
-image_allocator(Image *this)
+image_allocator(const Image *this)
 {
     return this->allocator;
 }

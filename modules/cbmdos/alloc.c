@@ -43,20 +43,12 @@ setConsiderReserved(IBlockAllocator *this, int considerReserved)
 }
 
 static Block *
-allocFirstBlock(IBlockAllocator *this, const BlockPosition *pos)
+allocFirstBlock(IBlockAllocator *this)
 {
     CbmdosAllocator *a = (CbmdosAllocator *)this;
     Track *t;
     Block *b;
     int tn, td, sn;
-
-    if (pos && pos->track > 0)
-    {
-        /* fixed start position requested */
-        b = image_block(a->img, pos);
-        if (block_status(b) & ~a->msk) return 0;
-        return b;
-    }
 
     /* find first track that has free sectors left */
     td = 0;

@@ -19,7 +19,7 @@ struct track
 };
 
 static void
-blockStatusChanged(void *owner, Block *block,
+blockStatusChanged(void *owner, const Block *block,
         BlockStatus oldStatus, BlockStatus newStatus)
 {
     Track *this = (Track *) owner;
@@ -143,7 +143,7 @@ track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
 }
 
 SOEXPORT Block *
-track_block(Track *this, int sector)
+track_block(const Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
     return this->sectors[sector];

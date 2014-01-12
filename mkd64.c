@@ -39,7 +39,9 @@ typedef struct
     SuggestedOption *suggestions;
     SuggestedOption *currentSuggestions;
     FILE *d64;
+    const char *d64name;
     FILE *map;
+    const char *mapname;
 } Mkd64;
 
 static Mkd64 mkd64 = {0};
@@ -279,7 +281,7 @@ processFiles(void)
             case 't':
                 if (checkArgAndWarn(opt, arg, 1, 1, 0))
                 {
-                    if (tryParseInt(arg, &intarg) || intarg < 1)
+                    if (!tryParseInt(arg, &intarg) || intarg < 1)
                     {
                         fprintf(stderr, "Warning: invalid track number `%s' "
                                 "ignored.\n", arg);
@@ -397,26 +399,45 @@ printSuggestions(SuggestedOption *suggestions)
     }
 }
 
-SOLOCAL int
-mkd64_run(void)
+static void
+printResult(void)
 {
-    int fileFound = 0;
-    int handled;
-    char opt;
+    int tn = 0;
+    int free = 0;
+    int sn;
+    Track *t;
+    BlockStatus s;
+
+    puts("mkd64 image creation complete.\n"
+            "Blocks on disk (. = free, : = reserved, but free, "
+            "# = allocated):");
+
+    while ((t = image_track(mkd64.image, ++tn)))
+    {
+        printf("%02d: ", tn);
+        for (sn = 0; sn < track_numSectors(t); ++sn)
+        {
+            s = track_blockStatus(t, sn);
+            if (s & BS_ALLOCATED) putc('#', stdout);
+            else if (s & BS_RESERVED) putc(':', stdout);
+            else
+            {
+                ++free;
+                putc('.', stdout);
+            }
+        }
+        putc('\n', stdout);
+    }
+
+    printf("%d blocks free.\n", free);
+}
+
+static int
+processSingleOptions(void)
+{
     const char *arg, *modid;
-    int intarg;
     char *argDup;
     FILE *cmdfile;
-
-    if (!mkd64.initialized) return 0;
-
-    if (!cmdline_moveNext(mkd64.cmdline))
-    {
-        /* no options given */
-
-        printUsage();
-        return 0;
-    }
 
     if (cmdline_count(mkd64.cmdline) == 1)
     {
@@ -425,13 +446,13 @@ mkd64_run(void)
         if (cmdline_opt(mkd64.cmdline) == 'V')
         {
             printVersion(cmdline_arg(mkd64.cmdline));
-            return 0;
+            return 1;
         }
 
         if (cmdline_opt(mkd64.cmdline) == 'h')
         {
             printHelp(cmdline_arg(mkd64.cmdline));
-            return 0;
+            return 1;
         }
 
         if (cmdline_opt(mkd64.cmdline) == 'C')
@@ -440,14 +461,14 @@ mkd64_run(void)
             if (!arg)
             {
                 fputs("Error: missing argument to single option -C.\n", stderr);
-                return 0;
+                return 1;
             }
             argDup = strdup(arg);
             cmdfile = fopen(argDup, "rb");
             if (!cmdfile)
             {
                 perror("Error opening commandline file");
-                return 0;
+                return 1;
             }
             cmdline_parseFile(mkd64.cmdline, cmdfile);
             fclose(cmdfile);
@@ -455,7 +476,7 @@ mkd64_run(void)
             {
                 fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
                 free(argDup);
-                return 0;
+                return 1;
             }
             free(argDup);
         }
@@ -473,14 +494,20 @@ mkd64_run(void)
             {
                 fprintf(stderr, "  %s\n", modid);
             }
-            return 0;
+            return 1;
         }
     }
 
-    mkd64.currentPass = 1;
-    mkd64.maxPasses = 1;
+    return 0;
+}
 
-mkd64_run_mainloop:
+static int
+processGlobalOptions(void)
+{
+    char opt;
+    const char *arg;
+    int intarg, handled;
+
     do
     {
         opt = cmdline_opt(mkd64.cmdline);
@@ -492,60 +519,47 @@ mkd64_run_mainloop:
             case 'm':
                 handled = 1;
                 if (mkd64.currentPass > 1) break;
-                if (!arg)
-                {
-                    fputs("Error: missing argument to global option -m.\n",
-                            stderr);
-                    goto mkd64_run_error;
-                }
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
                 if (!modrepo_createInstance(mkd64.modrepo, arg))
                 {
                     fprintf(stderr, "Error: module `%s' not found.\n", arg);
-                    goto mkd64_run_error;
+                    return 0;
                 }
                 break;
             case 'o':
                 handled = 1;
                 if (mkd64.currentPass > 1) break;
-                if (!arg)
-                {
-                    fputs("Error: missing argument to global option -o.\n",
-                            stderr);
-                    goto mkd64_run_error;
-                }
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
                 if (mkd64.d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
-                    goto mkd64_run_error;
+                    return 0;
                 }
                 mkd64.d64 = fopen(arg, "wb");
                 if (!mkd64.d64)
                 {
                     perror("Error opening D64 output file");
-                    goto mkd64_run_error;
+                    return 0;
                 }
+                mkd64.d64name = arg;
                 break;
             case 'M':
                 handled = 1;
                 if (mkd64.currentPass > 1) break;
-                if (!arg)
-                {
-                    fputs("Error: missing argument to global option -M.\n",
-                            stderr);
-                    goto mkd64_run_error;
-                }
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
                 if (mkd64.map)
                 {
                     fputs("Error: file map output file specified twice.\n",
                             stderr);
-                    goto mkd64_run_error;
+                    return 0;
                 }
                 mkd64.map = fopen(arg, "w");
                 if (!mkd64.map)
                 {
                     perror("Error opening file map output file");
-                    goto mkd64_run_error;
+                    return 0;
                 }
+                mkd64.mapname = arg;
                 break;
             case 'P':
                 handled = 1;
@@ -556,7 +570,7 @@ mkd64_run_mainloop:
                     {
                         fprintf(stderr, "Error: invalid maximum passes `%s' "
                                 "given.\n", arg);
-                        goto mkd64_run_error;
+                        return 0;
                     }
                     mkd64.maxPasses = intarg;
                 }
@@ -566,63 +580,93 @@ mkd64_run_mainloop:
                 }
                 break;
             case 'f':
-                fileFound = 1;
-                handled = 1;
-                break;
+                return 1;
         }
-        if (!fileFound)
-        {
-            if (modrepo_allGlobalOption(mkd64.modrepo, opt, arg))
-                handled = 1;
-        }
-        if (!handled)
+        if (!(modrepo_allGlobalOption(mkd64.modrepo, opt, arg) || handled))
         {
             fprintf(stderr, "Warning: unrecognized global option -%c ignored.\n"
                    "         Maybe you forgot to load a module?\n", opt);
         }
-    } while (!fileFound && cmdline_moveNext(mkd64.cmdline));
+    } while (cmdline_moveNext(mkd64.cmdline));
+    return 1;
+}
 
-    if (fileFound)
+SOLOCAL int
+mkd64_run(void)
+{
+    if (!mkd64.initialized) return 0;
+
+    if (!cmdline_moveNext(mkd64.cmdline))
     {
-        processSuggestions();
-        if (!processFiles()) goto mkd64_run_error;
+        /* no options given */
+
+        printUsage();
+        return 0;
     }
 
-    modrepo_allImageComplete(mkd64.modrepo);
+    if (processSingleOptions()) return 0;
 
-    if (mkd64.suggestions)
+    mkd64.currentPass = 1;
+    mkd64.maxPasses = 1;
+
+    do
     {
-        printSuggestions(mkd64.suggestions);
-        if (mkd64.currentPass < mkd64.maxPasses)
+        if (!processGlobalOptions()) goto mkd64_run_error;
+
+        if (cmdline_opt(mkd64.cmdline) == 'f')
         {
-            fputs("[Info] rerunning using the above suggestions ...\n", stderr);
-            image_reset(mkd64.image);
-            modrepo_reloadModules(mkd64.modrepo);
-            cmdline_moveNext(mkd64.cmdline);
-            deleteSuggestions(mkd64.currentSuggestions);
-            mkd64.currentSuggestions = mkd64.suggestions;
-            mkd64.suggestions = 0;
-            fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
-            fileFound = 0;
-            goto mkd64_run_mainloop;
+            processSuggestions();
+            if (!processFiles()) goto mkd64_run_error;
+        }
+
+        modrepo_allImageComplete(mkd64.modrepo);
+
+        deleteSuggestions(mkd64.currentSuggestions);
+
+        if (mkd64.suggestions)
+        {
+            printSuggestions(mkd64.suggestions);
+            if (mkd64.currentPass < mkd64.maxPasses)
+            {
+                fputs("[Info] rerunning using the above suggestions ...\n",
+                        stderr);
+                image_reset(mkd64.image);
+                modrepo_reloadModules(mkd64.modrepo);
+                cmdline_moveNext(mkd64.cmdline);
+                mkd64.currentSuggestions = mkd64.suggestions;
+                mkd64.suggestions = 0;
+                fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+            }
         }
     }
+    while (mkd64.currentSuggestions);
 
     if (mkd64.d64)
     {
-        if (!image_dump(mkd64.image, mkd64.d64))
+        if (image_dump(mkd64.image, mkd64.d64))
+            printf("D64 image written to `%s'.\n", mkd64.d64name);
+        else
             perror("Error writing D64 image");
         fclose(mkd64.d64);
         mkd64.d64 = 0;
     }
+    else
+    {
+        fputs("Warning: no output file specified, use -o to save your created "
+                ".d64.\n", stderr);
+    }
 
     if (mkd64.map)
     {
-        if (!filemap_dump(image_filemap(mkd64.image), mkd64.map))
+        if (filemap_dump(image_filemap(mkd64.image), mkd64.map))
+            printf("File map for image written to `%s'.\n", mkd64.mapname);
+        else
             perror("Error writing file map");
         fclose(mkd64.map);
         mkd64.map = 0;
     }
+
+    printResult();
 
     return 1;
 

@@ -3,7 +3,7 @@
 
 #include <mkd64/block.h>
 
-typedef void (*BlockStatusChangedHandler)(void *owner, Block *block,
+typedef void (*BlockStatusChangedHandler)(void *owner, const Block *block,
         BlockStatus oldStatus, BlockStatus newStatus);
 
 Block *block_new(void *owner,
