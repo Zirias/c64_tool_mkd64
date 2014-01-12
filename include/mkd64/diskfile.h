@@ -10,11 +10,11 @@ typedef struct diskfile Diskfile;
 #include <mkd64/block.h>
 #include <stdlib.h>
 
-typedef void (*DataDelete)(void *owner, void *data);
+typedef void (*DataDelete)(const void *owner, void *data);
 
-DECLEXPORT void diskfile_attachData(Diskfile *this, void *owner, void *data,
-        DataDelete deleter);
-DECLEXPORT void *diskfile_data(const Diskfile *this, void *owner);
+DECLEXPORT void diskfile_attachData(Diskfile *this, const void *owner,
+        void *data, DataDelete deleter);
+DECLEXPORT void *diskfile_data(const Diskfile *this, const void *owner);
 
 DECLEXPORT size_t diskfile_size(const Diskfile *this);
 DECLEXPORT size_t diskfile_blocks(const Diskfile *this);

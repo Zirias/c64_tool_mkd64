@@ -10,7 +10,7 @@ typedef struct modrepo Modrepo;
 
 DECLEXPORT IModule *modrepo_moduleInstance(Modrepo *this, const char *id);
 
-DECLEXPORT int modrepo_isActive(Modrepo *this, const char *id);
+DECLEXPORT int modrepo_isActive(const Modrepo *this, const char *id);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

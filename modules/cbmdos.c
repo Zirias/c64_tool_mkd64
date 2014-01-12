@@ -105,7 +105,7 @@ static const uint8_t _initialBam[256] = {
 };
 
 static void
-_deleteFileData(void *owner, void *data)
+_deleteFileData(const void *owner, void *data)
 {
     free(data);
 }

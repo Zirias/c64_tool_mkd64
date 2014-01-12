@@ -74,7 +74,7 @@ findModule(Modrepo *this, const char *id)
 }
 
 static Modinstance *
-findInstance(Modrepo *this, const char *id)
+findInstance(const Modrepo *this, const char *id)
 {
     Modinstance *current;
     
@@ -490,7 +490,7 @@ modrepo_deleteInstance(Modrepo *this, const char *id)
 }
 
 SOEXPORT int
-modrepo_isActive(Modrepo *this, const char *id)
+modrepo_isActive(const Modrepo *this, const char *id)
 {
     return findInstance(this, id) ? 1 : 0;
 }

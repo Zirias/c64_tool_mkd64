@@ -21,7 +21,7 @@ DECLEXPORT int track_allocateBlock(Track *this, int sector);
 DECLEXPORT int track_allocateFirstFreeFrom(Track *this,
         int sector, int considerReserved);
 
-DECLEXPORT Block *track_block(Track *this, int sector);
+DECLEXPORT Block *track_block(const Track *this, int sector);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

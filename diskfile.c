@@ -22,7 +22,7 @@ typedef struct diskfileData DiskfileData;
 struct diskfileData
 {
     DiskfileData *next;
-    void *owner;
+    const void *owner;
     void *data;
     DataDelete deleter;
 };
@@ -67,7 +67,7 @@ diskfile_delete(Diskfile *this)
 }
 
 static DiskfileData *
-_createData(void *owner, void *data, DataDelete deleter)
+_createData(const void *owner, void *data, DataDelete deleter)
 {
     DiskfileData *d = malloc(sizeof(DiskfileData));
     d->next = 0;
@@ -78,7 +78,7 @@ _createData(void *owner, void *data, DataDelete deleter)
 }
 
 SOEXPORT void
-diskfile_attachData(Diskfile *this, void *owner, void *data,
+diskfile_attachData(Diskfile *this, const void *owner, void *data,
         DataDelete deleter)
 {
     DiskfileData *parent;
@@ -106,7 +106,7 @@ diskfile_attachData(Diskfile *this, void *owner, void *data,
 }
 
 SOEXPORT void *
-diskfile_data(const Diskfile *this, void *owner)
+diskfile_data(const Diskfile *this, const void *owner)
 {
     DiskfileData *d;
 
