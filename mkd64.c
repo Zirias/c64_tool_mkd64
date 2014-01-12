@@ -225,12 +225,12 @@ static int
 processFiles(void)
 {
     Diskfile *currentFile = 0;
+    Diskfile *nextFile;
     BlockPosition pos;
     char opt;
     int handled;
     const char *arg;
     int intarg;
-    FILE *hostFile;
 
     mkd64.currentFileNo = 0;
 
@@ -253,29 +253,28 @@ processFiles(void)
                     currentFile = 0;
                     --mkd64.currentFileNo;
                 }
+                nextFile = diskfile_new();
                 if (arg)
                 {
-                    hostFile = fopen(arg, "rb");
-                    if (hostFile)
+                    if (diskfile_readFromHost(nextFile, arg))
                     {
-                        currentFile = diskfile_new();
-                        diskfile_readFromHost(currentFile, hostFile);
-                        diskfile_setName(currentFile,arg);
-                        fclose(hostFile);
+                        diskfile_setName(nextFile, arg);
                     }
                     else
                     {
                         fprintf(stderr, "Error opening `%s' for reading: %s\n",
                                 arg, strerror(errno));
+                        diskfile_delete(nextFile);
+                        nextFile = 0;
                     }
                 }
-                else
+                if (nextFile)
                 {
-                    currentFile = diskfile_new();
+                    currentFile = nextFile;
+                    diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
+                    pos.track = 0;
+                    pos.sector = 0;
                 }
-                diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
-                pos.track = 0;
-                pos.sector = 0;
                 handled = 1;
                 break;
             case 't':
@@ -437,7 +436,6 @@ processSingleOptions(void)
 {
     const char *arg, *modid;
     char *argDup;
-    FILE *cmdfile;
 
     if (cmdline_count(mkd64.cmdline) == 1)
     {
@@ -463,22 +461,19 @@ processSingleOptions(void)
                 fputs("Error: missing argument to single option -C.\n", stderr);
                 return 1;
             }
-            argDup = strdup(arg);
-            cmdfile = fopen(argDup, "rb");
-            if (!cmdfile)
+            argDup = copyString(arg);
+            if (!(cmdline_parseFile(mkd64.cmdline, argDup)))
             {
-                perror("Error opening commandline file");
-                return 1;
-            }
-            cmdline_parseFile(mkd64.cmdline, cmdfile);
-            fclose(cmdfile);
-            if (!cmdline_moveNext(mkd64.cmdline))
-            {
-                fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
+                perror("Error opening or reading commandline file");
                 free(argDup);
                 return 1;
             }
             free(argDup);
+            if (!cmdline_moveNext(mkd64.cmdline))
+            {
+                fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
+                return 1;
+            }
         }
 
         if (cmdline_opt(mkd64.cmdline) == 'M')
@@ -717,7 +712,7 @@ mkd64_suggestOption(IModule *mod, int fileNo,
     sopt->suggestedBy = mod;
     sopt->fileNo = fileNo;
     sopt->opt = opt;
-    sopt->arg = arg ? strdup(arg) : 0;
+    sopt->arg = arg ? copyString(arg) : 0;
     sopt->reason = reason;
 
     if (!mkd64.suggestions) mkd64.suggestions = sopt;

@@ -1,5 +1,6 @@
 #include <mkd64/common.h>
 #include <mkd64/debug.h>
+#include <mkd64/util.h>
 
 #include "diskfile.h"
 #include "image.h"
@@ -118,13 +119,15 @@ diskfile_data(const Diskfile *this, const void *owner)
 }
 
 SOLOCAL int
-diskfile_readFromHost(Diskfile *this, FILE *hostfile)
+diskfile_readFromHost(Diskfile *this, const char *hostfile)
 {
     static struct stat st;
     void *ptr;
+    FILE *f;
 
-    if (fstat(fileno(hostfile), &st) < 0) return 0;
+    if (stat(hostfile, &st) < 0) return 0;
     if (st.st_size < 1) return 0;
+    if(!(f = fopen(hostfile, "rb"))) return 0;
 
     this->size = (size_t) st.st_size;
     free(this->content);
@@ -132,14 +135,15 @@ diskfile_readFromHost(Diskfile *this, FILE *hostfile)
 
     ptr = malloc(this->size);
     
-    rewind(hostfile);
-    if (fread(ptr, 1, this->size, hostfile) != this->size)
+    if (fread(ptr, 1, this->size, f) != this->size)
     {
         this->size = 0;
         free(ptr);
+        fclose(f);
         return 0;
     }
 
+    fclose(f);
     this->content = ptr;
     return 1;
 }
@@ -172,7 +176,7 @@ SOEXPORT void
 diskfile_setName(Diskfile *this, const char *name)
 {
     if (this->name) free(this->name);
-    this->name = strdup(name);
+    this->name = copyString(name);
 }
 
 SOEXPORT const char *

@@ -1,18 +1,16 @@
-#include <mkd64/common.h>
-#include <mkd64/debug.h>
-
-#include "modrepo.h"
-
-#include <stdio.h>
-#include <string.h>
 #ifdef WIN32
+
 #include <windows.h>
 #include <shlwapi.h>
 #define LOAD_MOD(name) LoadLibrary(name)
 #define GET_MOD_METHOD(so, name) GetProcAddress(so, name)
 #define UNLOAD_MOD(so) FreeLibrary(so)
 #define dlerror(x) "Error loading module"
+
 #else
+
+#define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE 500
 #include <glob.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -21,7 +19,16 @@
 #define LOAD_MOD(name) dlopen(name, RTLD_NOW)
 #define GET_MOD_METHOD(so, name) dlsym(so, name)
 #define UNLOAD_MOD(so) dlclose(so)
+
 #endif
+
+#include <mkd64/common.h>
+#include <mkd64/debug.h>
+
+#include "modrepo.h"
+
+#include <stdio.h>
+#include <string.h>
 
 struct modinstance;
 typedef struct modinstance Modinstance;
@@ -321,7 +328,7 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
             continue;
         }
 
-        apiVer = ((const int *(*)(void))modopt)();
+        apiVer = ((const int *(*)(void))((uintptr_t)modopt))();
 
         if (!_checkApiVersion(name, apiVer))
         {
@@ -350,23 +357,27 @@ modrepo_new(const char *exe, void *owner, ModInstanceCreated callback)
         next = malloc(sizeof(Modentry));
         next->next = 0;
         next->so = modso;
-        next->id = ((const char *(*)(void))modid)();
-        next->instance = (IModule *(*)(void))modinst;
+        next->id = ((const char *(*)(void))((uintptr_t)modid))();
+        next->instance = (IModule *(*)(void))((uintptr_t)modinst);
 
         modopt = GET_MOD_METHOD(modso, "depends");
-        next->depends = modopt ? ((const char **(*)(void))modopt)() : 0;
+        next->depends = modopt ?
+            ((const char **(*)(void))((uintptr_t)modopt))() : 0;
 
         modopt = GET_MOD_METHOD(modso, "conflicts");
-        next->conflicts = modopt ? ((const char **(*)(void))modopt)() : 0;
+        next->conflicts = modopt ?
+            ((const char **(*)(void))((uintptr_t)modopt))() : 0;
 
         modopt = GET_MOD_METHOD(modso, "help");
-        next->help = modopt ? (const char *(*)(void))modopt : 0;
+        next->help = modopt ? (const char *(*)(void))((uintptr_t)modopt) : 0;
 
         modopt = GET_MOD_METHOD(modso, "helpFile");
-        next->helpFile = modopt ? (const char *(*)(void))modopt : 0;
+        next->helpFile = modopt ?
+            (const char *(*)(void))((uintptr_t)modopt) : 0;
 
         modopt = GET_MOD_METHOD(modso, "versionInfo");
-        next->versionInfo = modopt ? (const char *(*)(void))modopt : 0;
+        next->versionInfo = modopt ?
+            (const char *(*)(void))((uintptr_t)modopt) : 0;
 
         next->conflicted = 0;
 

@@ -10,7 +10,7 @@ Cmdline *cmdline_new(void);
 void cmdline_delete(Cmdline *this);
 
 void cmdline_parse(Cmdline *this, int argc, char **argv);
-void cmdline_parseFile(Cmdline *this, FILE *cmdfile);
+int cmdline_parseFile(Cmdline *this, const char *cmdfile);
 char cmdline_opt(const Cmdline *this);
 const char *cmdline_arg(const Cmdline *this);
 int cmdline_moveNext(Cmdline *this);

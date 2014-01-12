@@ -1,4 +1,5 @@
 #include <mkd64/common.h>
+#include <mkd64/util.h>
 
 #include "cmdline.h"
 
@@ -80,11 +81,11 @@ cmdline_parse(Cmdline *this, int argc, char **argv)
             this->opts[this->count] = (*argvp)[1];
             if (strlen(*argvp) > 2)
             {
-                this->args[this->count] = strdup((*argvp)+2);
+                this->args[this->count] = copyString((*argvp)+2);
             }
             else if (*(argvp+1) && **(argvp+1) != '-')
             {
-                this->args[this->count] = strdup(*++argvp);
+                this->args[this->count] = copyString(*++argvp);
             }
             else
             {
@@ -166,8 +167,8 @@ _cmdtok(char *str, const char *delim, const char *quote)
     return tok;
 }
 
-SOLOCAL void
-cmdline_parseFile(Cmdline *this, FILE *cmdfile)
+SOLOCAL int
+cmdline_parseFile(Cmdline *this, const char *cmdfile)
 {
     static const char *delim = " \t\r\n";
     static const char *quote = "\"'";
@@ -175,19 +176,21 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
     size_t optSize = FILEOPT_CHUNKSIZE * sizeof(char);
     size_t argSize = FILEOPT_CHUNKSIZE * sizeof(char *);
     char *buf, *tok;
+    FILE *f;
 
     clear(this);
 
-    if (fstat(fileno(cmdfile), &st) < 0) return;
-    if (st.st_size < 1) return;
+    if (stat(cmdfile, &st) < 0) return 0;
+    if (st.st_size < 1) return 0;
+    if (!(f = fopen(cmdfile, "rb"))) return 0;
 
     buf = malloc(st.st_size);
-    rewind(cmdfile);
 
-    if (fread(buf, 1, st.st_size, cmdfile) != st.st_size)
+    if (fread(buf, 1, st.st_size, f) != st.st_size)
     {
+        fclose(f);
         free(buf);
-        return;
+        return 0;
     }
 
     this->opts = malloc(optSize);
@@ -201,7 +204,7 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
             this->opts[this->count] = tok[1];
             if (strlen(tok) > 2)
             {
-                this->args[this->count] = strdup(tok+2);
+                this->args[this->count] = copyString(tok+2);
                 tok = _cmdtok(0, delim, quote);
             }
             else
@@ -209,7 +212,7 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
                 tok = _cmdtok(0, delim, quote);
                 if (tok && tok[0] != '-')
                 {
-                    this->args[this->count] = strdup(tok);
+                    this->args[this->count] = copyString(tok);
                     tok = _cmdtok(0, delim, quote);
                 }
                 else
@@ -231,7 +234,9 @@ cmdline_parseFile(Cmdline *this, FILE *cmdfile)
             tok = _cmdtok(0, delim, quote);
         }
     }
+    fclose(f);
     free(buf);
+    return 1;
 }
 
 SOLOCAL char

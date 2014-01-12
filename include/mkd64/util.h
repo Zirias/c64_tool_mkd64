@@ -54,6 +54,13 @@ DECLEXPORT int tryParseIntHex(const char *str, unsigned int *result);
 DECLEXPORT int checkArgAndWarn(char opt, const char *arg, int isFileOpt,
         int argExpected, const char *modid);
 
+/** Take a copy of an existing string
+ * Use this instead of POSIX strdup() for C standard compliance
+ * @arg s the string to copy
+ * @return a copy, must be free()d by the caller
+ */
+DECLEXPORT char *copyString(const char *s);
+
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4
 */

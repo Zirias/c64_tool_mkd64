@@ -9,7 +9,7 @@ void diskfile_delete(Diskfile *this);
 
 void diskfile_setFileNo(Diskfile *this, int fileNo);
 
-int diskfile_readFromHost(Diskfile *this, FILE *hostfile);
+int diskfile_readFromHost(Diskfile *this, const char *hostfile);
 
 int diskfile_write(Diskfile *this, Image *image,
         const BlockPosition *startPosition);

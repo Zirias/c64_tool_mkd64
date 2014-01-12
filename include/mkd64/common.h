@@ -24,6 +24,7 @@
 #include <stdint.h>
 #else
 typedef unsigned char uint8_t;
+typedef void * uintptr_t;
 #endif
 
 #if defined(_MSC_VER)

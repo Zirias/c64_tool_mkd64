@@ -46,7 +46,7 @@ mod_LIBS =
 
 endif
 
-CFLAGS += -Wall -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
+CFLAGS += -Wall -std=c99 -pedantic -Werror=implicit-int -Werror=implicit-function-declaration -Werror=declaration-after-statement -fvisibility=hidden
 
 VTAGS =
 V=0

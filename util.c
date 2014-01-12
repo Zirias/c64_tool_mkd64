@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 SOEXPORT int
@@ -118,6 +119,15 @@ checkArgAndWarn(char opt, const char *arg, int isFileOpt,
         return 0;
     }
     return 1;
+}
+
+SOEXPORT char *
+copyString(const char *s)
+{
+    size_t bytes = strlen(s)+1;
+    char *copy = malloc(bytes);
+    memcpy(copy, s, bytes);
+    return copy;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

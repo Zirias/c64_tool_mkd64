@@ -19,7 +19,7 @@ static const char *moddeps[] = { "cbmdos", 0 };
 typedef struct
 {
     const char *name;
-    const char pattern[17];
+    const unsigned char pattern[17];
     const int contentOffset;
     const int contentLen;
 } SeparatorEntry;
