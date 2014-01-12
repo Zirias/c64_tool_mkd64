@@ -194,7 +194,7 @@ modules$(PSEP)%.d:	modules$(PSEP)%.c | modules$(PSEP)buildid.h
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
 
-%.d:	./$(PSEP)%.c | buildid.h
+%.d:	.$(PSEP)$(PSEP)%.c | buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
