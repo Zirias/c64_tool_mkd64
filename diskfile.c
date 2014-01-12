@@ -222,13 +222,22 @@ diskfile_write(Diskfile *this, Image *image,
 
     alloc->setInterleave(alloc, this->interleave);
     alloc->setConsiderReserved(alloc, 0);
-    nextBlock = alloc->allocFirstBlock(alloc, startPosition);
-    
-    if (!nextBlock)
+
+    if (startPosition && startPosition->track)
     {
-        writereserved = 1;
-        alloc->setConsiderReserved(alloc, 1);
-        nextBlock = alloc->allocFirstBlock(alloc, startPosition);
+        /* fixed start position requested */
+        nextBlock = image_allocateAt(image, startPosition);
+    }
+    else
+    {
+        /* automatic start position requested, use allocator */
+        nextBlock = alloc->allocFirstBlock(alloc);
+        if (!nextBlock)
+        {
+            writereserved = 1;
+            alloc->setConsiderReserved(alloc, 1);
+            nextBlock = alloc->allocFirstBlock(alloc);
+        }
     }
 
     if (!nextBlock) return 0;

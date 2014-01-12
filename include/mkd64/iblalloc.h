@@ -15,7 +15,7 @@ struct iBlockAllocator
     void (*setImage)(IBlockAllocator *this, Image *image);
     void (*setInterleave)(IBlockAllocator *this, int interleave);
     void (*setConsiderReserved)(IBlockAllocator *this, int considerReserved);
-    Block *(*allocFirstBlock)(IBlockAllocator *this, const BlockPosition *pos);
+    Block *(*allocFirstBlock)(IBlockAllocator *this);
     Block *(*allocNextBlock)(IBlockAllocator *this, const BlockPosition *pos);
 };
 

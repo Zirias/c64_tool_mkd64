@@ -12,7 +12,7 @@ static BlockStatus _msk;
 static void setImage(IBlockAllocator *this, Image *image);
 static void setInterleave(IBlockAllocator *this, int interleave);
 static void setConsiderReserved(IBlockAllocator *this, int considerReserved);
-static Block *allocFirstBlock(IBlockAllocator *this, const BlockPosition *pos);
+static Block *allocFirstBlock(IBlockAllocator *this);
 static Block *allocNextBlock(IBlockAllocator *this, const BlockPosition *pos);
 
 IBlockAllocator defaultAllocator = {
@@ -46,20 +46,11 @@ setConsiderReserved(IBlockAllocator *this, int considerReserved)
 }
 
 static Block *
-allocFirstBlock(IBlockAllocator *this, const BlockPosition *pos)
+allocFirstBlock(IBlockAllocator *this)
 {
     Track *t;
     Block *b;
     int tn, sn;
-
-    if (pos && pos->track > 0)
-    {
-        /* fixed start position requested */
-        b = image_block(_img, pos);
-        if (block_status(b) & ~_msk) return 0;
-        block_allocate(b);
-        return b;
-    }
 
     /* find first track that has free sectors left */
     for (tn = 1, t = image_track(_img, tn);

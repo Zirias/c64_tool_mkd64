@@ -17,8 +17,10 @@ DECLEXPORT BlockStatus image_blockStatus(const Image *this,
 DECLEXPORT Track *image_track(const Image *this, int tracknum);
 DECLEXPORT Block *image_block(const Image *this, const BlockPosition *pos);
 
+DECLEXPORT Block *image_allocateAt(const Image *this, const BlockPosition *pos);
+
 DECLEXPORT void image_setAllocator(Image *this, IBlockAllocator *allocator);
-DECLEXPORT IBlockAllocator *image_allocator(Image *this);
+DECLEXPORT IBlockAllocator *image_allocator(const Image *this);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4
