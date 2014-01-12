@@ -189,12 +189,12 @@ mkd64.a:	$(mkd64_OBJS)
 	$(VGEN)
 	$(VR)-dlltool -l$@ -Dmkd64.exe $^
 
-modules$(PSEP)%.d:	modules$(PSEP)%.c | modules$(PSEP)buildid.h
+modules$(PSEP)%.d:	modules$(PSEP)%.c Makefile | modules$(PSEP)buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
 
-%.d:	.$(PSEP)$(PSEP)%.c | buildid.h
+%.d:	.$(PSEP)$(PSEP)%.c Makefile | buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
@@ -202,12 +202,12 @@ modules$(PSEP)%.d:	modules$(PSEP)%.c | modules$(PSEP)buildid.h
 -include $(cbmdos_OBJS:.o=.d)
 -include $(xtracks_OBJS:.o=.d)
 -include $(sepgen_OBJS:.o=.d)
-modules$(PSEP)%.o:	modules$(PSEP)%.c modules$(PSEP)buildid.h
+modules$(PSEP)%.o: modules$(PSEP)%.c Makefile modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 -include $(mkd64_OBJS:.o=.d)
-%.o: .$(PSEP)%.c buildid.h
+%.o: .$(PSEP)%.c Makefile buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
