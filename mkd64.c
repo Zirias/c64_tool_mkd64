@@ -599,25 +599,38 @@ mkd64_run(void)
         return 0;
     }
 
+    /* started using a "single" option? then it's handled by this call,
+     * so just exit */
     if (processSingleOptions()) return 0;
 
     mkd64.currentPass = 1;
     mkd64.maxPasses = 1;
 
+    /* loop for multiple passes */
     do
     {
+        /* first handle global options */
         if (!processGlobalOptions()) goto mkd64_run_error;
 
+        /* the first occurence of '-f' switches to handling files */
         if (cmdline_opt(mkd64.cmdline) == 'f')
         {
+            /* if there are suggestions for global options from the previous
+             * pass, apply them before handling the files */
             processSuggestions();
             if (!processFiles()) goto mkd64_run_error;
         }
 
+        /* give modules a chance to suggest better options by notifying them
+         * that we're done */
         modrepo_allImageComplete(mkd64.modrepo);
 
+        /* cleanup suggestions used in this pass */
         deleteSuggestions(mkd64.currentSuggestions);
+        mkd64.currentSuggestions = 0;
 
+        /* if there are new suggestions, check whether we should do another
+         * pass */
         if (mkd64.suggestions)
         {
             printSuggestions(mkd64.suggestions);
@@ -636,6 +649,7 @@ mkd64_run(void)
     }
     while (mkd64.currentSuggestions);
 
+    /* write the disk image to output file */
     if (mkd64.d64)
     {
         if (image_dump(mkd64.image, mkd64.d64))
@@ -651,6 +665,7 @@ mkd64_run(void)
                 ".d64.\n", stderr);
     }
 
+    /* write the file map */
     if (mkd64.map)
     {
         if (filemap_dump(image_filemap(mkd64.image), mkd64.map))
@@ -661,6 +676,7 @@ mkd64_run(void)
         mkd64.map = 0;
     }
 
+    /* show the user what was done */
     printResult();
 
     return 1;
