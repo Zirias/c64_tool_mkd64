@@ -555,7 +555,7 @@ modrepo_getVersionInfo(const Modrepo *this, const char *id)
     if (!found) return 0;
     versionInfo = found->versionInfo ? found->versionInfo() : 0;
 
-    versionLen = strlen(versionInfo) + strlen(id) - 1;
+    versionLen = strlen(versionHeader) + strlen(id) - 1;
 
     if (versionInfo) versionLen += strlen(versionInfo);
     else versionLen += strlen(noVersion);
