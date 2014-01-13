@@ -127,7 +127,7 @@ sepgen_OBJS := modules$(PSEP)sepgen.o
 
 
 
-all: checkconf bin modules
+all: bin modules
 
 bin: mkd64$(EXE)
 
@@ -189,11 +189,8 @@ conf.mk:
 
 -include conf.mk
 
-ifeq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(libdir)))
-checkconf:
-else
+ifneq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(libdir)))
 .PHONY: conf.mk
-checkconf: conf.mk
 endif
 
 buildid$(EXE): buildid.c
@@ -250,8 +247,7 @@ modules$(PSEP)%.o: modules$(PSEP)%.c Makefile conf.mk modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
-.PHONY: all bin modules strip clean distclean install checkconf
-
+.PHONY: all bin modules strip clean distclean install
 .SUFFIXES:
 
 # vim: noet:si:ts=8:sts=8:sw=8
