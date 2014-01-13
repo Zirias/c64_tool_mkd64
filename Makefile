@@ -125,7 +125,8 @@ xtracks_OBJS := modules$(PSEP)xtracks.o
 
 sepgen_OBJS := modules$(PSEP)sepgen.o
 
-
+mkd64_SOURCES := $(mkd64_OBJS:.o=.c)
+mod_SOURCES := $(cbmdos_OBJS:.o=.c) $(xtracks_OBJS:.o=.c) $(sepgen_OBJS:.o=.c)
 
 all: bin modules
 
@@ -193,19 +194,19 @@ ifneq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DE
 .PHONY: conf.mk
 endif
 
-buildid$(EXE): buildid.c
+buildid$(EXE): buildid.c $(mkd64_SOURCES) $(mod_SOURCES) Makefile conf.mk
 	$(VCCLD)
 	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
 
-buildid.h: buildid$(EXE)
+buildid.h: $(mkd64_SOURCES) Makefile conf.mk | buildid$(EXE)
 	$(VGEN)
 	$(VR).$(PSEP)buildid$(EXE) > buildid.h
 
-modules$(PSEP)buildid.h: buildid$(EXE)
+modules$(PSEP)buildid.h: $(mod_SOURCES) Makefile conf.mk | buildid$(EXE)
 	$(VGEN)
 	$(VR).$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
 
-mkd64$(EXE): buildid.h $(mkd64_OBJS)
+mkd64$(EXE): $(mkd64_OBJS)
 	$(VLD)
 	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
 
@@ -238,12 +239,12 @@ modules$(PSEP)%.d: modules$(PSEP)%.c Makefile conf.mk | modules$(PSEP)buildid.h
 -include $(cbmdos_OBJS:.o=.d)
 -include $(xtracks_OBJS:.o=.d)
 -include $(sepgen_OBJS:.o=.d)
-modules$(PSEP)%.o: modules$(PSEP)%.c Makefile conf.mk modules$(PSEP)buildid.h
+modules$(PSEP)%.o: modules$(PSEP)%.c Makefile conf.mk
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 -include $(mkd64_OBJS:.o=.d)
-%.o: .$(PSEP)%.c Makefile conf.mk buildid.h
+%.o: .$(PSEP)%.c Makefile conf.mk
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
