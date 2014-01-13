@@ -142,7 +142,7 @@ instance(void)
 {
     Separators *mod = calloc(1, sizeof(Separators));
     mod->mod.id = &id;
-    mod->mod.delete = &delete;
+    mod->mod.free = &delete;
     mod->mod.fileOption = &fileOption;
 
     mod->cbmdos = modrepo_moduleInstance(mkd64_modrepo(), "cbmdos");

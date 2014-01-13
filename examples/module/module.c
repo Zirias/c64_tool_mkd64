@@ -26,7 +26,7 @@ instance(void)
 {
     Module *mod = calloc(1, sizeof(Module));
     mod->mod.id = &id;
-    mod->mod.delete = &delete;
+    mod->mod.free = &delete;
 
     /* add more runtime methods as needed, see imodule.h and modapi.txt */
 

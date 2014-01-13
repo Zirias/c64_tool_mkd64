@@ -620,7 +620,7 @@ instance(void)
 {
     Cbmdos *this = calloc(1, sizeof(Cbmdos));
     this->mod.id = &id;
-    this->mod.delete = &delete;
+    this->mod.free = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.fileOption = &fileOption;

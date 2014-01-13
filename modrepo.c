@@ -422,7 +422,7 @@ modrepo_delete(Modrepo *this)
     {
         tmpInstance = currentInstance;
         currentInstance = currentInstance->next;
-        tmpInstance->mod->delete(tmpInstance->mod);
+        tmpInstance->mod->free(tmpInstance->mod);
         free(tmpInstance);
     }
 
@@ -444,7 +444,7 @@ modrepo_reloadModules(Modrepo *this)
 
     for (current = this->instances; current; current = current->next)
     {
-        current->mod->delete(current->mod);
+        current->mod->free(current->mod);
         entry = findModule(this, current->id);
         current->mod = entry->instance();
         this->callback(this->owner, current->mod);
@@ -493,7 +493,7 @@ modrepo_deleteInstance(Modrepo *this, const char *id)
     {
         if (parent) parent->next = current->next;
         else this->instances = current->next;
-        current->mod->delete(current->mod);
+        current->mod->free(current->mod);
         free(current);
         return 1;
     }

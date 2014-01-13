@@ -178,7 +178,7 @@ instance(void)
 {
     Xtracks *this = calloc(1, sizeof(Xtracks));
     this->mod.id = &id;
-    this->mod.delete = &delete;
+    this->mod.free = &delete;
     this->mod.initImage = &initImage;
     this->mod.globalOption = &globalOption;
     this->mod.getTrack = &getTrack;

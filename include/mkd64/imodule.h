@@ -23,7 +23,7 @@ struct iModule
     /** Delete the current module instance
      * @param this the module instance
      */
-    void (*delete)(IModule *this);
+    void (*free)(IModule *this);
 
     /** Initialize the module, called whenever the module is loaded
      * May be left unimplemented.
