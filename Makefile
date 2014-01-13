@@ -15,7 +15,6 @@ CATIN := copy /b
 CATADD := +
 CATOUT :=
 EQT :=
-EN := <nul set /p=
 
 CFLAGS += -DWIN32
 dl_LDFLAGS := -lshlwapi 
@@ -40,7 +39,6 @@ CATADD :=
 CATOUT := >
 EQT := "
 #" make vim syntax highlight happy
-EN := echo -n
 
 dl_LDFLAGS := -ldl -Wl,-E
 mod_CFLAGS := -fPIC
@@ -58,14 +56,6 @@ LDFLAGS += -static-libgcc
 VTAGS :=
 V := 0
 
-ifdef DEBUG
-CFLAGS += -DDEBUG -g3 -O0
-VTAGS += [debug]
-else
-CFLAGS += -g0 -O3 -flto
-LDFLAGS += -flto
-endif
-
 ifdef prefix
 bindir := $(prefix)/bin
 libbasedir := $(prefix)/lib
@@ -77,6 +67,7 @@ docdir := $(docbasedir)/mkd64
 
 INSTALL := install
 CFLAGS += -DMODDIR="\"$(libdir)\""
+VTAGS += [installable]
 else
 VTAGS += [portable]
 endif
@@ -88,6 +79,15 @@ VTAGS += [32bit]
 else
 CC := gcc
 endif
+
+ifdef DEBUG
+CFLAGS += -DDEBUG -g3 -O0
+VTAGS += [debug]
+else
+CFLAGS += -g0 -O3 -flto
+LDFLAGS += -flto
+endif
+
 CCDEP := $(CC) -MM
 
 ifeq ($(V),1)
@@ -97,7 +97,6 @@ VLD :=
 VCCLD :=
 VGEN :=
 VGENT :=
-VCHK :=
 VR :=
 else
 VCC = @echo $(EQT)   [CC]   $@$(EQT)
@@ -106,7 +105,6 @@ VLD = @echo $(EQT)   [LD]   $@$(EQT)
 VCCLD = @echo $(EQT)   [CCLD] $@$(EQT)
 VGEN = @echo $(EQT)   [GEN]  $@$(EQT)
 VGENT = @echo $(EQT)   [GEN]  $@: $(VTAGS)$(EQT)
-VCHK = @echo $(EQT)   [CHK]  $@$(EQT)
 VR := @
 endif
 
@@ -228,13 +226,13 @@ sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
 
 modules$(PSEP)%.d: modules$(PSEP)%.c Makefile conf.mk | modules$(PSEP)buildid.h
 	$(VDEP)
-	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
-		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
+	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
+		$(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 %.d: .$(PSEP)$(PSEP)%.c Makefile conf.mk | buildid.h
 	$(VDEP)
-	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
-		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
+	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
+		$(mkd64_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 -include $(cbmdos_OBJS:.o=.d)
 -include $(xtracks_OBJS:.o=.d)
