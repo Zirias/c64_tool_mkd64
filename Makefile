@@ -1,50 +1,50 @@
 ifeq ($(OS),Windows_NT)
 
-EXE = .exe
-SO = .dll
-CMDSEP = &
-PSEP = \\
-CPF = copy /y
-RMF = del /f /q
-RMFR = -rd /s /q
-MDP = -md
-XIF = if exist
-XTHEN = (
-XFI = )
-CATIN = copy /b
-CATADD = +
-CATOUT =
-EQT =
-EN = <nul set /p=
+EXE := .exe
+SO := .dll
+CMDSEP := &
+PSEP := \\
+CPF := copy /y
+RMF := del /f /q
+RMFR := -rd /s /q
+MDP := -md
+XIF := if exist
+XTHEN := (
+XFI := )
+CATIN := copy /b
+CATADD := +
+CATOUT :=
+EQT :=
+EN := <nul set /p=
 
 CFLAGS += -DWIN32
-dl_LDFLAGS = -lshlwapi 
-mod_CFLAGS =
-mod_LIBS = mkd64.a
+dl_LDFLAGS := -lshlwapi 
+mod_CFLAGS :=
+mod_LIBS := mkd64.a
 
 else
 
-EXE =
-SO = .so
-CMDSEP = ;
-PSEP = /
-CPF = cp -f
-RMF = rm -f
-RMFR = rm -fr
-MDP = mkdir -p
-XIF = if [ -x
-XTHEN = ]; then
-XFI = ; fi
-CATIN = cat
-CATADD = 
-CATOUT = >
-EQT = "
+EXE :=
+SO := .so
+CMDSEP := ;
+PSEP := /
+CPF := cp -f
+RMF := rm -f
+RMFR := rm -fr
+MDP := mkdir -p
+XIF := if [ -x
+XTHEN := ]; then
+XFI := ; fi
+CATIN := cat
+CATADD := 
+CATOUT := >
+EQT := "
 #" make vim syntax highlight happy
-EN = echo -n
+EN := echo -n
 
-dl_LDFLAGS = -ldl -Wl,-E
-mod_CFLAGS = -fPIC
-mod_LIBS =
+dl_LDFLAGS := -ldl -Wl,-E
+mod_CFLAGS := -fPIC
+mod_LIBS :=
 
 endif
 
@@ -55,75 +55,79 @@ CFLAGS += -fvisibility=hidden -std=c99 -Wall -pedantic \
 
 LDFLAGS += -static-libgcc
 
-VTAGS =
-V=0
+VTAGS :=
+V := 0
 
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
-VTAGS += [DBG]
+VTAGS += [debug]
 else
 CFLAGS += -g0 -O3 -flto
 LDFLAGS += -flto
 endif
 
 ifdef prefix
-bindir = $(prefix)/bin
-libbasedir = $(prefix)/lib
-libdir = $(libbasedir)/mkd64
-includebasedir = $(prefix)/include
-includedir = $(includebasedir)/mkd64
-docbasedir = $(prefix)/share/doc
-docdir = $(docbasedir)/mkd64
+bindir := $(prefix)/bin
+libbasedir := $(prefix)/lib
+libdir := $(libbasedir)/mkd64
+includebasedir := $(prefix)/include
+includedir := $(includebasedir)/mkd64
+docbasedir := $(prefix)/share/doc
+docdir := $(docbasedir)/mkd64
 
-INSTALL = install
+INSTALL := install
 CFLAGS += -DMODDIR="\"$(libdir)\""
 else
-VTAGS += [PRT]
+VTAGS += [portable]
 endif
 
 ifdef GCC32
-CC = gcc -m32
+CC := gcc -m32
 CFLAGS += -DGCC32BIT
-VTAGS += [32]
+VTAGS += [32bit]
 else
-CC = gcc
+CC := gcc
 endif
-CCDEP = $(CC) -MM
+CCDEP := $(CC) -MM
 
 ifeq ($(V),1)
-VCC =
-VDEP =
-VLD =
-VCCLD =
-VGEN =
-VR =
+VCC :=
+VDEP :=
+VLD :=
+VCCLD :=
+VGEN :=
+VGENT :=
+VCHK :=
+VR :=
 else
-VCC = @echo $(EQT)  $(VTAGS)   [CC]   $@$(EQT)
-VDEP = @echo $(EQT)  $(VTAGS)   [DEP]  $@$(EQT)
-VLD = @echo $(EQT)  $(VTAGS)   [LD]   $@$(EQT)
-VCCLD = @echo $(EQT)  $(VTAGS)   [CCLD] $@$(EQT)
-VGEN = @echo $(EQT)  $(VTAGS)   [GEN]  $@$(EQT)
-VR = @
+VCC = @echo $(EQT)   [CC]   $@$(EQT)
+VDEP = @echo $(EQT)   [DEP]  $@$(EQT)
+VLD = @echo $(EQT)   [LD]   $@$(EQT)
+VCCLD = @echo $(EQT)   [CCLD] $@$(EQT)
+VGEN = @echo $(EQT)   [GEN]  $@$(EQT)
+VGENT = @echo $(EQT)   [GEN]  $@: $(VTAGS)$(EQT)
+VCHK = @echo $(EQT)   [CHK]  $@$(EQT)
+VR := @
 endif
 
-INCLUDES = -Iinclude
+INCLUDES := -Iinclude
 
-mkd64_OBJS = mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
+mkd64_OBJS := mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
 	     cmdline.o modrepo.o util.o
-mkd64_LDFLAGS = $(dl_LDFLAGS)
-mkd64_DEFINES = -DBUILDING_MKD64
+mkd64_LDFLAGS := $(dl_LDFLAGS)
+mkd64_DEFINES := -DBUILDING_MKD64
 
-MODULES = cbmdos$(SO) xtracks$(SO) sepgen$(SO)
+MODULES := cbmdos$(SO) xtracks$(SO) sepgen$(SO)
 
-cbmdos_OBJS = modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
+cbmdos_OBJS := modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
 
-xtracks_OBJS = modules$(PSEP)xtracks.o
+xtracks_OBJS := modules$(PSEP)xtracks.o
 
-sepgen_OBJS = modules$(PSEP)sepgen.o
+sepgen_OBJS := modules$(PSEP)sepgen.o
 
 
 
-all: bin modules
+all: checkconf bin modules
 
 bin: mkd64$(EXE)
 
@@ -142,6 +146,7 @@ clean:
 	$(RMFR) mkd64sdk
 
 distclean: clean
+	$(RMF) conf.mk
 	$(RMF) *.d
 	$(RMF) modules$(PSEP)*.d
 	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.d
@@ -176,6 +181,21 @@ sdk: bin mkd64.a
 	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
 	$(CPF) modapi.txt mkd64sdk
 
+conf.mk:
+	$(VGENT)
+	$(VR)echo $(EQT)C_DEBUG :=$(DEBUG)$(EQT) >conf.mk
+	$(VR)echo $(EQT)C_GCC32 :=$(GCC32)$(EQT) >>conf.mk
+	$(VR)echo $(EQT)C_libdir :=$(libdir)$(EQT) >>conf.mk
+
+-include conf.mk
+
+ifeq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(libdir)))
+checkconf:
+else
+.PHONY: conf.mk
+checkconf: conf.mk
+endif
+
 buildid$(EXE): buildid.c
 	$(VCCLD)
 	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
@@ -208,12 +228,12 @@ sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
 	$(VLD)
 	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
 
-modules$(PSEP)%.d: modules$(PSEP)%.c Makefile | modules$(PSEP)buildid.h
+modules$(PSEP)%.d: modules$(PSEP)%.c Makefile conf.mk | modules$(PSEP)buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $< >> $@
 
-%.d: .$(PSEP)$(PSEP)%.c Makefile | buildid.h
+%.d: .$(PSEP)$(PSEP)%.c Makefile conf.mk | buildid.h
 	$(VDEP)
 	$(VR)$(EN) "$@ $(dir $@)" >$@ $(CMDSEP) \
 		$(CCDEP) $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $< >>$@
@@ -221,16 +241,16 @@ modules$(PSEP)%.d: modules$(PSEP)%.c Makefile | modules$(PSEP)buildid.h
 -include $(cbmdos_OBJS:.o=.d)
 -include $(xtracks_OBJS:.o=.d)
 -include $(sepgen_OBJS:.o=.d)
-modules$(PSEP)%.o: modules$(PSEP)%.c Makefile modules$(PSEP)buildid.h
+modules$(PSEP)%.o: modules$(PSEP)%.c Makefile conf.mk modules$(PSEP)buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
 -include $(mkd64_OBJS:.o=.d)
-%.o: .$(PSEP)%.c Makefile buildid.h
+%.o: .$(PSEP)%.c Makefile conf.mk buildid.h
 	$(VCC)
 	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
-.PHONY: all bin modules strip clean distclean install
+.PHONY: all bin modules strip clean distclean install checkconf
 
 .SUFFIXES:
 

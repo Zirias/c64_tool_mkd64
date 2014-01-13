@@ -5,6 +5,7 @@
 *.a
 *.so
 *.dll
+conf.mk
 mkd64
 mkd64.exe
 buildid
