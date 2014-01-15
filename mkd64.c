@@ -14,10 +14,9 @@
 #include <errno.h>
 #include <string.h>
 
-struct suggestedOption;
-typedef struct suggestedOption SuggestedOption;
+typedef struct SuggestedOption SuggestedOption;
 
-struct suggestedOption
+struct SuggestedOption
 {
     SuggestedOption *next;
     IModule *suggestedBy;
@@ -27,7 +26,7 @@ struct suggestedOption
     const char *reason;
 };
 
-typedef struct
+struct Mkd64
 {
     int initialized;
     int currentPass;
@@ -35,16 +34,16 @@ typedef struct
     int currentFileNo;
     Image *image;
     Cmdline *cmdline;
-    Modrepo *modrepo;
+    ModRepo *modrepo;
     SuggestedOption *suggestions;
     SuggestedOption *currentSuggestions;
     FILE *d64;
     const char *d64name;
     FILE *map;
     const char *mapname;
-} Mkd64;
+};
 
-static Mkd64 mkd64 = {0};
+static Mkd64 *instance = 0;
 
 static void
 moduleLoaded(void *owner, IModule *mod)
@@ -66,28 +65,36 @@ deleteSuggestions(SuggestedOption *suggestions)
     }
 }
 
-SOLOCAL int
-mkd64_init(int argc, char **argv)
+SOLOCAL Mkd64 *
+Mkd64_init(Mkd64 *this, int argc, char **argv)
 {
-    mkd64.image = image_new();
-    mkd64.cmdline = OBJNEW(Cmdline);
-    Cmdline_parse(mkd64.cmdline, argc, argv);
-    mkd64.modrepo = modrepo_new(Cmdline_exe(mkd64.cmdline),
-            &mkd64, &moduleLoaded);
-    mkd64.suggestions = 0;
-    mkd64.currentSuggestions = 0;
-    mkd64.d64 = 0;
-    mkd64.map = 0;
-    mkd64.initialized = 1;
-    return 1;
+    if (!instance)
+    {
+        instance = this;
+        this->image = OBJNEW(Image);
+        this->cmdline = OBJNEW(Cmdline);
+        Cmdline_parse(this->cmdline, argc, argv);
+        this->modrepo = OBJNEW3(ModRepo, Cmdline_exe(this->cmdline),
+                this, &moduleLoaded);
+        this->suggestions = 0;
+        this->currentSuggestions = 0;
+        this->d64 = 0;
+        this->map = 0;
+        this->initialized = 1;
+    }
+    else
+    {
+        this->initialized = 0;
+    }
+    return this;
 }
 
 static void
-printVersion(const char *modId)
+printVersion(Mkd64 *this, const char *modId)
 {
     if (modId)
     {
-       char *versionInfo = modrepo_getVersionInfo(mkd64.modrepo, modId);
+       char *versionInfo = ModRepo_getVersionInfo(this->modrepo, modId);
        if (versionInfo)
        {
            fputs(versionInfo, stderr);
@@ -108,10 +115,10 @@ printVersion(const char *modId)
 }
 
 static void
-printUsage(void)
+printUsage(Mkd64 *this)
 {
-    const char *exe = Cmdline_exe(mkd64.cmdline);
-    printVersion(0);
+    const char *exe = Cmdline_exe(this->cmdline);
+    printVersion(this, 0);
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
             "       %s -V [MODULE]\n"
             "       %s -C OPTFILE\n"
@@ -123,13 +130,13 @@ printUsage(void)
 }
 
 static void
-printHelp(const char *modId)
+printHelp(Mkd64 *this, const char *modId)
 {
     fputs("mkd64 " MKD64_VERSION " help\n\n", stderr);
 
     if (modId)
     {
-        char *modHelp = modrepo_getHelp(mkd64.modrepo, modId);
+        char *modHelp = ModRepo_getHelp(this->modrepo, modId);
         if (modHelp)
         {
             fputs(modHelp, stderr);
@@ -190,10 +197,10 @@ printHelp(const char *modId)
 }
 
 static void
-processFileSuggestions(Diskfile *file, BlockPosition *pos)
+processFileSuggestions(Mkd64 *this, DiskFile *file, BlockPosition *pos)
 {
-    int fileNo = diskfile_fileNo(file);
-    SuggestedOption *sopt = mkd64.currentSuggestions;
+    int fileNo = DiskFile_fileNo(file);
+    SuggestedOption *sopt = this->currentSuggestions;
 
     while (sopt)
     {
@@ -208,12 +215,12 @@ processFileSuggestions(Diskfile *file, BlockPosition *pos)
                     pos->sector = atoi(sopt->arg);
                     break;
                 case 'i':
-                    diskfile_setInterleave(file, atoi(sopt->arg));
+                    DiskFile_setInterleave(file, atoi(sopt->arg));
                     break;
             }
             if (sopt->opt != 'w')
             {
-                modrepo_allFileOption(mkd64.modrepo, file,
+                ModRepo_allFileOption(this->modrepo, file,
                         sopt->opt, sopt->arg);
             }
         }
@@ -222,22 +229,22 @@ processFileSuggestions(Diskfile *file, BlockPosition *pos)
 }
 
 static int
-processFiles(void)
+processFiles(Mkd64 *this)
 {
-    Diskfile *currentFile = 0;
-    Diskfile *nextFile;
+    DiskFile *currentFile = 0;
+    DiskFile *nextFile;
     BlockPosition pos;
     char opt;
     int handled;
     const char *arg;
     int intarg;
 
-    mkd64.currentFileNo = 0;
+    this->currentFileNo = 0;
 
     do
     {
-        opt = Cmdline_opt(mkd64.cmdline);
-        arg = Cmdline_arg(mkd64.cmdline);
+        opt = Cmdline_opt(this->cmdline);
+        arg = Cmdline_arg(this->cmdline);
         handled = 0;
 
         switch (opt)
@@ -248,30 +255,30 @@ processFiles(void)
                     fprintf(stderr, "Warning: new file started before "
                             "previous file `%s' was written.\n"
                             "         dropping previous file!\n",
-                            diskfile_name(currentFile));
-                    diskfile_delete(currentFile);
+                            DiskFile_name(currentFile));
+                    OBJDEL(DiskFile, currentFile);
                     currentFile = 0;
-                    --mkd64.currentFileNo;
+                    --this->currentFileNo;
                 }
-                nextFile = diskfile_new();
+                nextFile = OBJNEW(DiskFile);
                 if (arg)
                 {
-                    if (diskfile_readFromHost(nextFile, arg))
+                    if (DiskFile_readFromHost(nextFile, arg))
                     {
-                        diskfile_setName(nextFile, arg);
+                        DiskFile_setName(nextFile, arg);
                     }
                     else
                     {
                         fprintf(stderr, "Error opening `%s' for reading: %s\n",
                                 arg, strerror(errno));
-                        diskfile_delete(nextFile);
+                        OBJDEL(DiskFile, nextFile);
                         nextFile = 0;
                     }
                 }
                 if (nextFile)
                 {
                     currentFile = nextFile;
-                    diskfile_setFileNo(currentFile, ++mkd64.currentFileNo);
+                    DiskFile_setFileNo(currentFile, ++this->currentFileNo);
                     pos.track = 0;
                     pos.sector = 0;
                 }
@@ -309,7 +316,7 @@ processFiles(void)
                         fprintf(stderr, "Warning: invalid interleave number "
                                 "`%s' ignored.\n", arg);
                     }
-                    else if (currentFile) diskfile_setInterleave(
+                    else if (currentFile) DiskFile_setInterleave(
                             currentFile, intarg);
                 }
                 handled = 1;
@@ -318,13 +325,13 @@ processFiles(void)
                 checkArgAndWarn(opt, arg, 1, 0, 0);
                 if (currentFile)
                 {
-                    processFileSuggestions(currentFile, &pos);
-                    if (!diskfile_write(currentFile, mkd64.image, &pos))
+                    processFileSuggestions(this, currentFile, &pos);
+                    if (!DiskFile_write(currentFile, this->image, &pos))
                     {
                         fprintf(stderr,
                                 "Error: Disk full while writing file #%d.",
-                                mkd64.currentFileNo);
-                        diskfile_delete(currentFile);
+                                this->currentFileNo);
+                        OBJDEL(DiskFile, currentFile);
                         return 0;
                     }
                     currentFile = 0;
@@ -339,7 +346,7 @@ processFiles(void)
         }
         if (currentFile)
         {
-            if(modrepo_allFileOption(mkd64.modrepo, currentFile, opt, arg))
+            if(ModRepo_allFileOption(this->modrepo, currentFile, opt, arg))
                 handled = 1;
         }
         else if (opt != 'w')
@@ -353,20 +360,20 @@ processFiles(void)
                    "         Maybe you forgot to load a module?\n", opt);
         }
 
-    } while (Cmdline_moveNext(mkd64.cmdline));
+    } while (Cmdline_moveNext(this->cmdline));
     return 1;
 }
 
 static void
-processSuggestions(void)
+processSuggestions(Mkd64 *this)
 {
-    SuggestedOption *sopt = mkd64.currentSuggestions;
+    SuggestedOption *sopt = this->currentSuggestions;
 
     while (sopt)
     {
         if (sopt->fileNo == 0)
         {
-            modrepo_allGlobalOption(mkd64.modrepo, sopt->opt, sopt->arg);
+            ModRepo_allGlobalOption(this->modrepo, sopt->opt, sopt->arg);
         }
         sopt = sopt->next;
     }
@@ -399,7 +406,7 @@ printSuggestions(SuggestedOption *suggestions)
 }
 
 static void
-printResult(void)
+printResult(Mkd64 *this)
 {
     int tn = 0;
     int free = 0;
@@ -411,12 +418,12 @@ printResult(void)
             "Blocks on disk (. = free, : = reserved, but free, "
             "# = allocated):");
 
-    while ((t = image_track(mkd64.image, ++tn)))
+    while ((t = Image_track(this->image, ++tn)))
     {
         printf("%02d: ", tn);
-        for (sn = 0; sn < track_numSectors(t); ++sn)
+        for (sn = 0; sn < Track_numSectors(t); ++sn)
         {
-            s = track_blockStatus(t, sn);
+            s = Track_blockStatus(t, sn);
             if (s & BS_ALLOCATED) putc('#', stdout);
             else if (s & BS_RESERVED) putc(':', stdout);
             else
@@ -432,60 +439,60 @@ printResult(void)
 }
 
 static int
-processSingleOptions(void)
+processSingleOptions(Mkd64 *this)
 {
     const char *arg, *modid;
     char *argDup;
 
-    if (Cmdline_count(mkd64.cmdline) == 1)
+    if (Cmdline_count(this->cmdline) == 1)
     {
         /* handle single options */
 
-        if (Cmdline_opt(mkd64.cmdline) == 'V')
+        if (Cmdline_opt(this->cmdline) == 'V')
         {
-            printVersion(Cmdline_arg(mkd64.cmdline));
+            printVersion(this, Cmdline_arg(this->cmdline));
             return 1;
         }
 
-        if (Cmdline_opt(mkd64.cmdline) == 'h')
+        if (Cmdline_opt(this->cmdline) == 'h')
         {
-            printHelp(Cmdline_arg(mkd64.cmdline));
+            printHelp(this, Cmdline_arg(this->cmdline));
             return 1;
         }
 
-        if (Cmdline_opt(mkd64.cmdline) == 'C')
+        if (Cmdline_opt(this->cmdline) == 'C')
         {
-            arg = Cmdline_arg(mkd64.cmdline);
+            arg = Cmdline_arg(this->cmdline);
             if (!arg)
             {
                 fputs("Error: missing argument to single option -C.\n", stderr);
                 return 1;
             }
             argDup = copyString(arg);
-            if (!(Cmdline_parseFile(mkd64.cmdline, argDup)))
+            if (!(Cmdline_parseFile(this->cmdline, argDup)))
             {
                 perror("Error opening or reading commandline file");
                 free(argDup);
                 return 1;
             }
             free(argDup);
-            if (!Cmdline_moveNext(mkd64.cmdline))
+            if (!Cmdline_moveNext(this->cmdline))
             {
                 fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
                 return 1;
             }
         }
 
-        if (Cmdline_opt(mkd64.cmdline) == 'M')
+        if (Cmdline_opt(this->cmdline) == 'M')
         {
-            if (Cmdline_arg(mkd64.cmdline))
+            if (Cmdline_arg(this->cmdline))
             {
                 fputs("Warning: argument to single option -M ignored.\n",
                         stderr);
             }
             fputs("Available modules:\n", stderr);
             modid = 0;
-            while ((modid = modrepo_nextAvailableModule(mkd64.modrepo, modid)))
+            while ((modid = ModRepo_nextAvailableModule(this->modrepo, modid)))
             {
                 fprintf(stderr, "  %s\n", modid);
             }
@@ -497,7 +504,7 @@ processSingleOptions(void)
 }
 
 static int
-processGlobalOptions(void)
+processGlobalOptions(Mkd64 *this)
 {
     char opt;
     const char *arg;
@@ -505,17 +512,17 @@ processGlobalOptions(void)
 
     do
     {
-        opt = Cmdline_opt(mkd64.cmdline);
-        arg = Cmdline_arg(mkd64.cmdline);
+        opt = Cmdline_opt(this->cmdline);
+        arg = Cmdline_arg(this->cmdline);
         handled = 0;
 
         switch (opt)
         {
             case 'm':
                 handled = 1;
-                if (mkd64.currentPass > 1) break;
+                if (this->currentPass > 1) break;
                 if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
-                if (!modrepo_createInstance(mkd64.modrepo, arg))
+                if (!ModRepo_createInstance(this->modrepo, arg))
                 {
                     fprintf(stderr, "Error: module `%s' not found.\n", arg);
                     return 0;
@@ -523,42 +530,42 @@ processGlobalOptions(void)
                 break;
             case 'o':
                 handled = 1;
-                if (mkd64.currentPass > 1) break;
+                if (this->currentPass > 1) break;
                 if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
-                if (mkd64.d64)
+                if (this->d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
                     return 0;
                 }
-                mkd64.d64 = fopen(arg, "wb");
-                if (!mkd64.d64)
+                this->d64 = fopen(arg, "wb");
+                if (!this->d64)
                 {
                     perror("Error opening D64 output file");
                     return 0;
                 }
-                mkd64.d64name = arg;
+                this->d64name = arg;
                 break;
             case 'M':
                 handled = 1;
-                if (mkd64.currentPass > 1) break;
+                if (this->currentPass > 1) break;
                 if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
-                if (mkd64.map)
+                if (this->map)
                 {
                     fputs("Error: file map output file specified twice.\n",
                             stderr);
                     return 0;
                 }
-                mkd64.map = fopen(arg, "w");
-                if (!mkd64.map)
+                this->map = fopen(arg, "w");
+                if (!this->map)
                 {
                     perror("Error opening file map output file");
                     return 0;
                 }
-                mkd64.mapname = arg;
+                this->mapname = arg;
                 break;
             case 'P':
                 handled = 1;
-                if (mkd64.currentPass > 1) break;
+                if (this->currentPass > 1) break;
                 if (arg)
                 {
                     if (!tryParseInt(arg, &intarg) || intarg < 1)
@@ -567,97 +574,98 @@ processGlobalOptions(void)
                                 "given.\n", arg);
                         return 0;
                     }
-                    mkd64.maxPasses = intarg;
+                    this->maxPasses = intarg;
                 }
                 else
                 {
-                    mkd64.maxPasses = 5;
+                    this->maxPasses = 5;
                 }
                 break;
             case 'f':
                 return 1;
         }
-        if (!(modrepo_allGlobalOption(mkd64.modrepo, opt, arg) || handled))
+        if (!(ModRepo_allGlobalOption(this->modrepo, opt, arg) || handled))
         {
             fprintf(stderr, "Warning: unrecognized global option -%c ignored.\n"
                    "         Maybe you forgot to load a module?\n", opt);
         }
-    } while (Cmdline_moveNext(mkd64.cmdline));
+    } while (Cmdline_moveNext(this->cmdline));
     return 1;
 }
 
 SOLOCAL int
-mkd64_run(void)
+Mkd64_run(Mkd64 *this)
 {
-    if (!mkd64.initialized) return 0;
+    if (!this->initialized) return 0;
 
-    if (!Cmdline_moveNext(mkd64.cmdline))
+    if (!Cmdline_moveNext(this->cmdline))
     {
         /* no options given */
 
-        printUsage();
+        printUsage(this);
         return 0;
     }
 
     /* started using a "single" option? then it's handled by this call,
      * so just exit */
-    if (processSingleOptions()) return 0;
+    if (processSingleOptions(this)) return 0;
 
-    mkd64.currentPass = 1;
-    mkd64.maxPasses = 1;
+    this->currentPass = 1;
+    this->maxPasses = 1;
 
     /* loop for multiple passes */
     do
     {
         /* first handle global options */
-        if (!processGlobalOptions()) goto mkd64_run_error;
+        if (!processGlobalOptions(this)) goto Mkd64_run_error;
 
         /* the first occurence of '-f' switches to handling files */
-        if (Cmdline_opt(mkd64.cmdline) == 'f')
+        if (Cmdline_opt(this->cmdline) == 'f')
         {
             /* if there are suggestions for global options from the previous
              * pass, apply them before handling the files */
-            processSuggestions();
-            if (!processFiles()) goto mkd64_run_error;
+            processSuggestions(this);
+            if (!processFiles(this)) goto Mkd64_run_error;
         }
 
         /* give modules a chance to suggest better options by notifying them
          * that we're done */
-        modrepo_allImageComplete(mkd64.modrepo);
+        ModRepo_allImageComplete(this->modrepo);
 
         /* cleanup suggestions used in this pass */
-        deleteSuggestions(mkd64.currentSuggestions);
-        mkd64.currentSuggestions = 0;
+        deleteSuggestions(this->currentSuggestions);
+        this->currentSuggestions = 0;
 
         /* if there are new suggestions, check whether we should do another
          * pass */
-        if (mkd64.suggestions)
+        if (this->suggestions)
         {
-            printSuggestions(mkd64.suggestions);
-            if (mkd64.currentPass < mkd64.maxPasses)
+            printSuggestions(this->suggestions);
+            if (this->currentPass < this->maxPasses)
             {
                 fputs("[Info] rerunning using the above suggestions ...\n",
                         stderr);
-                image_reset(mkd64.image);
-                modrepo_reloadModules(mkd64.modrepo);
-                Cmdline_moveNext(mkd64.cmdline);
-                mkd64.currentSuggestions = mkd64.suggestions;
-                mkd64.suggestions = 0;
-                fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
+                Image_done(this->image);
+                Image_init(this->image);
+                ModRepo_reloadModules(this->modrepo);
+                Cmdline_moveNext(this->cmdline);
+                this->currentSuggestions = this->suggestions;
+                this->suggestions = 0;
+                fprintf(stderr, "* Pass #%d\n", ++this->currentPass);
             }
         }
     }
-    while (mkd64.currentSuggestions);
+    while (this->currentSuggestions);
 
     /* write the disk image to output file */
-    if (mkd64.d64)
+    if (this->d64)
     {
-        if (image_dump(mkd64.image, mkd64.d64))
-            printf("D64 image written to `%s'.\n", mkd64.d64name);
+        if (Image_dump(this->image, this->d64))
+            printf("D64 image written to `%s'.\n", this->d64name);
         else
             perror("Error writing D64 image");
-        fclose(mkd64.d64);
-        mkd64.d64 = 0;
+        fclose(this->d64);
+        this->d64 = 0;
     }
     else
     {
@@ -666,59 +674,59 @@ mkd64_run(void)
     }
 
     /* write the file map */
-    if (mkd64.map)
+    if (this->map)
     {
-        if (filemap_dump(image_filemap(mkd64.image), mkd64.map))
-            printf("File map for image written to `%s'.\n", mkd64.mapname);
+        if (FileMap_dump(Image_fileMap(this->image), this->map))
+            printf("File map for image written to `%s'.\n", this->mapname);
         else
             perror("Error writing file map");
-        fclose(mkd64.map);
-        mkd64.map = 0;
+        fclose(this->map);
+        this->map = 0;
     }
 
     /* show the user what was done */
-    printResult();
+    printResult(this);
 
     return 1;
 
-mkd64_run_error:
-    if (mkd64.d64) fclose(mkd64.d64);
-    if (mkd64.map) fclose(mkd64.map);
+Mkd64_run_error:
+    if (this->d64) fclose(this->d64);
+    if (this->map) fclose(this->map);
     return 0;
 }
 
 SOLOCAL void
-mkd64_done(void)
+Mkd64_done(Mkd64 *this)
 {
-    if (!mkd64.initialized) return;
-    mkd64.initialized = 0;
-    image_delete(mkd64.image);
-    OBJDEL(Cmdline, mkd64.cmdline);
-    modrepo_delete(mkd64.modrepo);
-    deleteSuggestions(mkd64.suggestions);
-    deleteSuggestions(mkd64.currentSuggestions);
+    if (!this->initialized) return;
+    this->initialized = 0;
+    OBJDEL(Image, this->image);
+    OBJDEL(Cmdline, this->cmdline);
+    OBJDEL(ModRepo, this->modrepo);
+    deleteSuggestions(this->suggestions);
+    deleteSuggestions(this->currentSuggestions);
 }
 
 SOLOCAL Image *
-mkd64_image(void)
+Mkd64_image(Mkd64 *this)
 {
-    return mkd64.initialized ? mkd64.image : 0;
+    return this->initialized ? this->image : 0;
 }
 
 SOLOCAL Cmdline *
-mkd64_cmdline(void)
+Mkd64_cmdline(Mkd64 *this)
 {
-    return mkd64.initialized ? mkd64.cmdline : 0;
+    return this->initialized ? this->cmdline : 0;
 }
 
-SOEXPORT Modrepo *
-mkd64_modrepo(void)
+SOEXPORT ModRepo *
+Mkd64_modRepo(Mkd64 *this)
 {
-    return mkd64.initialized ? mkd64.modrepo : 0;
+    return this->initialized ? this->modrepo : 0;
 }
 
 SOEXPORT void
-mkd64_suggestOption(IModule *mod, int fileNo,
+Mkd64_suggestOption(Mkd64 *this, IModule *mod, int fileNo,
         char opt, const char *arg, const char *reason)
 {
     SuggestedOption *sopt = malloc(sizeof(SuggestedOption));
@@ -731,22 +739,29 @@ mkd64_suggestOption(IModule *mod, int fileNo,
     sopt->arg = arg ? copyString(arg) : 0;
     sopt->reason = reason;
 
-    if (!mkd64.suggestions) mkd64.suggestions = sopt;
+    if (!this->suggestions) this->suggestions = sopt;
     else
     {
-        parent = mkd64.suggestions;
+        parent = this->suggestions;
         while (parent->next) parent = parent->next;
         parent->next = sopt;
     }
 }
 
+SOEXPORT Mkd64 *
+Mkd64_instance(void)
+{
+    return instance;
+}
+
 int main(int argc, char **argv)
 {
-    int exit;
+    static int exit;
+    static Mkd64 mkd64;
 
-    mkd64_init(argc, argv);
-    exit = mkd64_run() ? EXIT_SUCCESS : EXIT_FAILURE;
-    mkd64_done();
+    Mkd64_init(&mkd64, argc, argv);
+    exit = Mkd64_run(&mkd64) ? EXIT_SUCCESS : EXIT_FAILURE;
+    Mkd64_done(&mkd64);
 
     return exit;
 }

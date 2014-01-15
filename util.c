@@ -130,5 +130,17 @@ copyString(const char *s)
     return copy;
 }
 
+SOEXPORT void *
+mkd64Alloc(size_t size)
+{
+    void *alloc = malloc(size);
+    if (!alloc)
+    {
+        perror("Fatal: Could not allocate memory");
+        exit(EXIT_FAILURE);
+    }
+    return alloc;
+}
+
 /* vim: et:si:ts=4:sts=4:sw=4
 */

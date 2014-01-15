@@ -4,14 +4,15 @@
 #include <mkd64/diskfile.h>
 #include <stdio.h>
 
-Diskfile *diskfile_new(void);
-void diskfile_delete(Diskfile *this);
+size_t DiskFile_objectSize(void);
+DiskFile *DiskFile_init(DiskFile *this);
+void DiskFile_done(DiskFile *this);
 
-void diskfile_setFileNo(Diskfile *this, int fileNo);
+void DiskFile_setFileNo(DiskFile *this, int fileNo);
 
-int diskfile_readFromHost(Diskfile *this, const char *hostfile);
+int DiskFile_readFromHost(DiskFile *this, const char *hostfile);
 
-int diskfile_write(Diskfile *this, Image *image,
+int DiskFile_write(DiskFile *this, Image *image,
         const BlockPosition *startPosition);
 
 #endif

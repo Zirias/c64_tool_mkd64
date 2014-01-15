@@ -3,17 +3,16 @@
 
 #include <mkd64/common.h>
 
-struct diskfile;
 /** class representing a file to be written on a C64 disk
  */
-typedef struct diskfile Diskfile;
+typedef struct DiskFile DiskFile;
 
 #include <mkd64/image.h>
 #include <mkd64/block.h>
 #include <stdlib.h>
 
-/** callback for deleting data attached using diskfile_attachData()
- * @param owner pointer to the owner as given to diskfile_attachData()
+/** callback for deleting data attached using DiskFile_attachData()
+ * @param owner pointer to the owner as given to DiskFile_attachData()
  * @param data the data to delete
  */
 typedef void (*DataDelete)(const void *owner, void *data);
@@ -26,7 +25,7 @@ typedef void (*DataDelete)(const void *owner, void *data);
  * @param data the data to attach
  * @param deleter a callback that must free all memory of data when called
  */
-DECLEXPORT void diskfile_attachData(Diskfile *this, const void *owner,
+DECLEXPORT void DiskFile_attachData(DiskFile *this, const void *owner,
         void *data, DataDelete deleter);
 
 /** Get attached data for a given owner
@@ -34,13 +33,13 @@ DECLEXPORT void diskfile_attachData(Diskfile *this, const void *owner,
  * @param owner the owner of the data
  * @return pointer to the data, or 0 if no data for this owner was found
  */
-DECLEXPORT void *diskfile_data(const Diskfile *this, const void *owner);
+DECLEXPORT void *DiskFile_data(const DiskFile *this, const void *owner);
 
 /** Get the size of the file in bytes
  * @param this the diskfile
  * @return size in bytes, or 0 if no real file was read from the local system
  */
-DECLEXPORT size_t diskfile_size(const Diskfile *this);
+DECLEXPORT size_t DiskFile_size(const DiskFile *this);
 
 /** Get the size of the file in blocks
  * This will only return a real value after the file was written to a disk
@@ -48,7 +47,7 @@ DECLEXPORT size_t diskfile_size(const Diskfile *this);
  * @param this the diskfile
  * @return the size in blocks
  */
-DECLEXPORT size_t diskfile_blocks(const Diskfile *this);
+DECLEXPORT size_t DiskFile_blocks(const DiskFile *this);
 
 /** Set interleave for this file
  * This sets an interleave value to be used when the file is written to a disk
@@ -59,13 +58,13 @@ DECLEXPORT size_t diskfile_blocks(const Diskfile *this);
  * @param this the diskfile
  * @param interleave the interleave value to set.
  */
-DECLEXPORT void diskfile_setInterleave(Diskfile *this, int interleave);
+DECLEXPORT void DiskFile_setInterleave(DiskFile *this, int interleave);
 
 /** Get interleave for this file
  * @param this the diskfile
  * @return the currently set interleave value
  */
-DECLEXPORT int diskfile_interleave(const Diskfile *this);
+DECLEXPORT int DiskFile_interleave(const DiskFile *this);
 
 /** Set the name of this file
  * mkd64 initially sets the file name to the name of the file loaded from the
@@ -77,13 +76,13 @@ DECLEXPORT int diskfile_interleave(const Diskfile *this);
  * @param this the diskfile
  * @param name the name to set for the file
  */
-DECLEXPORT void diskfile_setName(Diskfile *this, const char *name);
+DECLEXPORT void DiskFile_setName(DiskFile *this, const char *name);
 
 /** Get the name of this file
  * @param this the diskfile
- * @return the (current) name of the file, see diskfile_setName().
+ * @return the (current) name of the file, see DiskFile_setName().
  */
-DECLEXPORT const char *diskfile_name(const Diskfile *this);
+DECLEXPORT const char *DiskFile_name(const DiskFile *this);
 
 /** Get the number of the file
  * Each file gets automatically a number when it is written to the disk image,
@@ -91,7 +90,7 @@ DECLEXPORT const char *diskfile_name(const Diskfile *this);
  * @param this the diskfile
  * @return the file number
  */
-DECLEXPORT int diskfile_fileNo(const Diskfile *this);
+DECLEXPORT int DiskFile_fileNo(const DiskFile *this);
 
 #endif
 

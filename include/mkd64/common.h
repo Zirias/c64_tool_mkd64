@@ -51,8 +51,25 @@ SOEXPORT const char *id(void) \
 }
 #endif
 
+#include <mkd64/util.h>
+
 #define OBJNEW(classname) classname##_init( \
-        (classname *)malloc(classname##_objectSize()))
+        (classname *)mkd64Alloc(classname##_objectSize()))
+
+#define OBJNEW1(classname, p1) classname##_init( \
+        (classname *)mkd64Alloc(classname##_objectSize()), p1)
+
+#define OBJNEW2(classname, p1, p2) classname##_init( \
+        (classname *)mkd64Alloc(classname##_objectSize()), p1, p2)
+
+#define OBJNEW3(classname, p1, p2, p3) classname##_init( \
+        (classname *)mkd64Alloc(classname##_objectSize()), p1, p2, p3)
+
+#define OBJNEW4(classname, p1, p2, p3, p4) classname##_init( \
+        (classname *)mkd64Alloc(classname##_objectSize()), p1, p2, p3, p4)
+
+#define OBJNEW5(classname, p1, p2, p3, p4, p5) classname##_init( \
+        (classname *)mkd64Alloc(classname##_objectSize()), p1, p2, p3, p4, p5)
 
 #define OBJDEL(classname, object) do { \
     classname##_done(object); \

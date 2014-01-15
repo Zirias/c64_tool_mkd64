@@ -31,7 +31,7 @@ delete(IModule *this)
 
     for (i = 0; i < 5; ++i)
     {
-        if (dos->extraTracks[i]) track_delete(dos->extraTracks[i]);
+        if (dos->extraTracks[i]) OBJDEL(Track, dos->extraTracks[i]);
     }
 
     free(dos);
@@ -46,9 +46,9 @@ initImage(IModule *this, Image *image)
     dos->image = image;
     for (i = 0; i < 5; ++i)
     {
-        if (!image_track(image, i+36))
+        if (!Image_track(image, i+36))
         {
-            dos->extraTracks[i] = track_new(i+36, 17);
+            dos->extraTracks[i] = OBJNEW2(Track, i+36, 17);
         }
     }
 }
@@ -60,12 +60,12 @@ getBam(Xtracks *this)
 
     if (!this->bam)
     {
-        this->bam = image_block(this->image, &pos);
+        this->bam = Image_block(this->image, &pos);
     }
 
-    if (!block_status(this->bam) & BS_ALLOCATED)
+    if (!Block_status(this->bam) & BS_ALLOCATED)
     {
-        block_allocate(this->bam);
+        Block_allocate(this->bam);
     }
 }
 
@@ -88,7 +88,7 @@ globalOption(IModule *this, char opt, const char *arg)
                     getBam(dos);
                     for (i = 0; i < 5; ++i)
                     {
-                        bamEntry = block_rawData(dos->bam) + 0xac + 4*i;
+                        bamEntry = Block_rawData(dos->bam) + 0xac + 4*i;
                         bamEntry[0] = 0x11;
                         bamEntry[1] = 0xff;
                         bamEntry[2] = 0xff;
@@ -101,7 +101,7 @@ globalOption(IModule *this, char opt, const char *arg)
                     getBam(dos);
                     for (i = 0; i < 5; ++i)
                     {
-                        bamEntry = block_rawData(dos->bam) + 0xc0 + 4*i;
+                        bamEntry = Block_rawData(dos->bam) + 0xc0 + 4*i;
                         bamEntry[0] = 0x11;
                         bamEntry[1] = 0xff;
                         bamEntry[2] = 0xff;
@@ -135,11 +135,11 @@ updateBam(Xtracks *this, uint8_t *bamEntry, const BlockPosition *pos)
 {
     int bamByte, bamBit;
 
-    bamEntry[0] = track_freeSectors(image_track(this->image, pos->track),
+    bamEntry[0] = Track_freeSectors(Image_track(this->image, pos->track),
             ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
-    if (image_blockStatus(this->image, pos) & BS_ALLOCATED)
+    if (Image_blockStatus(this->image, pos) & BS_ALLOCATED)
     {
         bamEntry[bamByte] &= ~(1<<bamBit);
     }
@@ -162,13 +162,13 @@ statusChanged(IModule *this, const BlockPosition *pos)
 
     if (dos->doDolphinDosBam)
     {
-        bamEntry = block_rawData(dos->bam) + 0xac + 4 * (pos->track-36);
+        bamEntry = Block_rawData(dos->bam) + 0xac + 4 * (pos->track-36);
         updateBam(dos, bamEntry, pos);
     }
 
     if (dos->doSpeedDosBam)
     {
-        bamEntry = block_rawData(dos->bam) + 0xc0 + 4 * (pos->track-36);
+        bamEntry = Block_rawData(dos->bam) + 0xc0 + 4 * (pos->track-36);
         updateBam(dos, bamEntry, pos);
     }
 }

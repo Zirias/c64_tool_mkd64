@@ -51,9 +51,8 @@ Cmdline_objectSize(void)
 SOLOCAL Cmdline *
 Cmdline_init(Cmdline *this)
 {
-    this->count = 0;
+    memset(this, 0, sizeof(Cmdline));
     this->pos = -1;
-    this->opts = 0;
     return this;
 }
 

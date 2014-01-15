@@ -53,16 +53,16 @@ allocFirstBlock(IBlockAllocator *this)
     int tn, sn;
 
     /* find first track that has free sectors left */
-    for (tn = 1, t = image_track(_img, tn);
-            t && !track_freeSectors(t, _msk);
-            t = image_track(_img, ++tn)) {}
+    for (tn = 1, t = Image_track(_img, tn);
+            t && !Track_freeSectors(t, _msk);
+            t = Image_track(_img, ++tn)) {}
 
     /* no track found */
     if (!t) return 0;
 
     /* allocate first available sector on block */
-    sn = track_allocateFirstFreeFrom(t, 0, _rsv);
-    b = track_block(t, sn);
+    sn = Track_allocateFirstFreeFrom(t, 0, _rsv);
+    b = Track_block(t, sn);
     return b;
 }
 
@@ -77,30 +77,30 @@ allocNextBlock(IBlockAllocator *this, const BlockPosition *pos)
     sn = pos->sector;
 
     /* get current track */
-    t = image_track(_img, tn);
+    t = Image_track(_img, tn);
     bigdist = 0;
 
     /* search first track from current one with free sectors */
-    while (t && !track_freeSectors(t, _msk)) t = image_track(_img, ++tn);
+    while (t && !Track_freeSectors(t, _msk)) t = Image_track(_img, ++tn);
 
     /* try again from beginning of the disk if no track found so far */
     if (!t)
     {
         bigdist = 1;
         tn = 1;
-        t = image_track(_img, tn);
-        while (tn < pos->track && !track_freeSectors(t, _msk))
-            t = image_track(_img, ++tn);
+        t = Image_track(_img, tn);
+        while (tn < pos->track && !Track_freeSectors(t, _msk))
+            t = Image_track(_img, ++tn);
     }
 
     /* no track found */
     if (!t) return 0;
 
     /* apply interleaving for "near" tracks */
-    if (!bigdist) sn = (sn + _ilv) % track_numSectors(t);
+    if (!bigdist) sn = (sn + _ilv) % Track_numSectors(t);
 
-    sn = track_allocateFirstFreeFrom(t, sn, _rsv);
-    b = track_block(t, sn);
+    sn = Track_allocateFirstFreeFrom(t, sn, _rsv);
+    b = Track_block(t, sn);
     return b;
 }
 

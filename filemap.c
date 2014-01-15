@@ -6,59 +6,64 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-struct filemapEntry;
-typedef struct filemapEntry FilemapEntry;
+typedef struct FileMapEntry FileMapEntry;
 
-struct filemapEntry
+struct FileMapEntry
 {
-    FilemapEntry *next;
-    Diskfile *file;
+    FileMapEntry *next;
+    DiskFile *file;
     BlockPosition *startPosition;
 };
 
-struct filemap
+struct FileMap
 {
-    FilemapEntry *first;
+    FileMapEntry *first;
 };
 
-SOLOCAL Filemap *
-filemap_new(void)
+SOLOCAL size_t
+FileMap_objectSize(void)
 {
-    Filemap *this = calloc(1, sizeof(Filemap));
+    return sizeof(FileMap);
+}
+
+SOLOCAL FileMap *
+FileMap_init(FileMap *this)
+{
+    memset(this, 0, sizeof(FileMap));
     return this;
 }
 
 SOLOCAL void
-filemap_delete(Filemap *this)
+FileMap_done(FileMap *this)
 {
-    FilemapEntry *current, *next;
+    FileMapEntry *current, *next;
 
     for (current = this->first; current; current = next)
     {
         next = current->next;
-        diskfile_delete(current->file);
+        OBJDEL(DiskFile, current->file);
         free(current->startPosition);
         free(current);
     }
-    free(this);
 }
 
 SOLOCAL void
-filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
+FileMap_add(FileMap *this, DiskFile *file, const BlockPosition *pos)
 {
-    FilemapEntry *current;
+    FileMapEntry *current;
 
     if (!this->first)
     {
-        current = malloc(sizeof(FilemapEntry));
+        current = malloc(sizeof(FileMapEntry));
         this->first = current;
     }
     else
     {
         current = this->first;
         while (current->next) current = current->next;
-        current->next = malloc(sizeof(FilemapEntry));
+        current->next = malloc(sizeof(FileMapEntry));
         current = current->next;
     }
     current->next = 0;
@@ -69,15 +74,15 @@ filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos)
 }
 
 SOLOCAL int
-filemap_dump(const Filemap *this, FILE *out)
+FileMap_dump(const FileMap *this, FILE *out)
 {
     static const char *unnamed = "[UNNAMED]";
     const char *name;
-    FilemapEntry *current;
+    FileMapEntry *current;
 
     for (current = this->first; current; current = current->next)
     {
-        name = diskfile_name(current->file);
+        name = DiskFile_name(current->file);
         if (!name) name = unnamed;
         if (fprintf(out, "%u;%u;%s\n",
                 current->startPosition->track,

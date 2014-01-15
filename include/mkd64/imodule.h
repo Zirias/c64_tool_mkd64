@@ -3,17 +3,16 @@
 
 #include <mkd64/common.h>
 
-struct iModule;
 /** runtime interface for mkd64 modules
  */
-typedef struct iModule IModule;
+typedef struct IModule IModule;
 
 #include <mkd64/image.h>
 #include <mkd64/diskfile.h>
 #include <mkd64/track.h>
 #include <mkd64/block.h>
 
-struct iModule
+struct IModule
 {
     /** Get id of the module, for runtime identification
      * @return the module id
@@ -50,7 +49,7 @@ struct iModule
      * @return 1 if the options is recognized by the module, 0 otherwise
      */
     int (*fileOption)(IModule *this,
-            Diskfile *file, char opt, const char *arg);
+            DiskFile *file, char opt, const char *arg);
 
     /** Get extra tracks, if provided by the module
      * May be left unimplemented.
@@ -70,7 +69,7 @@ struct iModule
      *  written
      */
     void (*fileWritten)(IModule *this,
-            Diskfile *file, const BlockPosition *start);
+            DiskFile *file, const BlockPosition *start);
 
     /** Called after the status of any block changed
      * May be left unimplemented.

@@ -8,6 +8,7 @@
  */
 
 #include <mkd64/common.h>
+#include <stdlib.h>
 
 /** Get random integer in a given range
  * The random number generator is initialized on the first call
@@ -60,6 +61,8 @@ DECLEXPORT int checkArgAndWarn(char opt, const char *arg, int isFileOpt,
  * @return a copy, must be free()d by the caller
  */
 DECLEXPORT char *copyString(const char *s);
+
+DECLEXPORT void *mkd64Alloc(size_t size);
 
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4

@@ -4,18 +4,17 @@
 #include <string.h>
 
 #include <mkd64/track.h>
+#include <mkd64/debug.h>
 #include "block.h"
 #include "modrepo.h"
 #include "mkd64.h"
 
-#define TRACK_SIZE(x) (sizeof(Track) + (x - 1) * sizeof(Block *))
-
-struct track
+struct Track
 {
     int tracknum;
     size_t num_sectors;
     int free_sectors;
-    Block *sectors[1];
+    Block *sectors[TRACK_MAX_SECTORS];
 };
 
 static void
@@ -23,23 +22,34 @@ blockStatusChanged(void *owner, const Block *block,
         BlockStatus oldStatus, BlockStatus newStatus)
 {
     Track *this = (Track *) owner;
-    Modrepo *mr = mkd64_modrepo();
+    ModRepo *mr = Mkd64_modRepo(MKD64);
 
     if (oldStatus == BS_NONE && newStatus != BS_NONE)
         --(this->free_sectors);
     else if (oldStatus != BS_NONE && newStatus == BS_NONE)
         ++(this->free_sectors);
 
-    modrepo_allStatusChanged(mr, block_position(block));
+    ModRepo_allStatusChanged(mr, Block_position(block));
+}
+
+SOEXPORT size_t
+Track_objectSize(void)
+{
+    return sizeof(Track);
 }
 
 SOEXPORT Track *
-track_new(int tracknum, size_t num_sectors)
+Track_init(Track *this, int tracknum, size_t num_sectors)
 {
     int i;
     BlockPosition pos;
 
-    Track *this = malloc(TRACK_SIZE(num_sectors));
+    if (num_sectors > TRACK_MAX_SECTORS)
+    {
+        DBGd1("Error: Too many sectors requested", (int) num_sectors);
+        num_sectors = TRACK_MAX_SECTORS;
+    }
+
     this->tracknum = tracknum;
     this->num_sectors = num_sectors;
     this->free_sectors = num_sectors;
@@ -48,31 +58,30 @@ track_new(int tracknum, size_t num_sectors)
     for (i = 0; i < num_sectors; ++i)
     {
         pos.sector = i;
-        this->sectors[i] = block_new(this, &pos, &blockStatusChanged);
+        this->sectors[i] = OBJNEW3(Block, this, &pos, &blockStatusChanged);
     }
     return this;
 }
 
 SOEXPORT void
-track_delete(Track *this)
+Track_done(Track *this)
 {
     int i;
     for (i = 0; i < this->num_sectors; ++i)
     {
-        block_delete(this->sectors[i]);
+        OBJDEL(Block, this->sectors[i]);
     }
-    free(this);
 }
 
 SOEXPORT BlockStatus
-track_blockStatus(const Track *this, int sector)
+Track_blockStatus(const Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return (BlockStatus) -1;
-    return block_status(this->sectors[sector]);
+    return Block_status(this->sectors[sector]);
 }
 
 SOEXPORT size_t
-track_numSectors(const Track *this)
+Track_numSectors(const Track *this)
 {
     return this->num_sectors;
 }
@@ -85,35 +94,35 @@ _freeSectorsRaw(const Track *this, BlockStatus mask)
 
     for (i = 0; i < this->num_sectors; ++i)
     {
-        if (!(block_status(this->sectors[i]) & ~mask)) ++free;
+        if (!(Block_status(this->sectors[i]) & ~mask)) ++free;
     }
 
     return free;
 }
 
 SOEXPORT int
-track_freeSectors(const Track *this, BlockStatus mask)
+Track_freeSectors(const Track *this, BlockStatus mask)
 {
     if (mask) return _freeSectorsRaw(this, mask);
     return this->free_sectors;
 }
 
 SOEXPORT int
-track_reserveBlock(Track *this, int sector, IModule *by)
+Track_reserveBlock(Track *this, int sector, IModule *by)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
-    return block_reserve(this->sectors[sector], by);
+    return Block_reserve(this->sectors[sector], by);
 }
 
 SOEXPORT int
-track_allocateBlock(Track *this, int sector)
+Track_allocateBlock(Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
-    return block_allocate(this->sectors[sector]);
+    return Block_allocate(this->sectors[sector]);
 }
 
 SOEXPORT int
-track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
+Track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
 {
     Block *b;
     BlockStatus s;
@@ -125,16 +134,16 @@ track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
     {
         if (sector >= this->num_sectors) sector = 0;
         b = this->sectors[sector];
-        s = block_status(b);
+        s = Block_status(b);
 
         if (s == BS_NONE)
         {
-            block_allocate(b);
+            Block_allocate(b);
             return sector;
         }
-        if (askModules && s == BS_RESERVED && block_unReserve(b))
+        if (askModules && s == BS_RESERVED && Block_unReserve(b))
         {
-            block_allocate(b);
+            Block_allocate(b);
             return sector;
         }
     }
@@ -143,7 +152,7 @@ track_allocateFirstFreeFrom(Track *this, int sector, int askModules)
 }
 
 SOEXPORT Block *
-track_block(const Track *this, int sector)
+Track_block(const Track *this, int sector)
 {
     if (sector < 0 || sector >= this->num_sectors) return 0;
     return this->sectors[sector];

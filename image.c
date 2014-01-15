@@ -21,64 +21,59 @@ static size_t num_sectors[] =
     17,17,17,17,17
 };
 
-struct image
+struct Image
 {
     size_t num_tracks;
     IBlockAllocator *allocator;
-    Filemap *map;
+    FileMap *map;
     Track *tracks[IMAGE_NUM_TRACKS];
 };
 
-static void _initImage(Image *this)
+SOLOCAL size_t
+Image_objectSize(void)
 {
-    int i;
-
-    for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
-    {
-        this->tracks[i] = track_new(i+1, num_sectors[i]);
-    }
-    this->num_tracks = IMAGE_NUM_TRACKS;
-    this->allocator = &defaultAllocator;
-    this->map = filemap_new();
-    defaultAllocator.setImage(&defaultAllocator, this);
+    return sizeof(Image);
 }
 
 SOLOCAL Image *
-image_new(void)
-{
-    Image *this = malloc(sizeof(Image));
-    _initImage(this);
-    return this;
-}
-
-static void _cleanupImage(Image *this)
+Image_init(Image *this)
 {
     int i;
 
     for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
     {
-        track_delete(this->tracks[i]);
+        this->tracks[i] = OBJNEW2(Track, i+1, num_sectors[i]);
     }
-    filemap_delete(this->map);
+    this->num_tracks = IMAGE_NUM_TRACKS;
+    this->allocator = &defaultAllocator;
+    this->map = OBJNEW(FileMap);
+    defaultAllocator.setImage(&defaultAllocator, this);
+
+    return this;
 }
 
 SOLOCAL void
-image_delete(Image *this)
+Image_done(Image *this)
 {
-    _cleanupImage(this);
-    free(this);
+    int i;
+
+    for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
+    {
+        OBJDEL(Track, this->tracks[i]);
+    }
+    OBJDEL(FileMap, this->map);
 }
 
 SOEXPORT BlockStatus
-image_blockStatus(const Image *this, const BlockPosition *pos)
+Image_blockStatus(const Image *this, const BlockPosition *pos)
 {
-    Track *t = image_track(this, pos->track);
+    Track *t = Image_track(this, pos->track);
     if (!t) return (BlockStatus) -1;
-    return track_blockStatus(t, pos->sector);
+    return Track_blockStatus(t, pos->sector);
 }
 
 SOEXPORT Track *
-image_track(const Image *this, int track)
+Image_track(const Image *this, int track)
 {
     Track *t;
 
@@ -88,65 +83,58 @@ image_track(const Image *this, int track)
     }
     else
     {
-        t = modrepo_firstGetTrack(mkd64_modrepo(), track);
+        t = ModRepo_firstGetTrack(Mkd64_modRepo(MKD64), track);
     }
 
     return t;
 }
 
 SOEXPORT Block *
-image_block(const Image *this, const BlockPosition *pos)
+Image_block(const Image *this, const BlockPosition *pos)
 {
-    Track *t = image_track(this, pos->track);
+    Track *t = Image_track(this, pos->track);
     if (!t) return 0;
-    return track_block(t, pos->sector);
+    return Track_block(t, pos->sector);
 }
 
 SOEXPORT Block *
-image_allocateAt(const Image *this, const BlockPosition *pos)
+Image_allocateAt(const Image *this, const BlockPosition *pos)
 {
-    Block *b = image_block(this, pos);
+    Block *b = Image_block(this, pos);
     BlockStatus s;
 
     if (!b) return 0;
-    s = block_status(b);
+    s = Block_status(b);
     if (s & BS_ALLOCATED) return 0;
     if (s & BS_RESERVED)
     {
-        if (!block_unReserve(b)) return 0;
+        if (!Block_unReserve(b)) return 0;
     }
-    block_allocate(b);
+    Block_allocate(b);
     return b;
 }
 
-SOLOCAL Filemap *
-image_filemap(const Image *this)
+SOLOCAL FileMap *
+Image_fileMap(const Image *this)
 {
     return this->map;
 }
 
 SOEXPORT void
-image_setAllocator(Image *this, IBlockAllocator *allocator)
+Image_setAllocator(Image *this, IBlockAllocator *allocator)
 {
     allocator->setImage(allocator, this);
     this->allocator = allocator;
 }
 
 SOEXPORT IBlockAllocator *
-image_allocator(const Image *this)
+Image_allocator(const Image *this)
 {
     return this->allocator;
 }
 
-SOLOCAL void
-image_reset(Image *this)
-{
-    _cleanupImage(this);
-    _initImage(this);
-}
-
 SOLOCAL int
-image_dump(const Image *this, FILE *out)
+Image_dump(const Image *this, FILE *out)
 {
     int tracknum = 0;
     Track *track;
@@ -154,13 +142,13 @@ image_dump(const Image *this, FILE *out)
     size_t num_sectors;
     int i;
 
-    while ((track = image_track(this, ++tracknum)))
+    while ((track = Image_track(this, ++tracknum)))
     {
-        num_sectors = track_numSectors(track);
+        num_sectors = Track_numSectors(track);
         for (i = 0; i < num_sectors; ++i)
         {
-            block = track_block(track, i);
-            if (fwrite(block_rawData(block), BLOCK_RAWSIZE, 1, out) != 1)
+            block = Track_block(track, i);
+            if (fwrite(Block_rawData(block), BLOCK_RAWSIZE, 1, out) != 1)
                 return 0;
         }
     }

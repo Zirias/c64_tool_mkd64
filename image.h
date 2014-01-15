@@ -3,16 +3,16 @@
 
 #include <mkd64/image.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "filemap.h"
 
-Image *image_new(void);
-void image_delete(Image *this);
+size_t Image_objectSize(void);
+Image *Image_init(Image *this);
+void Image_done(Image *this);
 
-Filemap *image_filemap(const Image *this);
+FileMap *Image_fileMap(const Image *this);
 
-void image_reset(Image *this);
-
-int image_dump(const Image *this, FILE *out);
+int Image_dump(const Image *this, FILE *out);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

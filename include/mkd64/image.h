@@ -3,10 +3,9 @@
 
 #include <mkd64/common.h>
 
-struct image;
 /** class representing a D64 image in memory
  */
-typedef struct image Image;
+typedef struct Image Image;
 
 #include <mkd64/image.h>
 #include <mkd64/block.h>
@@ -18,7 +17,7 @@ typedef struct image Image;
  * @param pos the position of the block
  * @return the status of the block
  */
-DECLEXPORT BlockStatus image_blockStatus(const Image *this,
+DECLEXPORT BlockStatus Image_blockStatus(const Image *this,
         const BlockPosition *pos);
 
 /** Get track object for a given track number
@@ -27,7 +26,7 @@ DECLEXPORT BlockStatus image_blockStatus(const Image *this,
  * @param tracknum the number of the track to get
  * @return the track object or 0 if no track with that number exists
  */
-DECLEXPORT Track *image_track(const Image *this, int tracknum);
+DECLEXPORT Track *Image_track(const Image *this, int tracknum);
 
 /** Get block object for a given position
  * This also locates blocks on tracks from modules providing extra tracks
@@ -35,7 +34,7 @@ DECLEXPORT Track *image_track(const Image *this, int tracknum);
  * @param pos the position of the block to get
  * @return the block object or 0 if no block wit the given position exists
  */
-DECLEXPORT Block *image_block(const Image *this, const BlockPosition *pos);
+DECLEXPORT Block *Image_block(const Image *this, const BlockPosition *pos);
 
 /** Try to allocate a block at a fixed position
  * This tries to allocate a given block. A module reserving this block is asked
@@ -45,7 +44,7 @@ DECLEXPORT Block *image_block(const Image *this, const BlockPosition *pos);
  * @param pos the position of the block to allocate
  * @return the allocated block object or 0 if allocation was not possible
  */
-DECLEXPORT Block *image_allocateAt(const Image *this, const BlockPosition *pos);
+DECLEXPORT Block *Image_allocateAt(const Image *this, const BlockPosition *pos);
 
 /** Set custom allocator
  * Set an IBlockAllocator instance to handle block allocations while writing
@@ -55,14 +54,14 @@ DECLEXPORT Block *image_allocateAt(const Image *this, const BlockPosition *pos);
  * @param this the image
  * @param allocator the allocator to use
  */
-DECLEXPORT void image_setAllocator(Image *this, IBlockAllocator *allocator);
+DECLEXPORT void Image_setAllocator(Image *this, IBlockAllocator *allocator);
 
 /** Get current allocator
  * Get a pointer to the IBlockAllocator instance currently in use.
  * @param this the image
  * @return the allocator
  */
-DECLEXPORT IBlockAllocator *image_allocator(const Image *this);
+DECLEXPORT IBlockAllocator *Image_allocator(const Image *this);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

@@ -5,12 +5,12 @@
 #include <mkd64/image.h>
 #include "cmdline.h"
 
-int mkd64_init(int argc, char **argv);
-int mkd64_run(void);
-void mkd64_done(void);
+Mkd64 *Mkd64_init(Mkd64 *this, int argc, char **argv);
+int Mkd64_run(Mkd64 *this);
+void Mkd64_done(Mkd64 *this);
 
-Image *mkd64_image(void);
-Cmdline *mkd64_cmdline(void);
+Image *Mkd64_image(Mkd64 *this);
+Cmdline *Mkd64_cmdline(Mkd64 *this);
 
 #endif
 

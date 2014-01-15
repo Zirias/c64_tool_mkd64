@@ -111,7 +111,7 @@ _deleteFileData(const void *owner, void *data)
 }
 
 static int
-_nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
+nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
 {
     Track *t;
     int trackChanged = 0;
@@ -122,42 +122,42 @@ _nextDirBlock(Cbmdos *this, BlockPosition *pos, int allocate)
         pos->sector = 1;
     }
 
-    t = image_track(this->image, pos->track);
-    while (t && !track_freeSectors(t, BS_NONE))
+    t = Image_track(this->image, pos->track);
+    while (t && !Track_freeSectors(t, BS_NONE))
     {
         trackChanged = 1;
         ++(pos->track);
-        t = image_track(this->image, pos->track);
+        t = Image_track(this->image, pos->track);
     }
     if (!t)
     {
         trackChanged = 1;
         pos->track = 17;
-        t = image_track(this->image, pos->track);
-        while (t && !track_freeSectors(t, BS_NONE))
+        t = Image_track(this->image, pos->track);
+        while (t && !Track_freeSectors(t, BS_NONE))
         {
             --(pos->track);
-            t = image_track(this->image, pos->track);
+            t = Image_track(this->image, pos->track);
         }
     }
     if (!t) return 0;
 
-    if (!trackChanged && track_blockStatus(t, pos->sector) == BS_NONE)
+    if (!trackChanged && Track_blockStatus(t, pos->sector) == BS_NONE)
     {
-        if (allocate) track_allocateBlock(t, pos->sector);
-        else track_reserveBlock(t, pos->sector, (IModule *)this);
+        if (allocate) Track_allocateBlock(t, pos->sector);
+        else Track_reserveBlock(t, pos->sector, (IModule *)this);
         return 1;
     }
 
-    pos->sector = (pos->sector + this->dirInterleave) % track_numSectors(t);
+    pos->sector = (pos->sector + this->dirInterleave) % Track_numSectors(t);
 
-    while (track_blockStatus(t, pos->sector) != BS_NONE)
+    while (Track_blockStatus(t, pos->sector) != BS_NONE)
     {
-        if (++(pos->sector) >= track_numSectors(t)) pos->sector = 0;
+        if (++(pos->sector) >= Track_numSectors(t)) pos->sector = 0;
     }
 
-    if (allocate) track_allocateBlock(t, pos->sector);
-    else track_reserveBlock(t, pos->sector, (IModule *)this);
+    if (allocate) Track_allocateBlock(t, pos->sector);
+    else Track_reserveBlock(t, pos->sector, (IModule *)this);
     return 1;
 }
 
@@ -171,7 +171,7 @@ _reserveDirBlocks(Cbmdos *this)
 
     for (i = 0; i < this->reservedDirBlocks; ++i)
     {
-        if (!_nextDirBlock(this, &pos, 0)) return;
+        if (!nextDirBlock(this, &pos, 0)) return;
         current = malloc(sizeof(DirBlock));
         current->next = 0;
         current->pos.track = pos.track;
@@ -183,7 +183,7 @@ _reserveDirBlocks(Cbmdos *this)
 }
 
 static void
-_reserveDirSlot(Cbmdos *this)
+reserveDirSlot(Cbmdos *this)
 {
     Block *nextBlock;
     BlockPosition pos;
@@ -196,8 +196,8 @@ _reserveDirSlot(Cbmdos *this)
     {
         if (this->directory)
         {
-            nextBlock = image_block(this->image, &(this->directory->pos));
-            block_allocate(nextBlock);
+            nextBlock = Image_block(this->image, &(this->directory->pos));
+            Block_allocate(nextBlock);
             tmp = this->directory;
             this->directory = tmp->next;
             free(tmp);
@@ -206,19 +206,19 @@ _reserveDirSlot(Cbmdos *this)
         {
             if (this->currentDirBlock)
             {
-                pos.track = block_position(this->currentDirBlock)->track;
-                pos.sector = block_position(this->currentDirBlock)->sector;
+                pos.track = Block_position(this->currentDirBlock)->track;
+                pos.sector = Block_position(this->currentDirBlock)->sector;
             }
             else
             {
                 pos.track = 0;
                 pos.sector = 0;
             }
-            if (_nextDirBlock(this, &pos, 1))
+            if (nextDirBlock(this, &pos, 1))
             {
                 DBGd2("cbmdos: allocated extra directory block",
                         pos.track, pos.sector);
-                nextBlock = image_block(this->image, &pos);
+                nextBlock = Image_block(this->image, &pos);
                 ++(this->extraDirBlocks);
             }
             else
@@ -231,13 +231,13 @@ _reserveDirSlot(Cbmdos *this)
         }
         if (this->currentDirBlock)
         {
-            block_setNextTrack(this->currentDirBlock,
-                    block_position(nextBlock)->track);
-            block_setNextSector(this->currentDirBlock,
-                    block_position(nextBlock)->sector);
+            Block_setNextTrack(this->currentDirBlock,
+                    Block_position(nextBlock)->track);
+            Block_setNextSector(this->currentDirBlock,
+                    Block_position(nextBlock)->sector);
         }
         this->currentDirBlock = nextBlock;
-        memset(block_rawData(this->currentDirBlock), 0, 256);
+        memset(Block_rawData(this->currentDirBlock), 0, 256);
         this->currentDirSlot = 0;
         ++(this->usedDirBlocks);
     }
@@ -247,14 +247,14 @@ _reserveDirSlot(Cbmdos *this)
 static void
 _setDosVersion(Cbmdos *this, uint8_t version)
 {
-    block_rawData(this->bam)[2] = version;
+    Block_rawData(this->bam)[2] = version;
 }
 
 static void
 _allocateAll(Cbmdos *this)
 {
     this->flags |= CDFL_ALLOCALL;
-    memset(block_rawData(this->bam)+4, 0, 0x8c);
+    memset(Block_rawData(this->bam)+4, 0, 0x8c);
 }
 
 static void
@@ -265,7 +265,7 @@ _setZeroFree(Cbmdos *this)
 
     if (!(this->flags & CDFL_ALLOCALL))
     {
-        bamData = block_rawData(this->bam);
+        bamData = Block_rawData(this->bam);
         for (i = 0x4; i < 0x90; i += 0x4) bamData[i] = 0;
     }
     this->flags |= CDFL_ZEROFREE;
@@ -297,9 +297,9 @@ initImage(IModule *this, Image *image)
     uint8_t *data;
 
     dos->image = image;
-    dos->bam = image_block(image, &pos);
+    dos->bam = Image_block(image, &pos);
 
-    data = block_rawData(dos->bam);
+    data = Block_rawData(dos->bam);
     memcpy(data, _initialBam, 256);
 
     /* write random disk id */
@@ -308,9 +308,9 @@ initImage(IModule *this, Image *image)
     data[0xa3] = randomNum(0x30, 0x53);
     if (data[0xa3] > 0x39) data[0xa3] += 7;
 
-    block_allocate(dos->bam);
+    Block_allocate(dos->bam);
 
-    image_setAllocator(image, dos->alloc);
+    Image_setAllocator(image, dos->alloc);
 }
 
 static int
@@ -327,7 +327,7 @@ globalOption(IModule *this, char opt, const char *arg)
             {
                 arglen = strlen(arg);
                 if (arglen > 16) arglen = 16;
-                memcpy(block_rawData(dos->bam) + 0x90, arg, arglen);
+                memcpy(Block_rawData(dos->bam) + 0x90, arg, arglen);
             }
             return 1;
         case 'i':
@@ -335,7 +335,7 @@ globalOption(IModule *this, char opt, const char *arg)
             {
                 arglen = strlen(arg);
                 if (arglen > 5) arglen = 5;
-                memcpy(block_rawData(dos->bam) + 0xa2, arg, arglen);
+                memcpy(Block_rawData(dos->bam) + 0xa2, arg, arglen);
             }
             return 1;
         case 'R':
@@ -395,7 +395,7 @@ globalOption(IModule *this, char opt, const char *arg)
 }
 
 static int
-fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
+fileOption(IModule *this, DiskFile *file, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)this;
     CbmdosFileData *data;
@@ -409,25 +409,25 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             {
                 _reserveDirBlocks(dos);
             }
-            diskfile_setInterleave(file, 10);
+            DiskFile_setInterleave(file, 10);
             data = malloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
             data->writeDirEntry = 0;
             data->forceBlocks = -1;
-            diskfile_attachData(file, dos, data, &_deleteFileData);
+            DiskFile_attachData(file, dos, data, &_deleteFileData);
             return 1;
         case 'n':
-            data = diskfile_data(file, dos);
+            data = DiskFile_data(file, dos);
             data->writeDirEntry = 1;
             if (arg)
             {
-                diskfile_setName(file, arg);
+                DiskFile_setName(file, arg);
             }
-            _reserveDirSlot(dos);
+            reserveDirSlot(dos);
             return 1;
         case 'T':
             if (!checkArgAndWarn(opt, arg, 1, 1, _modid)) return 1;
-            data = diskfile_data(file, dos);
+            data = DiskFile_data(file, dos);
             switch (arg[0])
             {
                 case 'd':
@@ -457,14 +457,14 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
             return 1;
         case 'P':
             checkArgAndWarn(opt, arg, 1, 0, _modid);
-            data = diskfile_data(file, dos);
+            data = DiskFile_data(file, dos);
             data->fileType |= FT_PROT;
             return 1;
         case 'S':
             checkArgAndWarn(opt, arg, 1, 1, _modid);
             if (tryParseInt(arg, &intarg) && intarg >= 0)
             {
-                data = diskfile_data(file, dos);
+                data = DiskFile_data(file, dos);
                 data->forceBlocks = intarg;
             }
             else
@@ -479,7 +479,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
 }
 
 static void
-fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
+fileWritten(IModule *this, DiskFile *file, const BlockPosition *start)
 {
     Cbmdos *dos = (Cbmdos *)this;
     CbmdosFileData *data;
@@ -491,11 +491,11 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
 
     DBGd2("cbmdos: fileWritten", start->track, start->sector);
 
-    data = diskfile_data(file, dos);
+    data = DiskFile_data(file, dos);
 
     if (!data->writeDirEntry) return;
 
-    fileEntry = block_rawData(dos->currentDirBlock)
+    fileEntry = Block_rawData(dos->currentDirBlock)
         + dos->currentDirSlot * 0x20;
     memset(fileEntry, 0, 0x20);
     memset(fileEntry + 0x05, 0xa0, 0x10);
@@ -505,7 +505,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     fileEntry[0x03] = start->track;
     fileEntry[0x04] = start->sector;
 
-    fileName = diskfile_name(file);
+    fileName = DiskFile_name(file);
     if (!fileName) fileName = unnamed;
     nameLen = strlen(fileName);
     if (nameLen > 16) nameLen = 16;
@@ -517,7 +517,7 @@ fileWritten(IModule *this, Diskfile *file, const BlockPosition *start)
     }
     else
     {
-        blockSize = diskfile_blocks(file);
+        blockSize = DiskFile_blocks(file);
     }
     fileEntry[0x1e] = blockSize & 0xff;
     fileEntry[0x1f] = blockSize >> 8;
@@ -537,12 +537,12 @@ statusChanged(IModule *this, const BlockPosition *pos)
     if (dos->flags & CDFL_ALLOCALL) return;
     if (pos->track < 1 || pos->track > 35) return;
 
-    bamEntry = block_rawData(dos->bam) + 4 * pos->track;
+    bamEntry = Block_rawData(dos->bam) + 4 * pos->track;
     bamEntry[0] = dos->flags & CDFL_ZEROFREE ? 0 :
-        track_freeSectors(image_track(dos->image, pos->track), ~BS_ALLOCATED);
+        Track_freeSectors(Image_track(dos->image, pos->track), ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
-    if (image_blockStatus(dos->image, pos) & BS_ALLOCATED)
+    if (Image_blockStatus(dos->image, pos) & BS_ALLOCATED)
     {
         bamEntry[bamByte] &= ~(1<<bamBit);
     }
@@ -591,7 +591,7 @@ imageComplete(IModule *this)
     if (dos->extraDirBlocks)
     {
         snprintf(buf, 8, "%d", dos->reservedDirBlocks + dos->extraDirBlocks);
-        mkd64_suggestOption(this, 0, 'R', buf,
+        Mkd64_suggestOption(MKD64, this, 0, 'R', buf,
                 "More directory blocks were needed, reserving them beforehand "
                 "lessens directory fragmentation.");
     }
@@ -600,7 +600,7 @@ imageComplete(IModule *this)
     {
         snprintf(buf, 8, "%d",
                 dos->reservedDirBlocks - dos->reclaimedDirBlocks);
-        mkd64_suggestOption(this, 0, 'R', buf,
+        Mkd64_suggestOption(MKD64, this, 0, 'R', buf,
                 "Blocks reserved for directory were needed for files. Not "
                 "reserving them can lessen file fragmentation.");
     }
@@ -609,7 +609,7 @@ imageComplete(IModule *this)
         buf[0] = '1';
         buf[1] = '8';
         buf[2] = 0;
-        mkd64_suggestOption(this, 0, 'R', buf,
+        Mkd64_suggestOption(MKD64, this, 0, 'R', buf,
                 "More than 18 directory blocks were reserved, but not needed. "
                 "Not reserving them can lessen file fragmentation.");
     }

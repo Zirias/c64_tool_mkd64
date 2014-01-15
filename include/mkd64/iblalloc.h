@@ -3,16 +3,15 @@
 
 #include <mkd64/common.h>
 
-struct iBlockAllocator;
 /** interface for custom block allocation schemes
  */
-typedef struct iBlockAllocator IBlockAllocator;
+typedef struct IBlockAllocator IBlockAllocator;
 
 #include <mkd64/image.h>
 #include <mkd64/track.h>
 #include <mkd64/block.h>
 
-struct iBlockAllocator
+struct IBlockAllocator
 {
     /** Set the image the allocator should operate on
      * This is always called when the allocator is attached to an image, so

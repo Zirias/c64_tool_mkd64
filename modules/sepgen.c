@@ -102,7 +102,7 @@ depends(void)
 }
 
 static int
-fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
+fileOption(IModule *this, DiskFile *file, char opt, const char *arg)
 {
     Separators *mod = (Separators *)this;
     const SeparatorEntry *sep;
@@ -126,7 +126,7 @@ fileOption(IModule *this, Diskfile *file, char opt, const char *arg)
         memcpy(buf, sep->pattern, 17);
         if (sep->contentLen)
         {
-            name = diskfile_name(file);
+            name = DiskFile_name(file);
             nameLen = strlen(name);
             if (nameLen > sep->contentLen) nameLen = sep->contentLen;
             memcpy(buf + sep->contentOffset, name, nameLen);
@@ -145,7 +145,7 @@ instance(void)
     mod->mod.free = &delete;
     mod->mod.fileOption = &fileOption;
 
-    mod->cbmdos = modrepo_moduleInstance(mkd64_modrepo(), "cbmdos");
+    mod->cbmdos = ModRepo_moduleInstance(Mkd64_modRepo(MKD64), "cbmdos");
 
     return (IModule *) mod;
 }

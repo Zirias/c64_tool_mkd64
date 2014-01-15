@@ -1,10 +1,11 @@
 #include <mkd64/common.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "block.h"
 
-struct block
+struct Block
 {
     void *owner;
     IModule *reservedBy;
@@ -14,12 +15,19 @@ struct block
     uint8_t data[BLOCK_RAWSIZE];
 };
 
+SOLOCAL size_t
+Block_objectSize(void)
+{
+    return sizeof(Block);
+}
+
 SOLOCAL Block *
-block_new(void *owner,
+Block_init(Block *this, void *owner,
         const BlockPosition *pos, BlockStatusChangedHandler handler)
 {
-    Block *this = calloc(1, sizeof(Block));
+    memset(this, 0, sizeof(Block));
     this->owner = owner;
+    this->status = BS_NONE;
     this->pos.track = pos->track;
     this->pos.sector = pos->sector;
     this->handler = handler;
@@ -27,70 +35,69 @@ block_new(void *owner,
 }
 
 SOLOCAL void
-block_delete(Block *this)
+Block_done(Block *this)
 {
-    free(this);
 }
 
 SOEXPORT BlockStatus
-block_status(const Block *this)
+Block_status(const Block *this)
 {
     return this->status;
 }
 
 SOEXPORT const BlockPosition *
-block_position(const Block *this)
+Block_position(const Block *this)
 {
     return &(this->pos);
 }
 
 SOEXPORT uint8_t
-block_nextTrack(const Block *this)
+Block_nextTrack(const Block *this)
 {
     return this->data[0];
 }
 
 SOEXPORT uint8_t
-block_nextSector(const Block *this)
+Block_nextSector(const Block *this)
 {
     return this->data[1];
 }
 
 SOEXPORT void
-block_nextPosition(const Block *this, BlockPosition *pos)
+Block_nextPosition(const Block *this, BlockPosition *pos)
 {
     pos->track = this->data[0];
     pos->sector = this->data[1];
 }
 
 SOEXPORT IModule *
-block_reservedBy(const Block *this)
+Block_reservedBy(const Block *this)
 {
     if (this->status & BS_RESERVED) return this->reservedBy;
     return 0;
 }
 
 SOEXPORT void
-block_setNextTrack(Block *this, uint8_t nextTrack)
+Block_setNextTrack(Block *this, uint8_t nextTrack)
 {
     this->data[0] = nextTrack;
 }
 
 SOEXPORT void
-block_setNextSector(Block *this, uint8_t nextSector)
+Block_setNextSector(Block *this, uint8_t nextSector)
 {
     this->data[1] = nextSector;
 }
 
 SOEXPORT void
-block_setNextPosition(Block *this, const BlockPosition *pos)
+Block_setNextPosition(Block *this, const BlockPosition *pos)
 {
     this->data[0] = pos->track;
     this->data[1] = pos->sector;
 }
 
 SOEXPORT int
-block_reserve(Block *this, IModule *by)
+Block_reserve(Block *this, IModule *by)
 {
     BlockStatus old;
 
@@ -106,7 +113,7 @@ block_reserve(Block *this, IModule *by)
 }
 
 SOEXPORT int
-block_unReserve(Block *this)
+Block_unReserve(Block *this)
 {
     BlockStatus old;
 
@@ -128,7 +135,7 @@ block_unReserve(Block *this)
 }
 
 SOEXPORT int
-block_allocate(Block *this)
+Block_allocate(Block *this)
 {
     BlockStatus old;
 
@@ -143,7 +150,7 @@ block_allocate(Block *this)
 }
 
 SOEXPORT int
-block_free(Block *this)
+Block_free(Block *this)
 {
     BlockStatus old;
 
@@ -158,13 +165,13 @@ block_free(Block *this)
 }
 
 SOEXPORT uint8_t *
-block_data(Block *this)
+Block_data(Block *this)
 {
     return &(this->data[2]);
 }
 
 SOEXPORT uint8_t *
-block_rawData(Block *this)
+Block_rawData(Block *this)
 {
     return this->data;
 }

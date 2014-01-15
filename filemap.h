@@ -1,19 +1,20 @@
-#ifndef FILEMAP_H
-#define FILEMAP_H
+#ifndef FileMap_H
+#define FileMap_H
 
 #include <stdio.h>
+#include <stdlib.h>
 
-struct filemap;
-typedef struct filemap Filemap;
+typedef struct FileMap FileMap;
 
 #include <mkd64/diskfile.h>
 #include <mkd64/block.h>
 
-Filemap *filemap_new(void);
-void filemap_delete(Filemap *this);
+size_t FileMap_objectSize(void);
+FileMap *FileMap_init(FileMap *this);
+void FileMap_done(FileMap *this);
 
-void filemap_add(Filemap *this, Diskfile *file, const BlockPosition *pos);
-int filemap_dump(const Filemap *this, FILE *out);
+void FileMap_add(FileMap *this, DiskFile *file, const BlockPosition *pos);
+int FileMap_dump(const FileMap *this, FILE *out);
 
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4

@@ -3,13 +3,12 @@
 
 #include <mkd64/common.h>
 
-struct modrepo;
 /** Module repository class
  * handles searching for modules, loading and instantiating them and checking
  * dependencies and conflicts between modules, as well as calling functions
  * on all currently loaded modules
  */
-typedef struct modrepo Modrepo;
+typedef struct ModRepo ModRepo;
 
 #include <mkd64/imodule.h>
 
@@ -20,14 +19,14 @@ typedef struct modrepo Modrepo;
  * @param id the id of the module
  * @return the module instance or 0 if not found and/or not loadable
  */
-DECLEXPORT IModule *modrepo_moduleInstance(Modrepo *this, const char *id);
+DECLEXPORT IModule *ModRepo_moduleInstance(ModRepo *this, const char *id);
 
 /** Check wheter a given module is instantiated
  * @param this the modrepo
  * @param id the id of the module
  * @return 1 if module is active (instantiated), 0 otherwise
  */
-DECLEXPORT int modrepo_isActive(const Modrepo *this, const char *id);
+DECLEXPORT int ModRepo_isActive(const ModRepo *this, const char *id);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

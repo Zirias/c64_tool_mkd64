@@ -17,18 +17,17 @@
 #include <stdio.h>
 #include <string.h>
 
-struct diskfileData;
-typedef struct diskfileData DiskfileData;
+typedef struct DiskFileData DiskFileData;
 
-struct diskfileData
+struct DiskFileData
 {
-    DiskfileData *next;
+    DiskFileData *next;
     const void *owner;
     void *data;
     DataDelete deleter;
 };
 
-struct diskfile
+struct DiskFile
 {
     char *name;
     int fileNo;
@@ -38,20 +37,26 @@ struct diskfile
 
     uint8_t *content;
 
-    DiskfileData *extraData;
+    DiskFileData *extraData;
 };
 
-SOLOCAL Diskfile *
-diskfile_new(void)
+SOLOCAL size_t
+DiskFile_objectSize(void)
 {
-    Diskfile *this = calloc(1, sizeof(Diskfile));
+    return sizeof(DiskFile);
+}
+
+SOLOCAL DiskFile *
+DiskFile_init(DiskFile *this)
+{
+    memset(this, 0, sizeof(DiskFile));
     return this;
 }
 
 SOLOCAL void
-diskfile_delete(Diskfile *this)
+DiskFile_done(DiskFile *this)
 {
-    DiskfileData *d, *tmp;
+    DiskFileData *d, *tmp;
 
     d = this->extraData;
     while (d)
@@ -64,13 +69,12 @@ diskfile_delete(Diskfile *this)
 
     free(this->name);
     free(this->content);
-    free(this);
 }
 
-static DiskfileData *
+static DiskFileData *
 _createData(const void *owner, void *data, DataDelete deleter)
 {
-    DiskfileData *d = malloc(sizeof(DiskfileData));
+    DiskFileData *d = malloc(sizeof(DiskFileData));
     d->next = 0;
     d->owner = owner;
     d->data = data;
@@ -79,10 +83,10 @@ _createData(const void *owner, void *data, DataDelete deleter)
 }
 
 SOEXPORT void
-diskfile_attachData(Diskfile *this, const void *owner, void *data,
+DiskFile_attachData(DiskFile *this, const void *owner, void *data,
         DataDelete deleter)
 {
-    DiskfileData *parent;
+    DiskFileData *parent;
 
     if (!this->extraData)
     {
@@ -107,9 +111,9 @@ diskfile_attachData(Diskfile *this, const void *owner, void *data,
 }
 
 SOEXPORT void *
-diskfile_data(const Diskfile *this, const void *owner)
+DiskFile_data(const DiskFile *this, const void *owner)
 {
-    DiskfileData *d;
+    DiskFileData *d;
 
     for (d = this->extraData; d; d = d->next)
     {
@@ -119,7 +123,7 @@ diskfile_data(const Diskfile *this, const void *owner)
 }
 
 SOLOCAL int
-diskfile_readFromHost(Diskfile *this, const char *hostfile)
+DiskFile_readFromHost(DiskFile *this, const char *hostfile)
 {
     static struct stat st;
     void *ptr;
@@ -149,44 +153,44 @@ diskfile_readFromHost(Diskfile *this, const char *hostfile)
 }
 
 SOEXPORT size_t
-diskfile_size(const Diskfile *this)
+DiskFile_size(const DiskFile *this)
 {
     return this->size;
 }
 
 SOEXPORT size_t
-diskfile_blocks(const Diskfile *this)
+DiskFile_blocks(const DiskFile *this)
 {
     return this->blocks;
 }
 
 SOEXPORT void
-diskfile_setInterleave(Diskfile *this, int interleave)
+DiskFile_setInterleave(DiskFile *this, int interleave)
 {
     this->interleave = interleave;
 }
 
 SOEXPORT int
-diskfile_interleave(const Diskfile *this)
+DiskFile_interleave(const DiskFile *this)
 {
     return this->interleave;
 }
 
 SOEXPORT void
-diskfile_setName(Diskfile *this, const char *name)
+DiskFile_setName(DiskFile *this, const char *name)
 {
     if (this->name) free(this->name);
     this->name = copyString(name);
 }
 
 SOEXPORT const char *
-diskfile_name(const Diskfile *this)
+DiskFile_name(const DiskFile *this)
 {
     return this->name;
 }
 
 static void
-_rollbackWrite(Diskfile *this, Image *image, const BlockPosition *pos)
+_rollbackWrite(DiskFile *this, Image *image, const BlockPosition *pos)
 {
     Block *block;
     BlockPosition current;
@@ -196,20 +200,20 @@ _rollbackWrite(Diskfile *this, Image *image, const BlockPosition *pos)
 
     while (current.track)
     {
-        block = image_block(image, &current);
-        block_free(block);
-        current.track = block_nextTrack(block);
-        current.sector = block_nextSector(block);
+        block = Image_block(image, &current);
+        Block_free(block);
+        current.track = Block_nextTrack(block);
+        current.sector = Block_nextSector(block);
     }
 }
 
 SOLOCAL int
-diskfile_write(Diskfile *this, Image *image,
+DiskFile_write(DiskFile *this, Image *image,
         const BlockPosition *startPosition)
 {
     const BlockPosition inval = { 0, 0 };
     const BlockPosition *start, *current;
-    IBlockAllocator *alloc = image_allocator(image);
+    IBlockAllocator *alloc = Image_allocator(image);
     uint8_t *contentPos = this->content;
     size_t toWrite = this->size;
     int writereserved = 0;
@@ -221,7 +225,7 @@ diskfile_write(Diskfile *this, Image *image,
     if (!toWrite)
     {
         start = &inval;
-        goto diskfile_write_done;
+        goto DiskFile_write_done;
     }
 
     alloc->setInterleave(alloc, this->interleave);
@@ -230,7 +234,7 @@ diskfile_write(Diskfile *this, Image *image,
     if (startPosition && startPosition->track)
     {
         /* fixed start position requested */
-        nextBlock = image_allocateAt(image, startPosition);
+        nextBlock = Image_allocateAt(image, startPosition);
     }
     else
     {
@@ -246,7 +250,7 @@ diskfile_write(Diskfile *this, Image *image,
 
     if (!nextBlock) return 0;
 
-    start = block_position(nextBlock);
+    start = Block_position(nextBlock);
     current = start;
     this->blocks = 1;
 
@@ -255,7 +259,7 @@ diskfile_write(Diskfile *this, Image *image,
         block = nextBlock;
         blockWrite = (toWrite > BLOCK_SIZE) ? BLOCK_SIZE : toWrite;
         toWrite -= blockWrite;
-        blockData = block_data(block);
+        blockData = Block_data(block);
         DBGd2("writing file", current->track, current->sector);
         memcpy(blockData, contentPos, blockWrite);
         if (toWrite)
@@ -269,39 +273,39 @@ diskfile_write(Diskfile *this, Image *image,
             }
             if (!nextBlock)
             {
-                block_setNextTrack(block, 0);
+                Block_setNextTrack(block, 0);
                 _rollbackWrite(this, image, start);
                 return 0;
             }
-            current = block_position(nextBlock);
-            block_setNextTrack(block, current->track);
-            block_setNextSector(block, current->sector);
+            current = Block_position(nextBlock);
+            Block_setNextTrack(block, current->track);
+            Block_setNextSector(block, current->sector);
             contentPos += blockWrite;
             ++(this->blocks);
         }
         else
         {
-            block_setNextTrack(block, 0);
-            block_setNextSector(block, blockWrite + 1);
+            Block_setNextTrack(block, 0);
+            Block_setNextSector(block, blockWrite + 1);
         }
     } while (toWrite);
 
-diskfile_write_done:
-    filemap_add(image_filemap(image), this, start);
+DiskFile_write_done:
+    FileMap_add(Image_fileMap(image), this, start);
 
-    modrepo_allFileWritten(mkd64_modrepo(), this, start);
+    ModRepo_allFileWritten(Mkd64_modRepo(MKD64), this, start);
 
     return 1;
 }
 
 SOLOCAL void
-diskfile_setFileNo(Diskfile *this, int fileNo)
+DiskFile_setFileNo(DiskFile *this, int fileNo)
 {
     this->fileNo = fileNo;
 }
 
 SOEXPORT int
-diskfile_fileNo(const Diskfile *this)
+DiskFile_fileNo(const DiskFile *this)
 {
     return this->fileNo;
 }
