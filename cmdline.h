@@ -3,19 +3,19 @@
 
 #include <stdio.h>
 
-struct cmdline;
-typedef struct cmdline Cmdline;
+typedef struct Cmdline Cmdline;
 
-Cmdline *cmdline_new(void);
-void cmdline_delete(Cmdline *this);
+size_t Cmdline_objectSize(void);
+Cmdline *Cmdline_init(Cmdline *this);
+void Cmdline_done(Cmdline *this);
 
-void cmdline_parse(Cmdline *this, int argc, char **argv);
-int cmdline_parseFile(Cmdline *this, const char *cmdfile);
-char cmdline_opt(const Cmdline *this);
-const char *cmdline_arg(const Cmdline *this);
-int cmdline_moveNext(Cmdline *this);
-const char *cmdline_exe(const Cmdline *this);
-int cmdline_count(const Cmdline *this);
+void Cmdline_parse(Cmdline *this, int argc, char **argv);
+int Cmdline_parseFile(Cmdline *this, const char *cmdfile);
+char Cmdline_opt(const Cmdline *this);
+const char *Cmdline_arg(const Cmdline *this);
+int Cmdline_moveNext(Cmdline *this);
+const char *Cmdline_exe(const Cmdline *this);
+int Cmdline_count(const Cmdline *this);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

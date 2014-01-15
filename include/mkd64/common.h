@@ -51,6 +51,14 @@ SOEXPORT const char *id(void) \
 }
 #endif
 
+#define OBJNEW(classname) classname##_init( \
+        (classname *)malloc(classname##_objectSize()))
+
+#define OBJDEL(classname, object) do { \
+    classname##_done(object); \
+    free(object); \
+} while(0)
+
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4
 */

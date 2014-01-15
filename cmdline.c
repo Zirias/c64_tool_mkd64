@@ -14,7 +14,7 @@
 
 #define FILEOPT_CHUNKSIZE 256
 
-struct cmdline
+struct Cmdline
 {
     int count;
     int pos;
@@ -42,19 +42,25 @@ clear(Cmdline *this)
     this->pos = -1;
 }
 
-SOLOCAL Cmdline *
-cmdline_new(void)
+SOLOCAL size_t
+Cmdline_objectSize(void)
 {
-    Cmdline *this = calloc(1, sizeof(Cmdline));
+    return sizeof(Cmdline);
+}
+
+SOLOCAL Cmdline *
+Cmdline_init(Cmdline *this)
+{
+    this->count = 0;
     this->pos = -1;
+    this->opts = 0;
     return this;
 }
 
 SOLOCAL void
-cmdline_delete(Cmdline *this)
+Cmdline_done(Cmdline *this)
 {
     clear(this);
-    free(this);
 }
 
 static void
@@ -64,7 +70,7 @@ _warnLooseArg(const char *arg)
 }
 
 SOLOCAL void
-cmdline_parse(Cmdline *this, int argc, char **argv)
+Cmdline_parse(Cmdline *this, int argc, char **argv)
 {
     char **argvp;
 
@@ -168,7 +174,7 @@ _cmdtok(char *str, const char *delim, const char *quote)
 }
 
 SOLOCAL int
-cmdline_parseFile(Cmdline *this, const char *cmdfile)
+Cmdline_parseFile(Cmdline *this, const char *cmdfile)
 {
     static const char *delim = " \t\r\n";
     static const char *quote = "\"'";
@@ -240,21 +246,21 @@ cmdline_parseFile(Cmdline *this, const char *cmdfile)
 }
 
 SOLOCAL char
-cmdline_opt(const Cmdline *this)
+Cmdline_opt(const Cmdline *this)
 {
     if (this->pos < 0) return '\0';
     return this->opts[this->pos];
 }
 
 SOLOCAL const char *
-cmdline_arg(const Cmdline *this)
+Cmdline_arg(const Cmdline *this)
 {
     if (this->pos < 0) return 0;
     return this->args[this->pos];
 }
 
 SOLOCAL int
-cmdline_moveNext(Cmdline *this)
+Cmdline_moveNext(Cmdline *this)
 {
     ++(this->pos);
     if (this->pos == this->count)
@@ -266,13 +272,13 @@ cmdline_moveNext(Cmdline *this)
 }
 
 SOLOCAL const char *
-cmdline_exe(const Cmdline *this)
+Cmdline_exe(const Cmdline *this)
 {
     return this->exe;
 }
 
 SOLOCAL int
-cmdline_count(const Cmdline *this)
+Cmdline_count(const Cmdline *this)
 {
     return this->count;
 }

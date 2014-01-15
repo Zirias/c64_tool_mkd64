@@ -70,9 +70,9 @@ SOLOCAL int
 mkd64_init(int argc, char **argv)
 {
     mkd64.image = image_new();
-    mkd64.cmdline = cmdline_new();
-    cmdline_parse(mkd64.cmdline, argc, argv);
-    mkd64.modrepo = modrepo_new(cmdline_exe(mkd64.cmdline),
+    mkd64.cmdline = OBJNEW(Cmdline);
+    Cmdline_parse(mkd64.cmdline, argc, argv);
+    mkd64.modrepo = modrepo_new(Cmdline_exe(mkd64.cmdline),
             &mkd64, &moduleLoaded);
     mkd64.suggestions = 0;
     mkd64.currentSuggestions = 0;
@@ -110,7 +110,7 @@ printVersion(const char *modId)
 static void
 printUsage(void)
 {
-    const char *exe = cmdline_exe(mkd64.cmdline);
+    const char *exe = Cmdline_exe(mkd64.cmdline);
     printVersion(0);
     fprintf(stderr, "\nUSAGE: %s -h [MODULE]\n"
             "       %s -V [MODULE]\n"
@@ -236,8 +236,8 @@ processFiles(void)
 
     do
     {
-        opt = cmdline_opt(mkd64.cmdline);
-        arg = cmdline_arg(mkd64.cmdline);
+        opt = Cmdline_opt(mkd64.cmdline);
+        arg = Cmdline_arg(mkd64.cmdline);
         handled = 0;
 
         switch (opt)
@@ -353,7 +353,7 @@ processFiles(void)
                    "         Maybe you forgot to load a module?\n", opt);
         }
 
-    } while (cmdline_moveNext(mkd64.cmdline));
+    } while (Cmdline_moveNext(mkd64.cmdline));
     return 1;
 }
 
@@ -437,48 +437,48 @@ processSingleOptions(void)
     const char *arg, *modid;
     char *argDup;
 
-    if (cmdline_count(mkd64.cmdline) == 1)
+    if (Cmdline_count(mkd64.cmdline) == 1)
     {
         /* handle single options */
 
-        if (cmdline_opt(mkd64.cmdline) == 'V')
+        if (Cmdline_opt(mkd64.cmdline) == 'V')
         {
-            printVersion(cmdline_arg(mkd64.cmdline));
+            printVersion(Cmdline_arg(mkd64.cmdline));
             return 1;
         }
 
-        if (cmdline_opt(mkd64.cmdline) == 'h')
+        if (Cmdline_opt(mkd64.cmdline) == 'h')
         {
-            printHelp(cmdline_arg(mkd64.cmdline));
+            printHelp(Cmdline_arg(mkd64.cmdline));
             return 1;
         }
 
-        if (cmdline_opt(mkd64.cmdline) == 'C')
+        if (Cmdline_opt(mkd64.cmdline) == 'C')
         {
-            arg = cmdline_arg(mkd64.cmdline);
+            arg = Cmdline_arg(mkd64.cmdline);
             if (!arg)
             {
                 fputs("Error: missing argument to single option -C.\n", stderr);
                 return 1;
             }
             argDup = copyString(arg);
-            if (!(cmdline_parseFile(mkd64.cmdline, argDup)))
+            if (!(Cmdline_parseFile(mkd64.cmdline, argDup)))
             {
                 perror("Error opening or reading commandline file");
                 free(argDup);
                 return 1;
             }
             free(argDup);
-            if (!cmdline_moveNext(mkd64.cmdline))
+            if (!Cmdline_moveNext(mkd64.cmdline))
             {
                 fprintf(stderr, "Error: no options found in `%s'.\n", argDup);
                 return 1;
             }
         }
 
-        if (cmdline_opt(mkd64.cmdline) == 'M')
+        if (Cmdline_opt(mkd64.cmdline) == 'M')
         {
-            if (cmdline_arg(mkd64.cmdline))
+            if (Cmdline_arg(mkd64.cmdline))
             {
                 fputs("Warning: argument to single option -M ignored.\n",
                         stderr);
@@ -505,8 +505,8 @@ processGlobalOptions(void)
 
     do
     {
-        opt = cmdline_opt(mkd64.cmdline);
-        arg = cmdline_arg(mkd64.cmdline);
+        opt = Cmdline_opt(mkd64.cmdline);
+        arg = Cmdline_arg(mkd64.cmdline);
         handled = 0;
 
         switch (opt)
@@ -582,7 +582,7 @@ processGlobalOptions(void)
             fprintf(stderr, "Warning: unrecognized global option -%c ignored.\n"
                    "         Maybe you forgot to load a module?\n", opt);
         }
-    } while (cmdline_moveNext(mkd64.cmdline));
+    } while (Cmdline_moveNext(mkd64.cmdline));
     return 1;
 }
 
@@ -591,7 +591,7 @@ mkd64_run(void)
 {
     if (!mkd64.initialized) return 0;
 
-    if (!cmdline_moveNext(mkd64.cmdline))
+    if (!Cmdline_moveNext(mkd64.cmdline))
     {
         /* no options given */
 
@@ -613,7 +613,7 @@ mkd64_run(void)
         if (!processGlobalOptions()) goto mkd64_run_error;
 
         /* the first occurence of '-f' switches to handling files */
-        if (cmdline_opt(mkd64.cmdline) == 'f')
+        if (Cmdline_opt(mkd64.cmdline) == 'f')
         {
             /* if there are suggestions for global options from the previous
              * pass, apply them before handling the files */
@@ -640,7 +640,7 @@ mkd64_run(void)
                         stderr);
                 image_reset(mkd64.image);
                 modrepo_reloadModules(mkd64.modrepo);
-                cmdline_moveNext(mkd64.cmdline);
+                Cmdline_moveNext(mkd64.cmdline);
                 mkd64.currentSuggestions = mkd64.suggestions;
                 mkd64.suggestions = 0;
                 fprintf(stderr, "* Pass #%d\n", ++mkd64.currentPass);
@@ -693,7 +693,7 @@ mkd64_done(void)
     if (!mkd64.initialized) return;
     mkd64.initialized = 0;
     image_delete(mkd64.image);
-    cmdline_delete(mkd64.cmdline);
+    OBJDEL(Cmdline, mkd64.cmdline);
     modrepo_delete(mkd64.modrepo);
     deleteSuggestions(mkd64.suggestions);
     deleteSuggestions(mkd64.currentSuggestions);
