@@ -5,14 +5,14 @@
 #include <stdio.h>
 
 size_t DiskFile_objectSize(void);
-DiskFile *DiskFile_init(DiskFile *this);
-void DiskFile_done(DiskFile *this);
+DiskFile *DiskFile_init(DiskFile *self);
+void DiskFile_done(DiskFile *self);
 
-void DiskFile_setFileNo(DiskFile *this, int fileNo);
+void DiskFile_setFileNo(DiskFile *self, int fileNo);
 
-int DiskFile_readFromHost(DiskFile *this, const char *hostfile);
+int DiskFile_readFromHost(DiskFile *self, const char *hostfile);
 
-int DiskFile_write(DiskFile *this, Image *image,
+int DiskFile_write(DiskFile *self, Image *image,
         const BlockPosition *startPosition);
 
 #endif

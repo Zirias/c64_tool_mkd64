@@ -12,9 +12,9 @@ typedef struct
 } Module;
 
 static void
-delete(IModule *this)
+delete(IModule *self)
 {
-    Module *mod = (Module *)this;
+    Module *mod = (Module *)self;
 
     /* add destructor code here, free all memory allocated in instance() */
 
@@ -48,7 +48,7 @@ SOEXPORT const char *
 helpFile(void)
 {
     return
-"  -o [ARGNAME]  This option does something with {ARGNAME}\n";
+"  -o [ARGNAME]  this option does something with {ARGNAME}\n";
 }
 */
 

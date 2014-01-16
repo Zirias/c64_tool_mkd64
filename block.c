@@ -22,112 +22,112 @@ Block_objectSize(void)
 }
 
 SOLOCAL Block *
-Block_init(Block *this, void *owner,
+Block_init(Block *self, void *owner,
         const BlockPosition *pos, BlockStatusChangedHandler handler)
 {
-    memset(this, 0, sizeof(Block));
-    this->owner = owner;
-    this->status = BS_NONE;
-    this->pos.track = pos->track;
-    this->pos.sector = pos->sector;
-    this->handler = handler;
-    return this;
+    memset(self, 0, sizeof(Block));
+    self->owner = owner;
+    self->status = BS_NONE;
+    self->pos.track = pos->track;
+    self->pos.sector = pos->sector;
+    self->handler = handler;
+    return self;
 }
 
 SOLOCAL void
-Block_done(Block *this)
+Block_done(Block *self)
 {
 }
 
 SOEXPORT BlockStatus
-Block_status(const Block *this)
+Block_status(const Block *self)
 {
-    return this->status;
+    return self->status;
 }
 
 SOEXPORT const BlockPosition *
-Block_position(const Block *this)
+Block_position(const Block *self)
 {
-    return &(this->pos);
+    return &(self->pos);
 }
 
 SOEXPORT uint8_t
-Block_nextTrack(const Block *this)
+Block_nextTrack(const Block *self)
 {
-    return this->data[0];
+    return self->data[0];
 }
 
 SOEXPORT uint8_t
-Block_nextSector(const Block *this)
+Block_nextSector(const Block *self)
 {
-    return this->data[1];
+    return self->data[1];
 }
 
 SOEXPORT void
-Block_nextPosition(const Block *this, BlockPosition *pos)
+Block_nextPosition(const Block *self, BlockPosition *pos)
 {
-    pos->track = this->data[0];
-    pos->sector = this->data[1];
+    pos->track = self->data[0];
+    pos->sector = self->data[1];
 }
 
 SOEXPORT IModule *
-Block_reservedBy(const Block *this)
+Block_reservedBy(const Block *self)
 {
-    if (this->status & BS_RESERVED) return this->reservedBy;
+    if (self->status & BS_RESERVED) return self->reservedBy;
     return 0;
 }
 
 SOEXPORT void
-Block_setNextTrack(Block *this, uint8_t nextTrack)
+Block_setNextTrack(Block *self, uint8_t nextTrack)
 {
-    this->data[0] = nextTrack;
+    self->data[0] = nextTrack;
 }
 
 SOEXPORT void
-Block_setNextSector(Block *this, uint8_t nextSector)
+Block_setNextSector(Block *self, uint8_t nextSector)
 {
-    this->data[1] = nextSector;
+    self->data[1] = nextSector;
 }
 
 SOEXPORT void
-Block_setNextPosition(Block *this, const BlockPosition *pos)
+Block_setNextPosition(Block *self, const BlockPosition *pos)
 {
-    this->data[0] = pos->track;
-    this->data[1] = pos->sector;
+    self->data[0] = pos->track;
+    self->data[1] = pos->sector;
 }
 
 SOEXPORT int
-Block_reserve(Block *this, IModule *by)
+Block_reserve(Block *self, IModule *by)
 {
     BlockStatus old;
 
-    if (this->status & BS_RESERVED) return 0;
-    old = this->status;
-    this->status |= BS_RESERVED;
-    this->reservedBy = by;
-    if (this->handler)
+    if (self->status & BS_RESERVED) return 0;
+    old = self->status;
+    self->status |= BS_RESERVED;
+    self->reservedBy = by;
+    if (self->handler)
     {
-        this->handler(this->owner, this, old, this->status);
+        self->handler(self->owner, self, old, self->status);
     }
     return 1;
 }
 
 SOEXPORT int
-Block_unReserve(Block *this)
+Block_unReserve(Block *self)
 {
     BlockStatus old;
 
-    if (!(this->status & BS_RESERVED)) return 0;
+    if (!(self->status & BS_RESERVED)) return 0;
 
-    if (this->reservedBy->requestReservedBlock &&
-            this->reservedBy->requestReservedBlock(
-                this->reservedBy, &(this->pos)))
+    if (self->reservedBy->requestReservedBlock &&
+            self->reservedBy->requestReservedBlock(
+                self->reservedBy, &(self->pos)))
     {
-        old = this->status;
-        this->status &= ~BS_RESERVED;
-        if (this->handler)
+        old = self->status;
+        self->status &= ~BS_RESERVED;
+        if (self->handler)
         {
-            this->handler(this->owner, this, old, this->status);
+            self->handler(self->owner, self, old, self->status);
         }
         return 1;
     }
@@ -135,45 +135,45 @@ Block_unReserve(Block *this)
 }
 
 SOEXPORT int
-Block_allocate(Block *this)
+Block_allocate(Block *self)
 {
     BlockStatus old;
 
-    if (this->status & BS_ALLOCATED) return 0;
-    old = this->status;
-    this->status |= BS_ALLOCATED;
-    if (this->handler)
+    if (self->status & BS_ALLOCATED) return 0;
+    old = self->status;
+    self->status |= BS_ALLOCATED;
+    if (self->handler)
     {
-        this->handler(this->owner, this, old, this->status);
+        self->handler(self->owner, self, old, self->status);
     }
     return 1;
 }
 
 SOEXPORT int
-Block_free(Block *this)
+Block_free(Block *self)
 {
     BlockStatus old;
 
-    if (!(this->status & BS_ALLOCATED)) return 0;
-    old = this->status;
-    this->status &= ~BS_ALLOCATED;
-    if (this->handler)
+    if (!(self->status & BS_ALLOCATED)) return 0;
+    old = self->status;
+    self->status &= ~BS_ALLOCATED;
+    if (self->handler)
     {
-        this->handler(this->owner, this, old, this->status);
+        self->handler(self->owner, self, old, self->status);
     }
     return 1;
 }
 
 SOEXPORT uint8_t *
-Block_data(Block *this)
+Block_data(Block *self)
 {
-    return &(this->data[2]);
+    return &(self->data[2]);
 }
 
 SOEXPORT uint8_t *
-Block_rawData(Block *this)
+Block_rawData(Block *self)
 {
-    return this->data;
+    return self->data;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4

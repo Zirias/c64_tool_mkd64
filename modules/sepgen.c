@@ -89,9 +89,9 @@ static const SeparatorEntry _seps[] = {
 };
 
 static void
-delete(IModule *this)
+delete(IModule *self)
 {
-    Separators *mod = (Separators *)this;
+    Separators *mod = (Separators *)self;
     free(mod);
 }
 
@@ -102,9 +102,9 @@ depends(void)
 }
 
 static int
-fileOption(IModule *this, DiskFile *file, char opt, const char *arg)
+fileOption(IModule *self, DiskFile *file, char opt, const char *arg)
 {
-    Separators *mod = (Separators *)this;
+    Separators *mod = (Separators *)self;
     const SeparatorEntry *sep;
     static char buf[17];
     const char *name;
@@ -112,7 +112,7 @@ fileOption(IModule *this, DiskFile *file, char opt, const char *arg)
     
     if (opt == 'p')
     {
-        if (!checkArgAndWarn(opt, arg, 1, 1, _modid)) return 1;
+        if (!checkArgAndWarn(opt, arg, 1, 1, id())) return 1;
         for (sep = _seps; sep->name; ++sep)
         {
             if (!strcmp(sep->name, arg)) break;

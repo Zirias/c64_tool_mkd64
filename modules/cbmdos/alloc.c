@@ -18,9 +18,9 @@ struct cbmdosAllocator
 };
 
 static void
-setImage(IBlockAllocator *this, Image *image)
+setImage(IBlockAllocator *self, Image *image)
 {
-    CbmdosAllocator *a = (CbmdosAllocator *)this;
+    CbmdosAllocator *a = (CbmdosAllocator *)self;
     a->img = image;
     a->ilv = 1;
     a->rsv = 0;
@@ -28,24 +28,24 @@ setImage(IBlockAllocator *this, Image *image)
 }
 
 static void
-setInterleave(IBlockAllocator *this, int interleave)
+setInterleave(IBlockAllocator *self, int interleave)
 {
-    CbmdosAllocator *a = (CbmdosAllocator *)this;
+    CbmdosAllocator *a = (CbmdosAllocator *)self;
     a->ilv = interleave;
 }
 
 static void
-setConsiderReserved(IBlockAllocator *this, int considerReserved)
+setConsiderReserved(IBlockAllocator *self, int considerReserved)
 {
-    CbmdosAllocator *a = (CbmdosAllocator *)this;
+    CbmdosAllocator *a = (CbmdosAllocator *)self;
     a->rsv = considerReserved;
     a->msk = considerReserved ? BS_RESERVED : BS_NONE;
 }
 
 static Block *
-allocFirstBlock(IBlockAllocator *this)
+allocFirstBlock(IBlockAllocator *self)
 {
-    CbmdosAllocator *a = (CbmdosAllocator *)this;
+    CbmdosAllocator *a = (CbmdosAllocator *)self;
     Track *t;
     Block *b;
     int tn, td, sn;
@@ -78,9 +78,9 @@ allocFirstBlock(IBlockAllocator *this)
 }
 
 static Block *
-allocNextBlock(IBlockAllocator *this, const BlockPosition *pos)
+allocNextBlock(IBlockAllocator *self, const BlockPosition *pos)
 {
-    CbmdosAllocator *a = (CbmdosAllocator *)this;
+    CbmdosAllocator *a = (CbmdosAllocator *)self;
     Track *t;
     Block *b;
     int tn, sn, half, bigdist;
@@ -132,21 +132,21 @@ allocNextBlock(IBlockAllocator *this, const BlockPosition *pos)
 SOLOCAL IBlockAllocator *
 cbmdosAllocator_new(void)
 {
-    IBlockAllocator *this = malloc(sizeof(CbmdosAllocator));
+    IBlockAllocator *self = malloc(sizeof(CbmdosAllocator));
 
-    this->setImage = &setImage;
-    this->setInterleave = &setInterleave;
-    this->setConsiderReserved = &setConsiderReserved;
-    this->allocFirstBlock = &allocFirstBlock;
-    this->allocNextBlock = &allocNextBlock;
+    self->setImage = &setImage;
+    self->setInterleave = &setInterleave;
+    self->setConsiderReserved = &setConsiderReserved;
+    self->allocFirstBlock = &allocFirstBlock;
+    self->allocNextBlock = &allocNextBlock;
 
-    return this;
+    return self;
 }
 
 SOLOCAL void
-cbmdosAllocator_delete(IBlockAllocator *this)
+cbmdosAllocator_delete(IBlockAllocator *self)
 {
-    free(this);
+    free(self);
 }
 
 /* vim: et:si:ts=8:sts=4:sw=4

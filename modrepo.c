@@ -64,11 +64,11 @@ struct ModRepo
 };
 
 static ModEntry *
-findModule(const ModRepo *this, const char *id)
+findModule(const ModRepo *self, const char *id)
 {
     ModEntry *current;
 
-    for (current = this->modules; current; current = current->next)
+    for (current = self->modules; current; current = current->next)
     {
         if (!strcmp(id, current->id))
         {
@@ -79,11 +79,11 @@ findModule(const ModRepo *this, const char *id)
 }
 
 static ModInstance *
-findInstance(const ModRepo *this, const char *id)
+findInstance(const ModRepo *self, const char *id)
 {
     ModInstance *current;
     
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (!strcmp(id, current->id))
         {
@@ -94,7 +94,7 @@ findInstance(const ModRepo *this, const char *id)
 }
 
 static void
-appendInstance(ModRepo *this, IModule *instance)
+appendInstance(ModRepo *self, IModule *instance)
 {
     ModInstance *current = malloc(sizeof(ModInstance));
     ModInstance *parent;
@@ -103,19 +103,19 @@ appendInstance(ModRepo *this, IModule *instance)
     current->mod = instance;
     current->next = 0;
 
-    if (this->instances)
+    if (self->instances)
     {
-        for (parent = this->instances; parent->next; parent = parent->next) {}
+        for (parent = self->instances; parent->next; parent = parent->next) {}
         parent->next = current;
     }
     else
     {
-        this->instances = current;
+        self->instances = current;
     }
 }
 
 static int
-createInstanceHere(ModRepo *this, ModEntry *entry)
+createInstanceHere(ModRepo *self, ModEntry *entry)
 {
     ModEntry *otherMod;
     const char **otherModId;
@@ -133,14 +133,14 @@ createInstanceHere(ModRepo *this, ModEntry *entry)
     {
         for (otherModId = entry->conflicts; *otherModId; ++otherModId)
         {
-            if (findInstance(this, *otherModId))
+            if (findInstance(self, *otherModId))
             {
                 fprintf(stderr,
 "Error: cannot load module `%s' because it conflicts with already loaded\n"
 "       module `%s'.\n", entry->id, *otherModId);
                 return 0;
             }
-            otherMod = findModule(this, *otherModId);
+            otherMod = findModule(self, *otherModId);
             if (otherMod)
             {
                 otherMod->conflicted = 1;
@@ -152,7 +152,7 @@ createInstanceHere(ModRepo *this, ModEntry *entry)
     {
         for (otherModId = entry->depends; *otherModId; ++otherModId)
         {
-            otherMod = findModule(this, *otherModId);
+            otherMod = findModule(self, *otherModId);
             if (!otherMod)
             {
                 fprintf(stderr,
@@ -160,12 +160,12 @@ createInstanceHere(ModRepo *this, ModEntry *entry)
 "       available.\n", entry->id, *otherModId);
                 return 0;
             }
-            if (!findInstance(this, *otherModId))
+            if (!findInstance(self, *otherModId))
             {
                 fprintf(stderr, "Info: loading module `%s' "
                         "because `%s' depends on it.\n",
                         otherMod->id, entry->id);
-                if (!createInstanceHere(this, otherMod))
+                if (!createInstanceHere(self, otherMod))
                 {
                     fprintf(stderr,
 "Error: cannot load module `%s' because its dependency `%s' failed to load.",
@@ -177,8 +177,8 @@ createInstanceHere(ModRepo *this, ModEntry *entry)
     }
 
     created = entry->instance();
-    appendInstance(this, created);
-    this->callback(this->owner, created);
+    appendInstance(self, created);
+    self->callback(self->owner, created);
     return 1;
 }
 
@@ -242,7 +242,7 @@ checkApiVersion(const char *name, const int *ver)
 }
 
 static void
-findModuleObjects(ModRepo *this, const char *exe)
+findModuleObjects(ModRepo *self, const char *exe)
 {
     ModEntry *current = 0;
     ModEntry *next;
@@ -277,7 +277,7 @@ findModuleObjects(ModRepo *this, const char *exe)
     if (findHdl == INVALID_HANDLE_VALUE)
     {
         free(modpat);
-        return this;
+        return self;
     }
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
@@ -384,7 +384,7 @@ findModuleObjects(ModRepo *this, const char *exe)
         }
         else
         {
-            this->modules = next;
+            self->modules = next;
         }
         current = next;
 
@@ -410,23 +410,23 @@ ModRepo_objectSize(void)
 }
 
 SOLOCAL ModRepo *
-ModRepo_init(ModRepo *this, const char *exe, void *owner,
+ModRepo_init(ModRepo *self, const char *exe, void *owner,
         ModInstanceCreated callback)
 {
-    memset(this, 0, sizeof(ModRepo));
+    memset(self, 0, sizeof(ModRepo));
 
-    findModuleObjects(this, exe);
-    this->owner = owner;
-    this->callback = callback;
+    findModuleObjects(self, exe);
+    self->owner = owner;
+    self->callback = callback;
 
-    return this;
+    return self;
 }
 
 SOLOCAL void
-ModRepo_done(ModRepo *this)
+ModRepo_done(ModRepo *self)
 {
-    ModEntry *currentEntry = this->modules;
-    ModInstance *currentInstance = this->instances;
+    ModEntry *currentEntry = self->modules;
+    ModInstance *currentInstance = self->instances;
     ModEntry *tmpEntry;
     ModInstance *tmpInstance;
 
@@ -448,62 +448,62 @@ ModRepo_done(ModRepo *this)
 }
 
 SOLOCAL void
-ModRepo_reloadModules(ModRepo *this)
+ModRepo_reloadModules(ModRepo *self)
 {
     ModEntry *entry;
     ModInstance *current;
 
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         current->mod->free(current->mod);
-        entry = findModule(this, current->id);
+        entry = findModule(self, current->id);
         current->mod = entry->instance();
-        this->callback(this->owner, current->mod);
+        self->callback(self->owner, current->mod);
     }
 }
 
 SOEXPORT IModule *
-ModRepo_moduleInstance(ModRepo *this, const char *id)
+ModRepo_moduleInstance(ModRepo *self, const char *id)
 {
     ModInstance *found;
 
-    found = findInstance(this, id);
+    found = findInstance(self, id);
     if (!found)
     {
-        ModRepo_createInstance(this, id);
-        found = findInstance(this, id);
+        ModRepo_createInstance(self, id);
+        found = findInstance(self, id);
     }
     if (!found) return 0;
     return found->mod;
 }
 
 SOLOCAL int
-ModRepo_createInstance(ModRepo *this, const char *id)
+ModRepo_createInstance(ModRepo *self, const char *id)
 {
     ModEntry *found;
 
-    if (findInstance(this, id)) return 1;
+    if (findInstance(self, id)) return 1;
 
-    found = findModule(this, id);
+    found = findModule(self, id);
     if (!found) return 0;
-    return createInstanceHere(this, found);
+    return createInstanceHere(self, found);
 }
 
 SOLOCAL int
-ModRepo_deleteInstance(ModRepo *this, const char *id)
+ModRepo_deleteInstance(ModRepo *self, const char *id)
 {
     ModInstance *current, *parent;
 
-    if (!this->instances) return 0;
+    if (!self->instances) return 0;
 
     parent = 0;
-    for (current = this->instances;
+    for (current = self->instances;
             current && strcmp(current->id,id) != 0;
             parent = current, current = current->next) {}
     if (current)
     {
         if (parent) parent->next = current->next;
-        else this->instances = current->next;
+        else self->instances = current->next;
         current->mod->free(current->mod);
         free(current);
         return 1;
@@ -512,13 +512,13 @@ ModRepo_deleteInstance(ModRepo *this, const char *id)
 }
 
 SOEXPORT int
-ModRepo_isActive(const ModRepo *this, const char *id)
+ModRepo_isActive(const ModRepo *self, const char *id)
 {
-    return findInstance(this, id) ? 1 : 0;
+    return findInstance(self, id) ? 1 : 0;
 }
 
 SOLOCAL char *
-ModRepo_getHelp(const ModRepo *this, const char *id)
+ModRepo_getHelp(const ModRepo *self, const char *id)
 {
     static const char *mainHelpHeader = "* Module `%s':\n\n";
     static const char *noHelp = "  No help available.\n";
@@ -528,7 +528,7 @@ ModRepo_getHelp(const ModRepo *this, const char *id)
     const char *mainHelp, *fileHelp;
     ModEntry *found;
 
-    found = findModule(this, id);
+    found = findModule(self, id);
     if (!found) return 0;
     mainHelp = found->help ? found->help() : 0;
     fileHelp = found->helpFile ? found->helpFile() : 0;
@@ -553,7 +553,7 @@ ModRepo_getHelp(const ModRepo *this, const char *id)
 }
 
 SOLOCAL char *
-ModRepo_getVersionInfo(const ModRepo *this, const char *id)
+ModRepo_getVersionInfo(const ModRepo *self, const char *id)
 {
     static const char *versionHeader = "* Module `%s':\n\n";
     static const char *noVersion = "  No version info available.\n";
@@ -562,7 +562,7 @@ ModRepo_getVersionInfo(const ModRepo *this, const char *id)
     const char *versionInfo;
     ModEntry *found;
 
-    found = findModule(this, id);
+    found = findModule(self, id);
     if (!found) return 0;
     versionInfo = found->versionInfo ? found->versionInfo() : 0;
 
@@ -580,10 +580,10 @@ ModRepo_getVersionInfo(const ModRepo *this, const char *id)
 }
 
 SOLOCAL void
-ModRepo_allInitImage(const ModRepo *this, Image *image)
+ModRepo_allInitImage(const ModRepo *self, Image *image)
 {
     ModInstance *current;
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->initImage)
             current->mod->initImage(current->mod, image);
@@ -591,12 +591,12 @@ ModRepo_allInitImage(const ModRepo *this, Image *image)
 }
 
 SOLOCAL int
-ModRepo_allGlobalOption(const ModRepo *this, char opt, const char *arg)
+ModRepo_allGlobalOption(const ModRepo *self, char opt, const char *arg)
 {
     ModInstance *current;
     int handled = 0;
 
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->globalOption)
         {
@@ -610,13 +610,13 @@ ModRepo_allGlobalOption(const ModRepo *this, char opt, const char *arg)
 }
 
 SOLOCAL int
-ModRepo_allFileOption(const ModRepo *this, DiskFile *file,
+ModRepo_allFileOption(const ModRepo *self, DiskFile *file,
         char opt, const char *arg)
 {
     ModInstance *current;
     int handled = 0;
 
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->fileOption)
         {
@@ -630,12 +630,12 @@ ModRepo_allFileOption(const ModRepo *this, DiskFile *file,
 }
 
 SOLOCAL Track *
-ModRepo_firstGetTrack(const ModRepo *this, int track)
+ModRepo_firstGetTrack(const ModRepo *self, int track)
 {
     Track *t = 0;
     ModInstance *current;
 
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->getTrack)
         {
@@ -648,11 +648,11 @@ ModRepo_firstGetTrack(const ModRepo *this, int track)
 }
 
 SOLOCAL void
-ModRepo_allFileWritten(const ModRepo *this,
+ModRepo_allFileWritten(const ModRepo *self,
         DiskFile *file, const BlockPosition *start)
 {
     ModInstance *current;
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->fileWritten)
             current->mod->fileWritten(current->mod, file, start);
@@ -660,10 +660,10 @@ ModRepo_allFileWritten(const ModRepo *this,
 }
 
 SOLOCAL void
-ModRepo_allStatusChanged(const ModRepo *this, const BlockPosition *pos)
+ModRepo_allStatusChanged(const ModRepo *self, const BlockPosition *pos)
 {
     ModInstance *current;
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->statusChanged)
             current->mod->statusChanged(current->mod, pos);
@@ -671,10 +671,10 @@ ModRepo_allStatusChanged(const ModRepo *this, const BlockPosition *pos)
 }
 
 SOLOCAL void
-ModRepo_allImageComplete(const ModRepo *this)
+ModRepo_allImageComplete(const ModRepo *self)
 {
     ModInstance *current;
-    for (current = this->instances; current; current = current->next)
+    for (current = self->instances; current; current = current->next)
     {
         if (current->mod->imageComplete)
             current->mod->imageComplete(current->mod);
@@ -682,30 +682,30 @@ ModRepo_allImageComplete(const ModRepo *this)
 }
 
 SOLOCAL const char *
-ModRepo_nextAvailableModule(const ModRepo *this, const char *id)
+ModRepo_nextAvailableModule(const ModRepo *self, const char *id)
 {
     ModEntry *found;
     if (!id)
     {
-        if (this->modules) return this->modules->id;
+        if (self->modules) return self->modules->id;
         else return 0;
     }
-    found = findModule(this, id);
+    found = findModule(self, id);
     if (!found) return 0;
     if (found->next) return found->next->id;
     return 0;
 }
 
 SOLOCAL const char *
-ModRepo_nextLoadedModule(const ModRepo *this, const char *id)
+ModRepo_nextLoadedModule(const ModRepo *self, const char *id)
 {
     ModInstance *found;
     if (!id)
     {
-        if (this->instances) return this->instances->id;
+        if (self->instances) return self->instances->id;
         else return 0;
     }
-    found = findInstance(this, id);
+    found = findInstance(self, id);
     if (!found) return 0;
     if (found->next) return found->next->id;
     return 0;

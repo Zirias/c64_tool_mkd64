@@ -29,18 +29,18 @@ FileMap_objectSize(void)
 }
 
 SOLOCAL FileMap *
-FileMap_init(FileMap *this)
+FileMap_init(FileMap *self)
 {
-    memset(this, 0, sizeof(FileMap));
-    return this;
+    memset(self, 0, sizeof(FileMap));
+    return self;
 }
 
 SOLOCAL void
-FileMap_done(FileMap *this)
+FileMap_done(FileMap *self)
 {
     FileMapEntry *current, *next;
 
-    for (current = this->first; current; current = next)
+    for (current = self->first; current; current = next)
     {
         next = current->next;
         OBJDEL(DiskFile, current->file);
@@ -50,18 +50,18 @@ FileMap_done(FileMap *this)
 }
 
 SOLOCAL void
-FileMap_add(FileMap *this, DiskFile *file, const BlockPosition *pos)
+FileMap_add(FileMap *self, DiskFile *file, const BlockPosition *pos)
 {
     FileMapEntry *current;
 
-    if (!this->first)
+    if (!self->first)
     {
         current = malloc(sizeof(FileMapEntry));
-        this->first = current;
+        self->first = current;
     }
     else
     {
-        current = this->first;
+        current = self->first;
         while (current->next) current = current->next;
         current->next = malloc(sizeof(FileMapEntry));
         current = current->next;
@@ -74,13 +74,13 @@ FileMap_add(FileMap *this, DiskFile *file, const BlockPosition *pos)
 }
 
 SOLOCAL int
-FileMap_dump(const FileMap *this, FILE *out)
+FileMap_dump(const FileMap *self, FILE *out)
 {
     static const char *unnamed = "[UNNAMED]";
     const char *name;
     FileMapEntry *current;
 
-    for (current = this->first; current; current = current->next)
+    for (current = self->first; current; current = current->next)
     {
         name = DiskFile_name(current->file);
         if (!name) name = unnamed;

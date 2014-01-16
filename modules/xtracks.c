@@ -24,9 +24,9 @@ typedef struct
 } Xtracks;
 
 static void
-delete(IModule *this)
+delete(IModule *self)
 {
-    Xtracks *dos = (Xtracks *) this;
+    Xtracks *dos = (Xtracks *) self;
     int i;
 
     for (i = 0; i < 5; ++i)
@@ -38,9 +38,9 @@ delete(IModule *this)
 }
 
 static void
-initImage(IModule *this, Image *image)
+initImage(IModule *self, Image *image)
 {
-    Xtracks *dos = (Xtracks *)this;
+    Xtracks *dos = (Xtracks *)self;
     int i;
 
     dos->image = image;
@@ -54,32 +54,32 @@ initImage(IModule *this, Image *image)
 }
 
 static void
-getBam(Xtracks *this)
+getBam(Xtracks *self)
 {
     BlockPosition pos = { 18, 0 };
 
-    if (!this->bam)
+    if (!self->bam)
     {
-        this->bam = Image_block(this->image, &pos);
+        self->bam = Image_block(self->image, &pos);
     }
 
-    if (!Block_status(this->bam) & BS_ALLOCATED)
+    if (!Block_status(self->bam) & BS_ALLOCATED)
     {
-        Block_allocate(this->bam);
+        Block_allocate(self->bam);
     }
 }
 
 static int
-globalOption(IModule *this, char opt, const char *arg)
+globalOption(IModule *self, char opt, const char *arg)
 {
-    Xtracks *dos = (Xtracks *)this;
+    Xtracks *dos = (Xtracks *)self;
     const char *argopt;
     uint8_t *bamEntry;
     int i;
 
     if (opt == 'X')
     {
-        if (checkArgAndWarn(opt, arg, 0, 1, _modid))
+        if (checkArgAndWarn(opt, arg, 0, 1, id()))
         {
             for (argopt = arg; *argopt; ++argopt)
             {
@@ -123,23 +123,23 @@ globalOption(IModule *this, char opt, const char *arg)
 }
 
 static Track *
-getTrack(IModule *this, int track)
+getTrack(IModule *self, int track)
 {
-    Xtracks *dos = (Xtracks *)this;
+    Xtracks *dos = (Xtracks *)self;
     if (track > 35 && track <= 40) return dos->extraTracks[track-36];
     return 0;
 }
 
 static void
-updateBam(Xtracks *this, uint8_t *bamEntry, const BlockPosition *pos)
+updateBam(Xtracks *self, uint8_t *bamEntry, const BlockPosition *pos)
 {
     int bamByte, bamBit;
 
-    bamEntry[0] = Track_freeSectors(Image_track(this->image, pos->track),
+    bamEntry[0] = Track_freeSectors(Image_track(self->image, pos->track),
             ~BS_ALLOCATED);
     bamByte = pos->sector / 8 + 1;
     bamBit = pos->sector % 8;
-    if (Image_blockStatus(this->image, pos) & BS_ALLOCATED)
+    if (Image_blockStatus(self->image, pos) & BS_ALLOCATED)
     {
         bamEntry[bamByte] &= ~(1<<bamBit);
     }
@@ -150,9 +150,9 @@ updateBam(Xtracks *this, uint8_t *bamEntry, const BlockPosition *pos)
 }
 
 static void
-statusChanged(IModule *this, const BlockPosition *pos)
+statusChanged(IModule *self, const BlockPosition *pos)
 {
-    Xtracks *dos = (Xtracks *)this;
+    Xtracks *dos = (Xtracks *)self;
     uint8_t *bamEntry;
 
     DBGd2("xtracks: statusChanged", pos->track, pos->sector);
@@ -176,15 +176,15 @@ statusChanged(IModule *this, const BlockPosition *pos)
 SOEXPORT IModule *
 instance(void)
 {
-    Xtracks *this = calloc(1, sizeof(Xtracks));
-    this->mod.id = &id;
-    this->mod.free = &delete;
-    this->mod.initImage = &initImage;
-    this->mod.globalOption = &globalOption;
-    this->mod.getTrack = &getTrack;
-    this->mod.statusChanged = &statusChanged;
+    Xtracks *self = calloc(1, sizeof(Xtracks));
+    self->mod.id = &id;
+    self->mod.free = &delete;
+    self->mod.initImage = &initImage;
+    self->mod.globalOption = &globalOption;
+    self->mod.getTrack = &getTrack;
+    self->mod.statusChanged = &statusChanged;
 
-    return (IModule *) this;
+    return (IModule *) self;
 }
 
 SOEXPORT const char *

@@ -24,22 +24,22 @@ struct Cmdline
 };
 
 static void
-clear(Cmdline *this)
+clear(Cmdline *self)
 {
     int i;
-    if (this->args)
+    if (self->args)
     {
-        for (i = 0; i < this->count; ++i)
+        for (i = 0; i < self->count; ++i)
         {
-            free(this->args[i]);
+            free(self->args[i]);
         }
-        free(this->args);
-        this->args = 0;
+        free(self->args);
+        self->args = 0;
     }
-    free(this->opts);
-    this->opts = 0;
-    this->count = 0;
-    this->pos = -1;
+    free(self->opts);
+    self->opts = 0;
+    self->count = 0;
+    self->pos = -1;
 }
 
 SOLOCAL size_t
@@ -49,17 +49,17 @@ Cmdline_objectSize(void)
 }
 
 SOLOCAL Cmdline *
-Cmdline_init(Cmdline *this)
+Cmdline_init(Cmdline *self)
 {
-    memset(this, 0, sizeof(Cmdline));
-    this->pos = -1;
-    return this;
+    memset(self, 0, sizeof(Cmdline));
+    self->pos = -1;
+    return self;
 }
 
 SOLOCAL void
-Cmdline_done(Cmdline *this)
+Cmdline_done(Cmdline *self)
 {
-    clear(this);
+    clear(self);
 }
 
 static void
@@ -69,34 +69,34 @@ _warnLooseArg(const char *arg)
 }
 
 SOLOCAL void
-Cmdline_parse(Cmdline *this, int argc, char **argv)
+Cmdline_parse(Cmdline *self, int argc, char **argv)
 {
     char **argvp;
 
-    clear(this);
+    clear(self);
 
-    this->exe = *argv;
-    this->opts = malloc(argc * sizeof(char));
-    this->args = malloc(argc * sizeof(char *));
+    self->exe = *argv;
+    self->opts = malloc(argc * sizeof(char));
+    self->args = malloc(argc * sizeof(char *));
 
     for (argvp = argv+1; *argvp; ++argvp)
     {
         if (strlen(*argvp) > 1 && **argvp == '-')
         {
-            this->opts[this->count] = (*argvp)[1];
+            self->opts[self->count] = (*argvp)[1];
             if (strlen(*argvp) > 2)
             {
-                this->args[this->count] = copyString((*argvp)+2);
+                self->args[self->count] = copyString((*argvp)+2);
             }
             else if (*(argvp+1) && **(argvp+1) != '-')
             {
-                this->args[this->count] = copyString(*++argvp);
+                self->args[self->count] = copyString(*++argvp);
             }
             else
             {
-                this->args[this->count] = 0;
+                self->args[self->count] = 0;
             }
-            ++(this->count);
+            ++(self->count);
         }
         else _warnLooseArg(*argvp);
     }
@@ -173,7 +173,7 @@ _cmdtok(char *str, const char *delim, const char *quote)
 }
 
 SOLOCAL int
-Cmdline_parseFile(Cmdline *this, const char *cmdfile)
+Cmdline_parseFile(Cmdline *self, const char *cmdfile)
 {
     static const char *delim = " \t\r\n";
     static const char *quote = "\"'";
@@ -183,7 +183,7 @@ Cmdline_parseFile(Cmdline *this, const char *cmdfile)
     char *buf, *tok;
     FILE *f;
 
-    clear(this);
+    clear(self);
 
     if (stat(cmdfile, &st) < 0) return 0;
     if (st.st_size < 1) return 0;
@@ -198,18 +198,18 @@ Cmdline_parseFile(Cmdline *this, const char *cmdfile)
         return 0;
     }
 
-    this->opts = malloc(optSize);
-    this->args = malloc(argSize);
+    self->opts = malloc(optSize);
+    self->args = malloc(argSize);
 
     tok = _cmdtok(buf, delim, quote);
     while (tok)
     {
         if (strlen(tok) > 1 && *tok == '-')
         {
-            this->opts[this->count] = tok[1];
+            self->opts[self->count] = tok[1];
             if (strlen(tok) > 2)
             {
-                this->args[this->count] = copyString(tok+2);
+                self->args[self->count] = copyString(tok+2);
                 tok = _cmdtok(0, delim, quote);
             }
             else
@@ -217,20 +217,20 @@ Cmdline_parseFile(Cmdline *this, const char *cmdfile)
                 tok = _cmdtok(0, delim, quote);
                 if (tok && tok[0] != '-')
                 {
-                    this->args[this->count] = copyString(tok);
+                    self->args[self->count] = copyString(tok);
                     tok = _cmdtok(0, delim, quote);
                 }
                 else
                 {
-                    this->args[this->count] = 0;
+                    self->args[self->count] = 0;
                 }
             }
-            if (!(++(this->count) % FILEOPT_CHUNKSIZE))
+            if (!(++(self->count) % FILEOPT_CHUNKSIZE))
             {
                 optSize += FILEOPT_CHUNKSIZE * sizeof(char);
-                this->opts = realloc(this->opts, optSize);
+                self->opts = realloc(self->opts, optSize);
                 argSize += FILEOPT_CHUNKSIZE * sizeof(char *);
-                this->args = realloc(this->args, argSize);
+                self->args = realloc(self->args, argSize);
             }
         }
         else
@@ -245,41 +245,41 @@ Cmdline_parseFile(Cmdline *this, const char *cmdfile)
 }
 
 SOLOCAL char
-Cmdline_opt(const Cmdline *this)
+Cmdline_opt(const Cmdline *self)
 {
-    if (this->pos < 0) return '\0';
-    return this->opts[this->pos];
+    if (self->pos < 0) return '\0';
+    return self->opts[self->pos];
 }
 
 SOLOCAL const char *
-Cmdline_arg(const Cmdline *this)
+Cmdline_arg(const Cmdline *self)
 {
-    if (this->pos < 0) return 0;
-    return this->args[this->pos];
+    if (self->pos < 0) return 0;
+    return self->args[self->pos];
 }
 
 SOLOCAL int
-Cmdline_moveNext(Cmdline *this)
+Cmdline_moveNext(Cmdline *self)
 {
-    ++(this->pos);
-    if (this->pos == this->count)
+    ++(self->pos);
+    if (self->pos == self->count)
     {
-        this->pos = -1;
+        self->pos = -1;
         return 0;
     }
     return 1;
 }
 
 SOLOCAL const char *
-Cmdline_exe(const Cmdline *this)
+Cmdline_exe(const Cmdline *self)
 {
-    return this->exe;
+    return self->exe;
 }
 
 SOLOCAL int
-Cmdline_count(const Cmdline *this)
+Cmdline_count(const Cmdline *self)
 {
-    return this->count;
+    return self->count;
 }
 /* vim: et:si:ts=4:sts=4:sw=4
 */

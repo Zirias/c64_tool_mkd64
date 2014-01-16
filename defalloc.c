@@ -9,11 +9,11 @@ static int _ilv;
 static int _rsv;
 static BlockStatus _msk;
 
-static void setImage(IBlockAllocator *this, Image *image);
-static void setInterleave(IBlockAllocator *this, int interleave);
-static void setConsiderReserved(IBlockAllocator *this, int considerReserved);
-static Block *allocFirstBlock(IBlockAllocator *this);
-static Block *allocNextBlock(IBlockAllocator *this, const BlockPosition *pos);
+static void setImage(IBlockAllocator *self, Image *image);
+static void setInterleave(IBlockAllocator *self, int interleave);
+static void setConsiderReserved(IBlockAllocator *self, int considerReserved);
+static Block *allocFirstBlock(IBlockAllocator *self);
+static Block *allocNextBlock(IBlockAllocator *self, const BlockPosition *pos);
 
 IBlockAllocator defaultAllocator = {
     &setImage,
@@ -24,7 +24,7 @@ IBlockAllocator defaultAllocator = {
 };
 
 static void
-setImage(IBlockAllocator *this, Image *image)
+setImage(IBlockAllocator *self, Image *image)
 {
     _img = image;
     _ilv = 1;
@@ -33,20 +33,20 @@ setImage(IBlockAllocator *this, Image *image)
 }
 
 static void
-setInterleave(IBlockAllocator *this, int interleave)
+setInterleave(IBlockAllocator *self, int interleave)
 {
     _ilv = interleave;
 }
 
 static void
-setConsiderReserved(IBlockAllocator *this, int considerReserved)
+setConsiderReserved(IBlockAllocator *self, int considerReserved)
 {
     _rsv = considerReserved;
     _msk = _rsv ? BS_RESERVED : BS_NONE;
 }
 
 static Block *
-allocFirstBlock(IBlockAllocator *this)
+allocFirstBlock(IBlockAllocator *self)
 {
     Track *t;
     Block *b;
@@ -67,7 +67,7 @@ allocFirstBlock(IBlockAllocator *this)
 }
 
 static Block *
-allocNextBlock(IBlockAllocator *this, const BlockPosition *pos)
+allocNextBlock(IBlockAllocator *self, const BlockPosition *pos)
 {
     Track *t;
     Block *b;

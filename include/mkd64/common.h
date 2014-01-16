@@ -1,26 +1,32 @@
 #ifndef MKD64_COMMON_H
 #define MKD64_COMMON_H
 
+#ifdef __cplusplus
+#define mkd64___cdecl extern "C"
+#else
+#define mkd64___cdecl
+#endif
+
 #ifdef WIN32
-#define SOEXPORT __declspec(dllexport)
+#define SOEXPORT mkd64___cdecl __declspec(dllexport)
 #ifdef BUILDING_MKD64
 #define DECLEXPORT __declspec(dllexport)
 #else
-#define DECLEXPORT __declspec(dllimport)
+#define DECLEXPORT mkd64___cdecl __declspec(dllimport) mkd64___cdecl
 #endif
 #define SOLOCAL
 #else
-#define DECLEXPORT
+#define DECLEXPORT mkd64___cdecl
 #if __GNUC__ >= 4
-#define SOEXPORT __attribute__ ((visibility ("default")))
+#define SOEXPORT mkd64___cdecl __attribute__ ((visibility ("default")))
 #define SOLOCAL __attribute__ ((visibility ("hidden")))
 #else
-#define SOEXPORT
+#define SOEXPORT mkd64___cdecl
 #define SOLOCAL
 #endif
 #endif
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#if defined (__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
 #include <stdint.h>
 #else
 typedef unsigned char uint8_t;
@@ -37,18 +43,20 @@ typedef unsigned int uintptr_t;
 #define API_VER_BETA
 
 #ifndef BUILDING_MKD64
-#define MKD64_MODULE(modname) static const int _mkd64_module_apiver[] = \
+#define MKD64_MODULE(modname) \
+static const int mkd64___module_apiver[] = \
     { API_VER_MAJOR, API_VER_MINOR }; \
 \
 SOEXPORT const int *mkd64ApiVersion(void) \
 { \
-    return _mkd64_module_apiver; \
+    return mkd64___module_apiver; \
 } \
-static const char *_modid = modname; \
+static const char *mkd64___modid = modname; \
 SOEXPORT const char *id(void) \
 { \
-    return _modid; \
+    return mkd64___modid; \
 }
+
 #endif
 
 #include <mkd64/util.h>

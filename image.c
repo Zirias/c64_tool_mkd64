@@ -36,50 +36,50 @@ Image_objectSize(void)
 }
 
 SOLOCAL Image *
-Image_init(Image *this)
+Image_init(Image *self)
 {
     int i;
 
     for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
     {
-        this->tracks[i] = OBJNEW2(Track, i+1, num_sectors[i]);
+        self->tracks[i] = OBJNEW2(Track, i+1, num_sectors[i]);
     }
-    this->num_tracks = IMAGE_NUM_TRACKS;
-    this->allocator = &defaultAllocator;
-    this->map = OBJNEW(FileMap);
-    defaultAllocator.setImage(&defaultAllocator, this);
+    self->num_tracks = IMAGE_NUM_TRACKS;
+    self->allocator = &defaultAllocator;
+    self->map = OBJNEW(FileMap);
+    defaultAllocator.setImage(&defaultAllocator, self);
 
-    return this;
+    return self;
 }
 
 SOLOCAL void
-Image_done(Image *this)
+Image_done(Image *self)
 {
     int i;
 
     for (i = 0; i < IMAGE_NUM_TRACKS; ++i)
     {
-        OBJDEL(Track, this->tracks[i]);
+        OBJDEL(Track, self->tracks[i]);
     }
-    OBJDEL(FileMap, this->map);
+    OBJDEL(FileMap, self->map);
 }
 
 SOEXPORT BlockStatus
-Image_blockStatus(const Image *this, const BlockPosition *pos)
+Image_blockStatus(const Image *self, const BlockPosition *pos)
 {
-    Track *t = Image_track(this, pos->track);
+    Track *t = Image_track(self, pos->track);
     if (!t) return (BlockStatus) -1;
     return Track_blockStatus(t, pos->sector);
 }
 
 SOEXPORT Track *
-Image_track(const Image *this, int track)
+Image_track(const Image *self, int track)
 {
     Track *t;
 
     if (track > 0 && track <= IMAGE_NUM_TRACKS)
     {
-        t = this->tracks[track-1];
+        t = self->tracks[track-1];
     }
     else
     {
@@ -90,17 +90,17 @@ Image_track(const Image *this, int track)
 }
 
 SOEXPORT Block *
-Image_block(const Image *this, const BlockPosition *pos)
+Image_block(const Image *self, const BlockPosition *pos)
 {
-    Track *t = Image_track(this, pos->track);
+    Track *t = Image_track(self, pos->track);
     if (!t) return 0;
     return Track_block(t, pos->sector);
 }
 
 SOEXPORT Block *
-Image_allocateAt(const Image *this, const BlockPosition *pos)
+Image_allocateAt(const Image *self, const BlockPosition *pos)
 {
-    Block *b = Image_block(this, pos);
+    Block *b = Image_block(self, pos);
     BlockStatus s;
 
     if (!b) return 0;
@@ -115,26 +115,26 @@ Image_allocateAt(const Image *this, const BlockPosition *pos)
 }
 
 SOLOCAL FileMap *
-Image_fileMap(const Image *this)
+Image_fileMap(const Image *self)
 {
-    return this->map;
+    return self->map;
 }
 
 SOEXPORT void
-Image_setAllocator(Image *this, IBlockAllocator *allocator)
+Image_setAllocator(Image *self, IBlockAllocator *allocator)
 {
-    allocator->setImage(allocator, this);
-    this->allocator = allocator;
+    allocator->setImage(allocator, self);
+    self->allocator = allocator;
 }
 
 SOEXPORT IBlockAllocator *
-Image_allocator(const Image *this)
+Image_allocator(const Image *self)
 {
-    return this->allocator;
+    return self->allocator;
 }
 
 SOLOCAL int
-Image_dump(const Image *this, FILE *out)
+Image_dump(const Image *self, FILE *out)
 {
     int tracknum = 0;
     Track *track;
@@ -142,7 +142,7 @@ Image_dump(const Image *this, FILE *out)
     size_t num_sectors;
     int i;
 
-    while ((track = Image_track(this, ++tracknum)))
+    while ((track = Image_track(self, ++tracknum)))
     {
         num_sectors = Track_numSectors(track);
         for (i = 0; i < num_sectors; ++i)

@@ -47,18 +47,18 @@ DiskFile_objectSize(void)
 }
 
 SOLOCAL DiskFile *
-DiskFile_init(DiskFile *this)
+DiskFile_init(DiskFile *self)
 {
-    memset(this, 0, sizeof(DiskFile));
-    return this;
+    memset(self, 0, sizeof(DiskFile));
+    return self;
 }
 
 SOLOCAL void
-DiskFile_done(DiskFile *this)
+DiskFile_done(DiskFile *self)
 {
     DiskFileData *d, *tmp;
 
-    d = this->extraData;
+    d = self->extraData;
     while (d)
     {
         tmp = d;
@@ -67,8 +67,8 @@ DiskFile_done(DiskFile *this)
         free(tmp);
     }
 
-    free(this->name);
-    free(this->content);
+    free(self->name);
+    free(self->content);
 }
 
 static DiskFileData *
@@ -83,18 +83,18 @@ _createData(const void *owner, void *data, DataDelete deleter)
 }
 
 SOEXPORT void
-DiskFile_attachData(DiskFile *this, const void *owner, void *data,
+DiskFile_attachData(DiskFile *self, const void *owner, void *data,
         DataDelete deleter)
 {
     DiskFileData *parent;
 
-    if (!this->extraData)
+    if (!self->extraData)
     {
-        this->extraData = _createData(owner, data, deleter);
+        self->extraData = _createData(owner, data, deleter);
         return;
     }
 
-    for (parent = this->extraData; parent->next; parent = parent->next)
+    for (parent = self->extraData; parent->next; parent = parent->next)
     {
         if (parent->owner == owner)
         {
@@ -111,11 +111,11 @@ DiskFile_attachData(DiskFile *this, const void *owner, void *data,
 }
 
 SOEXPORT void *
-DiskFile_data(const DiskFile *this, const void *owner)
+DiskFile_data(const DiskFile *self, const void *owner)
 {
     DiskFileData *d;
 
-    for (d = this->extraData; d; d = d->next)
+    for (d = self->extraData; d; d = d->next)
     {
         if (d->owner == owner) return d->data;
     }
@@ -123,7 +123,7 @@ DiskFile_data(const DiskFile *this, const void *owner)
 }
 
 SOLOCAL int
-DiskFile_readFromHost(DiskFile *this, const char *hostfile)
+DiskFile_readFromHost(DiskFile *self, const char *hostfile)
 {
     static struct stat st;
     void *ptr;
@@ -133,64 +133,64 @@ DiskFile_readFromHost(DiskFile *this, const char *hostfile)
     if (st.st_size < 1) return 0;
     if(!(f = fopen(hostfile, "rb"))) return 0;
 
-    this->size = (size_t) st.st_size;
-    free(this->content);
-    this->content = 0;
+    self->size = (size_t) st.st_size;
+    free(self->content);
+    self->content = 0;
 
-    ptr = malloc(this->size);
+    ptr = malloc(self->size);
     
-    if (fread(ptr, 1, this->size, f) != this->size)
+    if (fread(ptr, 1, self->size, f) != self->size)
     {
-        this->size = 0;
+        self->size = 0;
         free(ptr);
         fclose(f);
         return 0;
     }
 
     fclose(f);
-    this->content = ptr;
+    self->content = ptr;
     return 1;
 }
 
 SOEXPORT size_t
-DiskFile_size(const DiskFile *this)
+DiskFile_size(const DiskFile *self)
 {
-    return this->size;
+    return self->size;
 }
 
 SOEXPORT size_t
-DiskFile_blocks(const DiskFile *this)
+DiskFile_blocks(const DiskFile *self)
 {
-    return this->blocks;
+    return self->blocks;
 }
 
 SOEXPORT void
-DiskFile_setInterleave(DiskFile *this, int interleave)
+DiskFile_setInterleave(DiskFile *self, int interleave)
 {
-    this->interleave = interleave;
+    self->interleave = interleave;
 }
 
 SOEXPORT int
-DiskFile_interleave(const DiskFile *this)
+DiskFile_interleave(const DiskFile *self)
 {
-    return this->interleave;
+    return self->interleave;
 }
 
 SOEXPORT void
-DiskFile_setName(DiskFile *this, const char *name)
+DiskFile_setName(DiskFile *self, const char *name)
 {
-    if (this->name) free(this->name);
-    this->name = copyString(name);
+    if (self->name) free(self->name);
+    self->name = copyString(name);
 }
 
 SOEXPORT const char *
-DiskFile_name(const DiskFile *this)
+DiskFile_name(const DiskFile *self)
 {
-    return this->name;
+    return self->name;
 }
 
 static void
-_rollbackWrite(DiskFile *this, Image *image, const BlockPosition *pos)
+_rollbackWrite(DiskFile *self, Image *image, const BlockPosition *pos)
 {
     Block *block;
     BlockPosition current;
@@ -208,14 +208,14 @@ _rollbackWrite(DiskFile *this, Image *image, const BlockPosition *pos)
 }
 
 SOLOCAL int
-DiskFile_write(DiskFile *this, Image *image,
+DiskFile_write(DiskFile *self, Image *image,
         const BlockPosition *startPosition)
 {
     const BlockPosition inval = { 0, 0 };
     const BlockPosition *start, *current;
     IBlockAllocator *alloc = Image_allocator(image);
-    uint8_t *contentPos = this->content;
-    size_t toWrite = this->size;
+    uint8_t *contentPos = self->content;
+    size_t toWrite = self->size;
     int writereserved = 0;
 
     uint8_t *blockData;
@@ -228,7 +228,7 @@ DiskFile_write(DiskFile *this, Image *image,
         goto DiskFile_write_done;
     }
 
-    alloc->setInterleave(alloc, this->interleave);
+    alloc->setInterleave(alloc, self->interleave);
     alloc->setConsiderReserved(alloc, 0);
 
     if (startPosition && startPosition->track)
@@ -252,7 +252,7 @@ DiskFile_write(DiskFile *this, Image *image,
 
     start = Block_position(nextBlock);
     current = start;
-    this->blocks = 1;
+    self->blocks = 1;
 
     do
     {
@@ -274,14 +274,14 @@ DiskFile_write(DiskFile *this, Image *image,
             if (!nextBlock)
             {
                 Block_setNextTrack(block, 0);
-                _rollbackWrite(this, image, start);
+                _rollbackWrite(self, image, start);
                 return 0;
             }
             current = Block_position(nextBlock);
             Block_setNextTrack(block, current->track);
             Block_setNextSector(block, current->sector);
             contentPos += blockWrite;
-            ++(this->blocks);
+            ++(self->blocks);
         }
         else
         {
@@ -291,23 +291,23 @@ DiskFile_write(DiskFile *this, Image *image,
     } while (toWrite);
 
 DiskFile_write_done:
-    FileMap_add(Image_fileMap(image), this, start);
+    FileMap_add(Image_fileMap(image), self, start);
 
-    ModRepo_allFileWritten(Mkd64_modRepo(MKD64), this, start);
+    ModRepo_allFileWritten(Mkd64_modRepo(MKD64), self, start);
 
     return 1;
 }
 
 SOLOCAL void
-DiskFile_setFileNo(DiskFile *this, int fileNo)
+DiskFile_setFileNo(DiskFile *self, int fileNo)
 {
-    this->fileNo = fileNo;
+    self->fileNo = fileNo;
 }
 
 SOEXPORT int
-DiskFile_fileNo(const DiskFile *this)
+DiskFile_fileNo(const DiskFile *self)
 {
-    return this->fileNo;
+    return self->fileNo;
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4
