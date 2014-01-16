@@ -12,7 +12,7 @@
 #ifdef BUILDING_MKD64
 #define DECLEXPORT __declspec(dllexport)
 #else
-#define DECLEXPORT mkd64___cdecl __declspec(dllimport) mkd64___cdecl
+#define DECLEXPORT mkd64___cdecl __declspec(dllimport)
 #endif
 #define SOLOCAL
 #else
