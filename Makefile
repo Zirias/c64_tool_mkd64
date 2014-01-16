@@ -166,6 +166,7 @@ install: strip
 	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
 	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 coding.txt $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 examples/module/* $(DESTDIR)$(docdir)/examples/module
 
 endif

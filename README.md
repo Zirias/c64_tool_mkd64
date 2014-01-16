@@ -29,7 +29,7 @@ In short: just type 'make'. You will need GNU make and the GCC C-compiler for th
 install
 -------
 
-Put mkd64 (or mkd64.exe) and all modules (*.so or *.dll) in the same directory. That's it.
+Put mkd64 (or mkd64.exe) and all modules (*.so or *.dll) in the same directory. That's it. For more information and options see INSTALL.txt
 
 binaries
 --------
@@ -79,7 +79,6 @@ This code is free software and may be used or modified for any purpose, as long 
 development
 ===========
 
-Patches and comments are welcome. For the future, the following features are planned:
+Patches and comments are welcome and appreciated. Please have a look in
+coding.txt before you work on the source.
 
-- support 40track formats
-- custom directory formats in new modules
