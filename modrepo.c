@@ -264,7 +264,7 @@ findModuleObjects(ModRepo *self, const char *exe)
                 "         The executable must be named `mkd64.exe' to load "
                 "modules.\n********\n\n", stderr);
         free(modpat);
-        return 0;
+        return;
     }
 #ifdef MODDIR
     strcpy(modpat, MODDIR);
@@ -277,7 +277,7 @@ findModuleObjects(ModRepo *self, const char *exe)
     if (findHdl == INVALID_HANDLE_VALUE)
     {
         free(modpat);
-        return self;
+        return;
     }
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
