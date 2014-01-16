@@ -52,16 +52,20 @@ Complete building instructions
 
     Type 'make strip'. For installable builds, this is done by default.
 
+    * select what to build:
+
+    Type 'make bin' to only build the mkd64 executable or 'make modules' to
+    only build the in-tree mkd64 modules.
+
     * debugging:
 
     'make DEBUG=1' creates a debugging build with verbose output and debugging
-    symbols for use with gdb or valgrind. Do a 'make clean' first.
+    symbols for use with gdb or valgrind.
 
     * i386 builds on linux amd64:
 
     'make GCC32=1' will build i386 binaries on an amd64 linux system. This
-    could work for other multiarch systems, too -- I didn't test it. Do a
-    'make clean' first.
+    could work for other multiarch systems, too -- I didn't test it.
 
   = Debian packages =
 
