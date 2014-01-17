@@ -37,6 +37,7 @@ Block_init(Block *self, void *owner,
 SOLOCAL void
 Block_done(Block *self)
 {
+    (void) self; /* unused */
 }
 
 SOEXPORT BlockStatus

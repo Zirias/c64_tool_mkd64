@@ -46,7 +46,7 @@ mod_LIBS :=
 
 endif
 
-CFLAGS += -fvisibility=hidden -std=c99 -Wall -pedantic \
+CFLAGS += -fvisibility=hidden -std=c99 -Wall -Wextra -pedantic \
 	  -Werror=implicit-int \
 	  -Werror=implicit-function-declaration \
 	  -Werror=declaration-after-statement

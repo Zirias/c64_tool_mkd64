@@ -140,7 +140,7 @@ Image_dump(const Image *self, FILE *out)
     Track *track;
     Block *block;
     size_t num_sectors;
-    int i;
+    unsigned int i;
 
     while ((track = Image_track(self, ++tracknum)))
     {

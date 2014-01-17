@@ -6,6 +6,7 @@
 #include <mkd64/diskfile.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "buildid.h"
@@ -21,7 +22,7 @@ typedef struct
     const char *name;
     const unsigned char pattern[17];
     const int contentOffset;
-    const int contentLen;
+    const size_t contentLen;
 } SeparatorEntry;
 
 typedef struct

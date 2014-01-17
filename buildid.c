@@ -220,6 +220,9 @@ getBuildTime(void)
 int
 main(int argc, char **argv)
 {
+    (void) argc; /* unused */
+    (void) argv; /* unused */
+
 #ifdef WIN32
     openRegKeys();
 #endif

@@ -107,6 +107,8 @@ static const uint8_t _initialBam[256] = {
 static void
 _deleteFileData(const void *owner, void *data)
 {
+    (void) owner; /* unused */
+
     free(data);
 }
 
@@ -369,8 +371,7 @@ globalOption(IModule *self, char opt, const char *arg)
         case 'D':
             if (checkArgAndWarn(opt, arg, 0, 1, id()))
             {
-                if (tryParseIntHex(arg, &uintarg) &&
-                        uintarg >= 0 && uintarg <= 0xff)
+                if (tryParseIntHex(arg, &uintarg) && uintarg <= 0xff)
                 {
                     _setDosVersion(dos, (uint8_t)uintarg);
                 }

@@ -415,7 +415,7 @@ printResult(Mkd64 *self)
 {
     int tn = 0;
     int free = 0;
-    int sn;
+    unsigned int sn;
     Track *t;
     BlockStatus s;
 

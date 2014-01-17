@@ -41,7 +41,7 @@ Track_objectSize(void)
 SOEXPORT Track *
 Track_init(Track *self, int tracknum, size_t num_sectors)
 {
-    int i;
+    unsigned int i;
     BlockPosition pos;
 
     if (num_sectors > TRACK_MAX_SECTORS)
@@ -66,7 +66,7 @@ Track_init(Track *self, int tracknum, size_t num_sectors)
 SOEXPORT void
 Track_done(Track *self)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < self->num_sectors; ++i)
     {
         OBJDEL(Block, self->sectors[i]);
@@ -76,7 +76,8 @@ Track_done(Track *self)
 SOEXPORT BlockStatus
 Track_blockStatus(const Track *self, int sector)
 {
-    if (sector < 0 || sector >= self->num_sectors) return (BlockStatus) -1;
+    if (sector < 0 || sector >= (int) self->num_sectors)
+        return (BlockStatus) -1;
     return Block_status(self->sectors[sector]);
 }
 
@@ -90,7 +91,7 @@ static int
 _freeSectorsRaw(const Track *self, BlockStatus mask)
 {
     int free = 0;
-    int i;
+    unsigned int i;
 
     for (i = 0; i < self->num_sectors; ++i)
     {
@@ -110,14 +111,14 @@ Track_freeSectors(const Track *self, BlockStatus mask)
 SOEXPORT int
 Track_reserveBlock(Track *self, int sector, IModule *by)
 {
-    if (sector < 0 || sector >= self->num_sectors) return 0;
+    if (sector < 0 || sector >= (int) self->num_sectors) return 0;
     return Block_reserve(self->sectors[sector], by);
 }
 
 SOEXPORT int
 Track_allocateBlock(Track *self, int sector)
 {
-    if (sector < 0 || sector >= self->num_sectors) return 0;
+    if (sector < 0 || sector >= (int) self->num_sectors) return 0;
     return Block_allocate(self->sectors[sector]);
 }
 
@@ -132,7 +133,7 @@ Track_allocateFirstFreeFrom(Track *self, int sector, int askModules)
 
     for (i = self->num_sectors; i > 0 ; --i, ++sector)
     {
-        if (sector >= self->num_sectors) sector = 0;
+        if (sector >= (int) self->num_sectors) sector = 0;
         b = self->sectors[sector];
         s = Block_status(b);
 
@@ -154,7 +155,7 @@ Track_allocateFirstFreeFrom(Track *self, int sector, int askModules)
 SOEXPORT Block *
 Track_block(const Track *self, int sector)
 {
-    if (sector < 0 || sector >= self->num_sectors) return 0;
+    if (sector < 0 || sector >= (int) self->num_sectors) return 0;
     return self->sectors[sector];
 }
 

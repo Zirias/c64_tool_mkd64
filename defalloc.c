@@ -26,6 +26,8 @@ IBlockAllocator defaultAllocator = {
 static void
 setImage(IBlockAllocator *self, Image *image)
 {
+    (void) self; /* unused */
+
     _img = image;
     _ilv = 1;
     _rsv = 0;
@@ -35,12 +37,16 @@ setImage(IBlockAllocator *self, Image *image)
 static void
 setInterleave(IBlockAllocator *self, int interleave)
 {
+    (void) self; /* unused */
+
     _ilv = interleave;
 }
 
 static void
 setConsiderReserved(IBlockAllocator *self, int considerReserved)
 {
+    (void) self; /* unused */
+
     _rsv = considerReserved;
     _msk = _rsv ? BS_RESERVED : BS_NONE;
 }
@@ -51,6 +57,8 @@ allocFirstBlock(IBlockAllocator *self)
     Track *t;
     Block *b;
     int tn, sn;
+
+    (void) self; /* unused */
 
     /* find first track that has free sectors left */
     for (tn = 1, t = Image_track(_img, tn);
@@ -72,6 +80,8 @@ allocNextBlock(IBlockAllocator *self, const BlockPosition *pos)
     Track *t;
     Block *b;
     int tn, sn, bigdist;
+
+    (void) self; /* unused */
 
     tn = pos->track;
     sn = pos->sector;

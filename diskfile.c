@@ -190,7 +190,7 @@ DiskFile_name(const DiskFile *self)
 }
 
 static void
-_rollbackWrite(DiskFile *self, Image *image, const BlockPosition *pos)
+_rollbackWrite(Image *image, const BlockPosition *pos)
 {
     Block *block;
     BlockPosition current;
@@ -274,7 +274,7 @@ DiskFile_write(DiskFile *self, Image *image,
             if (!nextBlock)
             {
                 Block_setNextTrack(block, 0);
-                _rollbackWrite(self, image, start);
+                _rollbackWrite(image, start);
                 return 0;
             }
             current = Block_position(nextBlock);

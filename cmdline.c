@@ -191,7 +191,7 @@ Cmdline_parseFile(Cmdline *self, const char *cmdfile)
 
     buf = malloc(st.st_size);
 
-    if (fread(buf, 1, st.st_size, f) != st.st_size)
+    if (fread(buf, 1, st.st_size, f) != (size_t) st.st_size)
     {
         fclose(f);
         free(buf);
