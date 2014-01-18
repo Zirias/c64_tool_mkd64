@@ -74,9 +74,8 @@ printErrorMessage(int id, ...)
     char buf[4096];
     va_list vl;
 
-    int error = GetLastError();
     va_start(vl, id);
-    if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, error, 0,
+    if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, id, 0,
             buf, 4096, &vl))
     {
         DBGn(buf);
