@@ -1,4 +1,5 @@
 #include <mkd64/common.h>
+#include <mkd64/debug.h>
 
 #include "../../util.h"
 
@@ -8,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 SOEXPORT void
 findFilesInDir(const char *dir, const char *pattern, void *caller,
@@ -66,11 +68,20 @@ getAppDir(const char *expectedAppNameEnd, void *caller,
 }
 
 #ifdef DEBUG
-printLastErrorMessage()
+void
+printErrorMessage(int id, ...)
 {
     char buf[4096];
-    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, GetLastError(), 0, buf, 4096);
-    DBG(buf);
+    va_list vl;
+
+    int error = GetLastError();
+    va_start(vl, id);
+    if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, error, 0,
+            buf, 4096, &vl))
+    {
+        DBGn(buf);
+    }
+    va_end(vl);
 }
 #endif
 
@@ -83,7 +94,7 @@ loadDso(const char *name)
 #ifdef DEBUG
     if (!dso)
     {
-        printLastErrorMessage();
+        printErrorMessage(GetLastError(), name);
     }
 #endif
     SetErrorMode(0);
