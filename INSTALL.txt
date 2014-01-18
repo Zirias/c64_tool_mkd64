@@ -6,15 +6,25 @@ Quick start
 
   just type 'make'.
 
+  Parallel make is supported and safe, so on a multicore or SMP machine, this
+  can be even quicker using 'make -jN' where N >= the number of the available
+  cores.
+
+  For example, on a quad-core try 'make -j5'.
 
 Complete building instructions
 ------------------------------
 
   = Prerequisites =
 
-  For building mkd64, you need a C89-compliant C-Compiler. A Makefile is
-  included for building with the GCC C-Compiler and GNU Make. For building
-  with Visual Studio, there's also a solution file and some project files.
+  For building mkd64, you need a C99-compliant C-Compiler. A Makefile is
+  included for building with the GCC C-Compiler and GNU Make. 
+
+  Only very little C99 is actually used, so other compilers may work, maybe
+  with the help of some defines. MSVC does work.
+
+  For building with Visual Studio, there's a solution file and some project
+  files included.
 
   = GCC / GNU Make on windows =
 
