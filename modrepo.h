@@ -13,8 +13,7 @@ typedef void (*ModInstanceCreated)(void *owner, IModule *instance);
 
 size_t ModRepo_objectSize(void);
 
-ModRepo *ModRepo_init(ModRepo *self, const char *exe, void *owner,
-        ModInstanceCreated callback);
+ModRepo *ModRepo_init(ModRepo *self, void *owner, ModInstanceCreated callback);
 
 void ModRepo_done(ModRepo *self);
 

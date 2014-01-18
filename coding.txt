@@ -34,23 +34,28 @@ tree should follow them.
 
 2. = project structure =
 
-- public API goes to include/mkd64/. public declarations should use the
+- Public API goes to include/mkd64/. public declarations should use the
   DECLEXPORT macro.
 
-- internal API as well as mkd64 implementation goes to the project root
+- Internal API as well as mkd64 implementation goes to the project root
   directory. Implementations should use the SOEXPORT macro for public
   definitions, the SOLOCAL macro for internal definitions and the static
   keyword for private definitions. Internal declarations don't need a macro.
 
-- if you have an implementation exposing both public and internal definitions,
+- If you have an implementation exposing both public and internal definitions,
   create two header files with the same name, the internal one in the project
   root dir, the public one in include/mkd64/. Let the internal one include
   the public one.
 
-- public API headers should use a guard macro named MKD64_{FILENAME}_H,
+- Public API headers should use a guard macro named MKD64_{FILENAME}_H,
   internal API headers just {FILENAME}_H.
 
-- in-tree modules go to the modules/ directory.
+- In-tree modules go to the modules/ directory.
+
+- Platform-specific code goes to the platform/{name}/ directory. The Makefile
+  has to select which implementation to build and link. There's also a defs.h
+  in each platform-dir for defines depending on the platform.
+  "platform/defs.h" should select and include the correct one.
 
 3. = C language =
 
@@ -91,9 +96,8 @@ tree should follow them.
   part of the C99 specification. Replacements can go to utils.c/utils.h, there
   are already some.
 
-- platform-specific code is allowable only in the following files:
-  include/mkd64/common.h, utils.c and modrepo.c. In the long run,
-  platform-specific code from modrepo.c should also be moved to utils.c.
+- platform-specific code outside of the platform-subdirectories is only
+  allowed in include/mkd64/common.h.
 
 4. = mkd64 classes and objects =
 

@@ -1,29 +1,7 @@
-#ifdef WIN32
-
-#include <windows.h>
-#include <shlwapi.h>
-#define LOAD_MOD(name) LoadLibrary(name)
-#define GET_MOD_METHOD(so, name) GetProcAddress(so, name)
-#define UNLOAD_MOD(so) FreeLibrary(so)
-#define dlerror(x) "Error loading module"
-
-#else
-
-#define _POSIX_C_SOURCE 200809L
-#define _XOPEN_SOURCE 500
-#include <glob.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <libgen.h>
-#include <dlfcn.h>
-#define LOAD_MOD(name) dlopen(name, RTLD_NOW)
-#define GET_MOD_METHOD(so, name) dlsym(so, name)
-#define UNLOAD_MOD(so) dlclose(so)
-
-#endif
-
 #include <mkd64/common.h>
 #include <mkd64/debug.h>
+#include "util.h"
+#include "platform/defs.h"
 
 #include "modrepo.h"
 
@@ -182,29 +160,6 @@ createInstanceHere(ModRepo *self, ModEntry *entry)
     return 1;
 }
 
-#ifdef WIN32
-#include <ctype.h>
-
-static int
-endsWith(const char *value, const char *pattern)
-{
-    int valueLen = strlen(value);
-    int patternLen = strlen(pattern);
-    const char *valuePtr;
-    int i;
-
-    if (patternLen > valueLen) return 0;
-
-    valuePtr = value + valueLen - patternLen;
-    for (i = 0; i < patternLen; ++i)
-    {
-        if (toupper(valuePtr[i]) != toupper(pattern[i])) return 0;
-    }
-
-    return 1;
-}
-#endif
-
 static int
 checkApiVersion(const char *name, const int *ver)
 {
@@ -242,166 +197,102 @@ checkApiVersion(const char *name, const int *ver)
 }
 
 static void
-findModuleObjects(ModRepo *self, const char *exe)
+addModuleFile(void *caller, const char *filename)
 {
-    ModEntry *current = 0;
-    ModEntry *next;
-    const int *apiVer;
-    const char *name;
-
-#ifdef WIN32
-    HANDLE findHdl;
-    HMODULE modso;
-    FARPROC modid, modinst, modopt;
-    WIN32_FIND_DATA findData;
-
-    char *modpat = malloc(4096);
-    GetModuleFileName(GetModuleHandle(0), modpat, 4096);
-    if (!endsWith(modpat, "\\MKD64.EXE"))
-    {
-        fputs("\n\n********\n"
-                "WARNING: Loading of modules will not work!\n"
-                "         The executable must be named `mkd64.exe' to load "
-                "modules.\n********\n\n", stderr);
-        free(modpat);
-        return;
-    }
-#ifdef MODDIR
-    strcpy(modpat, MODDIR);
-#else
-    PathRemoveFileSpec(modpat);
-#endif
-    strcat(modpat, "\\*.dll");
-
-    findHdl = FindFirstFile(modpat, &findData);
-    if (findHdl == INVALID_HANDLE_VALUE)
-    {
-        free(modpat);
-        return;
-    }
-
-    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-    do
-    {
-        name = findData.cFileName;
-#else
-    glob_t glb;
-    char **pathvp;
-    char *modpat;
+    ModRepo *self = caller;
+    ModEntry *current, *next;
     void *modso, *modid, *modinst, *modopt;
+    const int *apiVer;
 
-#ifdef MODDIR
-    modpat = malloc(strlen(MODDIR) + 6);
-    strcpy(modpat, MODDIR);
-#else
-    char *exefullpath = realpath(exe, 0);
-    char *dir = dirname(exefullpath);
-    modpat = malloc(strlen(dir) + 6);
-    strcpy(modpat, dir);
-#endif
-    strcat(modpat, "/*.so");
-    glob(modpat, 0, 0, &glb);
-    free(modpat);
-#ifndef MODDIR
-    free(exefullpath);
-#endif
+    modso = loadDso(filename);
+    if (!modso) return;
 
-    for (pathvp = glb.gl_pathv; pathvp && *pathvp; ++pathvp)
+    modopt = getDsoFunction(modso, "mkd64ApiVersion");
+    if (!modopt)
     {
-        name = *pathvp;
-#endif
-        modso = LOAD_MOD(name);
-        if (!modso)
-        {
-            DBG(dlerror());
-            continue;
-        }
-
-        modopt = GET_MOD_METHOD(modso, "mkd64ApiVersion");
-        if (!modopt)
-        {
-            DBGs1("Not an mkd64 module:", name);
-            UNLOAD_MOD(modso);
-            continue;
-        }
-
-        apiVer = ((const int *(*)(void))((uintptr_t)modopt))();
-
-        if (!checkApiVersion(name, apiVer))
-        {
-            UNLOAD_MOD(modso);
-            continue;
-        }
-
-        modid = GET_MOD_METHOD(modso, "id");
-        if (!modid)
-        {
-            fprintf(stderr, "Warning: Erroneous module `%s', missing "
-                    "'const char *id()' export.\n", name);
-            UNLOAD_MOD(modso);
-            continue;
-        }
-
-        modinst = GET_MOD_METHOD(modso, "instance");
-        if (!modinst)
-        {
-            fprintf(stderr, "Warning: Erroneous module `%s', missing "
-                    "'IModule *instance()' export.\n", name);
-            UNLOAD_MOD(modso);
-            continue;
-        }
-
-        next = malloc(sizeof(ModEntry));
-        next->next = 0;
-        next->so = modso;
-        next->id = ((const char *(*)(void))((uintptr_t)modid))();
-        next->instance = (IModule *(*)(void))((uintptr_t)modinst);
-
-        modopt = GET_MOD_METHOD(modso, "depends");
-        next->depends = modopt ?
-            ((const char **(*)(void))((uintptr_t)modopt))() : 0;
-
-        modopt = GET_MOD_METHOD(modso, "conflicts");
-        next->conflicts = modopt ?
-            ((const char **(*)(void))((uintptr_t)modopt))() : 0;
-
-        modopt = GET_MOD_METHOD(modso, "help");
-        next->help = modopt ? (const char *(*)(void))((uintptr_t)modopt) : 0;
-
-        modopt = GET_MOD_METHOD(modso, "helpFile");
-        next->helpFile = modopt ?
-            (const char *(*)(void))((uintptr_t)modopt) : 0;
-
-        modopt = GET_MOD_METHOD(modso, "versionInfo");
-        next->versionInfo = modopt ?
-            (const char *(*)(void))((uintptr_t)modopt) : 0;
-
-        next->conflicted = 0;
-
-        if (current)
-        {
-            current->next = next;
-        }
-        else
-        {
-            self->modules = next;
-        }
-        current = next;
-
-        DBGs1("Found module:", current->id);
-
-#ifdef WIN32
-    } while (FindNextFile(findHdl, &findData) != 0);
-
-    SetErrorMode(0);
-    FindClose(findHdl);
-    free(modpat);
-#else
+        DBGs1("Not an mkd64 module:", filename);
+        unloadDso(modso);
+        return;
     }
 
-    globfree(&glb);
-#endif
+    apiVer = ((const int *(*)(void))((uintptr_t)modopt))();
+
+    if (!checkApiVersion(filename, apiVer))
+    {
+        unloadDso(modso);
+        return;
+    }
+
+    modid = getDsoFunction(modso, "id");
+    if (!modid)
+    {
+        fprintf(stderr, "Warning: Erroneous module `%s', missing "
+                "'const char *id()' export.\n", filename);
+        unloadDso(modso);
+        return;
+    }
+
+    modinst = getDsoFunction(modso, "instance");
+    if (!modinst)
+    {
+        fprintf(stderr, "Warning: Erroneous module `%s', missing "
+                "'IModule *instance()' export.\n", filename);
+        unloadDso(modso);
+        return;
+    }
+
+    next = malloc(sizeof(ModEntry));
+    next->next = 0;
+    next->so = modso;
+    next->id = ((const char *(*)(void))((uintptr_t)modid))();
+    next->instance = (IModule *(*)(void))((uintptr_t)modinst);
+
+    modopt = getDsoFunction(modso, "depends");
+    next->depends = modopt ?
+        ((const char **(*)(void))((uintptr_t)modopt))() : 0;
+
+    modopt = getDsoFunction(modso, "conflicts");
+    next->conflicts = modopt ?
+        ((const char **(*)(void))((uintptr_t)modopt))() : 0;
+
+    modopt = getDsoFunction(modso, "help");
+    next->help = modopt ? (const char *(*)(void))((uintptr_t)modopt) : 0;
+
+    modopt = getDsoFunction(modso, "helpFile");
+    next->helpFile = modopt ?
+        (const char *(*)(void))((uintptr_t)modopt) : 0;
+
+    modopt = getDsoFunction(modso, "versionInfo");
+    next->versionInfo = modopt ?
+        (const char *(*)(void))((uintptr_t)modopt) : 0;
+
+    next->conflicted = 0;
+
+    if (self->modules)
+    {
+        for (current = self->modules; current->next; current = current->next);
+        current->next = next;
+    }
+    else
+    {
+        self->modules = next;
+    }
+
+    DBGs1("Found module:", next->id);
 }
+
+#ifdef APP_FILENAME
+static void appNameMismatch(void *caller, const char *appName)
+{
+    (void) appName;
+
+    fputs("\n\n********\n"
+            "WARNING: Loading of modules will not work!\n"
+            "         The executable must be named `" APP_FILENAME "' to load "
+            "modules.\n********\n\n", stderr);
+    return;
+}
+#endif
 
 SOLOCAL size_t
 ModRepo_objectSize(void)
@@ -409,13 +300,31 @@ ModRepo_objectSize(void)
     return sizeof(ModRepo);
 }
 
+void
+loadModuleFiles(ModRepo *self)
+{
+#ifdef MODDIR
+    findFilesInDir(MODDIR, FINDPAT_MODULES, self, &addModuleFile);
+#else
+#ifdef APP_FILENAME
+    char *appDir = getAppDir(PATH_SEP APP_FILENAME, self, &appNameMismatch);
+#else
+    char *appDir = getAppDir(0, 0, 0);
+#endif
+    if (appDir)
+    {
+        findFilesInDir(appDir, FINDPAT_MODULES, self, &addModuleFile);
+        free(appDir);
+    }
+#endif
+}
+
 SOLOCAL ModRepo *
-ModRepo_init(ModRepo *self, const char *exe, void *owner,
-        ModInstanceCreated callback)
+ModRepo_init(ModRepo *self, void *owner, ModInstanceCreated callback)
 {
     memset(self, 0, sizeof(ModRepo));
 
-    findModuleObjects(self, exe);
+    loadModuleFiles(self);
     self->owner = owner;
     self->callback = callback;
 
@@ -442,7 +351,7 @@ ModRepo_done(ModRepo *self)
     {
         tmpEntry = currentEntry;
         currentEntry = currentEntry->next;
-        UNLOAD_MOD(tmpEntry->so);
+        unloadDso(tmpEntry->so);
         free(tmpEntry);
     }
 }

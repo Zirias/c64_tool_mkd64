@@ -10,6 +10,13 @@
 #include <mkd64/common.h>
 #include <stdlib.h>
 
+/** Callback for the findFilesInDir() function
+ * This is called by findFilesInDir() function for every file found.
+ * @param caller the pointer to the caller object, given to findFilesInDir()
+ * @param filename the name of the file found
+ */
+typedef void (*FileFoundCallback)(void *caller, const char *filename);
+
 /** Get random integer in a given range
  * The random number generator is initialized on the first call
  * @param min minimum number to return
@@ -62,7 +69,36 @@ DECLEXPORT int checkArgAndWarn(char opt, const char *arg, int isFileOpt,
  */
 DECLEXPORT char *copyString(const char *s);
 
+/** Check whether a string ends with an expected content
+ * @param s the string to check
+ * @param expectedEnd the content to check for at the end of the string
+ * @param ignoreCase 0 to compare case-sensitive, 1 to ignore case
+ * @return 1 if the string ends with expectedEnd, 0 otherwise
+ */
+DECLEXPORT int stringEndsWith(const char *s, const char *expectedEnd,
+        int ignoreCase);
+
+/** Allocate memory and fail instantly on error
+ * Memory allocation should only fail in out-of-memory conditions. In this
+ * case, the safest thing to do for mkd64 is to fail instantly and exit with
+ * an appropriate message.
+ * @arg size the size of the memory block to allocate
+ * @return the allocated memory
+ */
 DECLEXPORT void *mkd64Alloc(size_t size);
+
+/** Find files matching a pattern in a given directory
+ * This will search a given directory for files matching a pattern
+ * non-recursively and call a given callback for each file found.
+ * ATTENTION: The exact pattern syntax depends on the platform-specific
+ * implementation. An asterisk (*) should normally work as expected.
+ * @param dir the directory to search files in
+ * @param pattern the pattern the files should match
+ * @param caller pointer to the calling object
+ * @param found callback to call for files found
+ */
+DECLEXPORT void findFilesInDir(const char *dir, const char *pattern,
+        void *caller, FileFoundCallback found);
 
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4

@@ -21,6 +21,8 @@ dl_LDFLAGS := -lshlwapi
 mod_CFLAGS :=
 mod_LIBS := mkd64.a
 
+PLATFORM := win32
+
 else
 
 EXE :=
@@ -43,6 +45,8 @@ EQT := "
 dl_LDFLAGS := -ldl -Wl,-E
 mod_CFLAGS := -fPIC
 mod_LIBS :=
+
+PLATFORM := posix
 
 endif
 
@@ -111,7 +115,8 @@ endif
 INCLUDES := -Iinclude
 
 mkd64_OBJS := mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
-	     cmdline.o modrepo.o util.o
+	     cmdline.o modrepo.o util.o \
+	     platform$(PSEP)$(PLATFORM)$(PSEP)util.o
 mkd64_LDFLAGS := $(dl_LDFLAGS)
 mkd64_DEFINES := -DBUILDING_MKD64
 

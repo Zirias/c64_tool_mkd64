@@ -1,11 +1,12 @@
 #include <mkd64/common.h>
 
-#include <mkd64/util.h>
+#include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 SOEXPORT int
 randomNum(int min, int max)
@@ -128,6 +129,32 @@ copyString(const char *s)
     char *copy = malloc(bytes);
     memcpy(copy, s, bytes);
     return copy;
+}
+
+SOEXPORT int
+stringEndsWith(const char *s, const char *expectedEnd, int ignoreCase)
+{
+    int stringLen = strlen(s);
+    int endLen = strlen(expectedEnd);
+    const char *sp;
+    int i;
+
+    if (endLen > stringLen) return 0;
+
+    sp = s + stringLen - endLen;
+    for (i = 0; i < endLen; ++i)
+    {
+        if (ignoreCase)
+        {
+            if (toupper(sp[i]) != toupper(expectedEnd[i])) return 0;
+        }
+        else
+        {
+            if (sp[i] != expectedEnd[i]) return 0;
+        }
+    }
+
+    return 1;
 }
 
 SOEXPORT void *

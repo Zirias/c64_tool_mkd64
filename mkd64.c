@@ -76,16 +76,17 @@ Mkd64_init(Mkd64 *self, int argc, char **argv)
     if (!instance)
     {
         instance = self;
-        self->image = OBJNEW(Image);
+        memset(self, 0, sizeof(Mkd64));
+
         self->cmdline = OBJNEW(Cmdline);
         Cmdline_parse(self->cmdline, argc, argv);
-        self->modrepo = OBJNEW3(ModRepo, Cmdline_exe(self->cmdline),
-                self, &moduleLoaded);
-        self->suggestions = 0;
-        self->currentSuggestions = 0;
-        self->d64 = 0;
-        self->map = 0;
+        self->image = OBJNEW(Image);
+
         self->initialized = 1;
+
+        /* create ModRepo after Mkd64 is initialized, because it may need
+         * util functions requiring an Mkd64 instance */
+        self->modrepo = OBJNEW2(ModRepo, self, &moduleLoaded);
     }
     else
     {
@@ -598,6 +599,17 @@ processGlobalOptions(Mkd64 *self)
     return 1;
 }
 
+static void
+cleanupRunObjects(Mkd64 *self)
+{
+    if (self->d64) fclose(self->d64);
+    self->d64 = 0;
+    if (self->map) fclose(self->map);
+    self->map = 0;
+    deleteSuggestions(self->suggestions);
+    deleteSuggestions(self->currentSuggestions);
+}
+
 SOLOCAL int
 Mkd64_run(Mkd64 *self)
 {
@@ -692,11 +704,11 @@ Mkd64_run(Mkd64 *self)
     /* show the user what was done */
     printResult(self);
 
+    cleanupRunObjects(self);
     return 1;
 
 Mkd64_run_error:
-    if (self->d64) fclose(self->d64);
-    if (self->map) fclose(self->map);
+    cleanupRunObjects(self);
     return 0;
 }
 
@@ -704,13 +716,14 @@ SOLOCAL void
 Mkd64_done(Mkd64 *self)
 {
     if (!self->initialized) return;
+    OBJDEL(Image, self->image);
+    self->image = 0;
+    OBJDEL(ModRepo, self->modrepo);
+    self->modrepo = 0;
+    OBJDEL(Cmdline, self->cmdline);
+    self->cmdline = 0;
     instance = 0;
     self->initialized = 0;
-    OBJDEL(Image, self->image);
-    OBJDEL(Cmdline, self->cmdline);
-    OBJDEL(ModRepo, self->modrepo);
-    deleteSuggestions(self->suggestions);
-    deleteSuggestions(self->currentSuggestions);
 }
 
 SOLOCAL Image *
