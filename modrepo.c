@@ -284,7 +284,8 @@ addModuleFile(void *caller, const char *filename)
 #ifdef APP_FILENAME
 static void appNameMismatch(void *caller, const char *appName)
 {
-    (void) appName;
+    (void) caller; /* unused */
+    (void) appName; /* unused */
 
     fputs("\n\n********\n"
             "WARNING: Loading of modules will not work!\n"

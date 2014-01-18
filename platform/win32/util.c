@@ -93,7 +93,7 @@ loadDso(const char *name)
 SOLOCAL void *
 getDsoFunction(void *dso, const char *name)
 {
-    return GetProcAddress(dso, name);
+    return (void *)(uintptr_t)GetProcAddress(dso, name);
 }
 
 SOLOCAL void
