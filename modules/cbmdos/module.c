@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "buildid.h"
-#include "cbmdos/alloc.h"
+#include "alloc.h"
 
 MKD64_MODULE("cbmdos")
 

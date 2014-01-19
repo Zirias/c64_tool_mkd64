@@ -1,54 +1,4 @@
-ifeq ($(OS),Windows_NT)
-
-EXE := .exe
-SO := .dll
-CMDSEP := &
-PSEP := \\
-CPF := copy /y
-RMF := del /f /q
-RMFR := -rd /s /q
-MDP := -md
-XIF := if exist
-XTHEN := (
-XFI := )
-CATIN := copy /b
-CATADD := +
-CATOUT :=
-EQT :=
-
-CFLAGS += -DWIN32
-dl_LDFLAGS := -lshlwapi 
-mod_CFLAGS :=
-mod_LIBS := mkd64.a
-
-PLATFORM := win32
-
-else
-
-EXE :=
-SO := .so
-CMDSEP := ;
-PSEP := /
-CPF := cp -f
-RMF := rm -f
-RMFR := rm -fr
-MDP := mkdir -p
-XIF := if [ -x
-XTHEN := ]; then
-XFI := ; fi
-CATIN := cat
-CATADD := 
-CATOUT := >
-EQT := "
-#" make vim syntax highlight happy
-
-dl_LDFLAGS := -ldl -Wl,-E
-mod_CFLAGS := -fPIC
-mod_LIBS :=
-
-PLATFORM := posix
-
-endif
+include defs.mk
 
 CFLAGS += -fvisibility=hidden -std=c99 -Wall -Wextra -pedantic \
 	  -Werror=implicit-int \
@@ -56,6 +6,8 @@ CFLAGS += -fvisibility=hidden -std=c99 -Wall -Wextra -pedantic \
 	  -Werror=declaration-after-statement
 
 LDFLAGS += -static-libgcc
+
+OUT := bin
 
 VTAGS :=
 V := 0
@@ -112,79 +64,11 @@ VGENT = @echo $(EQT)   [GEN]  $@: $(VTAGS)$(EQT)
 VR := @
 endif
 
+BID := tools$(PSEP)buildid$(EXE)
+
 INCLUDES := -Iinclude
 
-mkd64_OBJS := mkd64.o image.o track.o block.o defalloc.o filemap.o diskfile.o \
-	     cmdline.o modrepo.o util.o \
-	     platform$(PSEP)$(PLATFORM)$(PSEP)util.o
-mkd64_LDFLAGS := $(dl_LDFLAGS)
-mkd64_DEFINES := -DBUILDING_MKD64
-
-MODULES := cbmdos$(SO) xtracks$(SO) sepgen$(SO)
-
-cbmdos_OBJS := modules$(PSEP)cbmdos.o modules$(PSEP)cbmdos$(PSEP)alloc.o
-
-xtracks_OBJS := modules$(PSEP)xtracks.o
-
-sepgen_OBJS := modules$(PSEP)sepgen.o
-
-mkd64_SOURCES := $(mkd64_OBJS:.o=.c)
-mod_SOURCES := $(cbmdos_OBJS:.o=.c) $(xtracks_OBJS:.o=.c) $(sepgen_OBJS:.o=.c)
-
 all: bin modules
-
-bin: mkd64$(EXE)
-
-modules: $(MODULES)
-
-clean:
-	$(RMF) *.o
-	$(RMF) *.a
-	$(RMF) *$(SO)
-	$(RMF) modules$(PSEP)*.o
-	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.o
-	$(RMF) mkd64$(EXE)
-	$(RMF) buildid$(EXE)
-	$(RMF) buildid.h
-	$(RMF) modules$(PSEP)buildid.h
-	$(RMFR) mkd64sdk
-
-distclean: clean
-	$(RMF) conf.mk
-	$(RMF) *.d
-	$(RMF) modules$(PSEP)*.d
-	$(RMF) modules$(PSEP)cbmdos$(PSEP)*.d
-
-strip: all
-	strip --strip-all mkd64$(EXE)
-	strip --strip-unneeded *$(SO)
-
-ifdef prefix
-
-install: strip
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -d $(DESTDIR)$(libdir)
-	$(INSTALL) -d $(DESTDIR)$(includedir)
-	$(INSTALL) -d $(DESTDIR)$(docdir)/examples/module
-	$(INSTALL) mkd64 $(DESTDIR)$(bindir)
-	$(INSTALL) *.so $(DESTDIR)$(libdir)
-	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
-	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
-	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
-	$(INSTALL) -m644 coding.txt $(DESTDIR)$(docdir)
-	$(INSTALL) -m644 examples/module/* $(DESTDIR)$(docdir)/examples/module
-
-endif
-
-sdk: bin mkd64.a
-	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
-	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
-	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) include$(PSEP)mkd64$(PSEP)*.h mkd64sdk$(PSEP)include$(PSEP)mkd64
-	-$(CPF) mkd64.a mkd64sdk$(PSEP)lib$(PSEP)mkd64
-	$(CPF) examples$(PSEP)module$(PSEP)Makefile mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) modapi.txt mkd64sdk
 
 conf.mk:
 	$(VGENT)
@@ -198,61 +82,64 @@ ifneq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DE
 .PHONY: conf.mk
 endif
 
-buildid$(EXE): buildid.c $(mkd64_SOURCES) $(mod_SOURCES) Makefile conf.mk
+include src$(PSEP)mkd64.mk
+include modules$(PSEP)modules.mk
+
+bin: $(BINARIES)
+
+modules: $(MODULES)
+
+clean:
+	$(RMF) $(SOURCES:.c=.o)
+	$(RMF) $(BID)
+	$(RMF) $(CLEAN)
+	$(RMFR) $(OUT)
+	$(RMFR) mkd64sdk
+
+distclean: clean
+	$(RMF) conf.mk
+	$(RMF) $(SOURCES:.c=.d)
+
+strip: all
+	strip --strip-all $(BINARIES)
+	strip --strip-unneeded $(MODULES)
+
+ifdef prefix
+
+install: strip
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(includedir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)/examples/module
+	$(INSTALL) $(BINARIES) $(DESTDIR)$(bindir)
+	$(INSTALL) $(MODULES) $(DESTDIR)$(libdir)
+	$(INSTALL) -m644 include/mkd64/*.h $(DESTDIR)$(includedir)
+	$(INSTALL) -m644 README.md $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 modapi.txt $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 coding.txt $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 examples/module/* $(DESTDIR)$(docdir)/examples/module
+
+endif
+
+sdk: bin mkd64.a
+	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
+	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
+	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) include$(PSEP)mkd64$(PSEP)*.h mkd64sdk$(PSEP)include$(PSEP)mkd64
+	-$(CPF) src/mkd64.a mkd64sdk$(PSEP)lib$(PSEP)mkd64
+	$(CPF) examples$(PSEP)module$(PSEP)Makefile mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
+	$(CPF) modapi.txt mkd64sdk
+	$(CPF) coding.txt mkd64sdk
+
+outdir:
+	$(VR)$(MDP) $(OUT)
+
+$(BID): tools$(PSEP)buildid.c $(SOURCES) Makefile conf.mk
 	$(VCCLD)
-	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) buildid.c
+	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) $<
 
-buildid.h: $(mkd64_SOURCES) Makefile conf.mk | buildid$(EXE)
-	$(VGEN)
-	$(VR).$(PSEP)buildid$(EXE) > buildid.h
-
-modules$(PSEP)buildid.h: $(mod_SOURCES) Makefile conf.mk | buildid$(EXE)
-	$(VGEN)
-	$(VR).$(PSEP)buildid$(EXE) > modules$(PSEP)buildid.h
-
-mkd64$(EXE): $(mkd64_OBJS)
-	$(VLD)
-	$(VR)$(CC) -o$@ $^ $(mkd64_LDFLAGS) $(LDFLAGS)
-
-mkd64.a: $(mkd64_OBJS)
-	$(VGEN)
-	$(VR)-dlltool -l$@ -Dmkd64.exe $^
-
-cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
-
-xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
-
-sepgen$(SO): $(sepgen_OBJS) $(mod_LIBS)
-	$(VLD)
-	$(VR)$(CC) -shared -o$@ $^ $(LDFLAGS)
-
-modules$(PSEP)%.d: modules$(PSEP)%.c Makefile conf.mk | modules$(PSEP)buildid.h
-	$(VDEP)
-	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
-		$(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
-
-%.d: .$(PSEP)$(PSEP)%.c Makefile conf.mk | buildid.h
-	$(VDEP)
-	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
-		$(mkd64_CFLAGS) $(CFLAGS) $(INCLUDES) $<
-
--include $(cbmdos_OBJS:.o=.d)
--include $(xtracks_OBJS:.o=.d)
--include $(sepgen_OBJS:.o=.d)
-modules$(PSEP)%.o: modules$(PSEP)%.c Makefile conf.mk
-	$(VCC)
-	$(VR)$(CC) -o$@ -c $(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
-
--include $(mkd64_OBJS:.o=.d)
-%.o: .$(PSEP)%.c Makefile conf.mk
-	$(VCC)
-	$(VR)$(CC) -o$@ -c $(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
-
-.PHONY: all bin modules strip clean distclean install
+.PHONY: outdir all bin modules strip clean distclean install
 .SUFFIXES:
 
 # vim: noet:si:ts=8:sts=8:sw=8
