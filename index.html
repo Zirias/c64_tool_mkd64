@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mkd64 by Zirias</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Mkd64</h1>
+        <p>Modular command line tool for creating .d64 (C64 floppy) disk images</p>
+        <p class="view"><a href="https://github.com/Zirias/c64_tool_mkd64">View the Project on GitHub <small>Zirias/c64_tool_mkd64</small></a></p>
+        <ul>
+          <li><a href="https://github.com/Zirias/c64_tool_mkd64/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/Zirias/c64_tool_mkd64/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/Zirias/c64_tool_mkd64">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="mkd64" class="anchor" href="#mkd64"><span class="octicon octicon-link"></span></a>mkd64</h1>
+
+<p>mkd64 is a modular tool for creating .D64 images (disk images for a C64 floppy drive). The core program is responsible for writing tracks and sectors, while loadable modules do everything else, for example writing a directory.</p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>usage</h2>
+
+<p>The mkd64 command line works like a minimal scripting language: It starts with global options for loading modules and specifying things like output files or the disk name. The first '-f' options switches to file mode, every file starts with '-f' and an optional name to load from your harddrive and ends with '-w' for writing the file to the disk image.</p>
+
+<p>mkd64 will never complain about unknown options but silently ignore them. This is because every option gets also fed to every loaded module, so modules can extend the available options.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>features</h2>
+
+<ul>
+<li>can create images without directory</li>
+<li>module 'cbmdos' writes directory in original format (sector interleave 4)</li>
+<li>module API for other directory formats</li>
+<li>interleave can be specified per file</li>
+<li>can create a 'map file' containing files and their start track/sector</li>
+<li>start track and sector of a file can be specified explicitly</li>
+<li>for lots of files on the image, options may be read from a file</li>
+</ul><h2>
+<a name="build" class="anchor" href="#build"><span class="octicon octicon-link"></span></a>build</h2>
+
+<p>In short: just type 'make'. You will need GNU make and the GCC C-compiler for this to work. For windows, use MinGW (and DON'T use MSYS, because the Makefile assumes the shell to be CMD.EXE).</p>
+
+<h2>
+<a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>install</h2>
+
+<p>Put mkd64 (or mkd64.exe) and all modules (*.so or *.dll) in the same directory. That's it. For more information and options see INSTALL.txt</p>
+
+<h2>
+<a name="binaries" class="anchor" href="#binaries"><span class="octicon octicon-link"></span></a>binaries</h2>
+
+<p>I create win32 binaries for every tagged release in-tree, see directory win32bin. There's also a directory win64bin, but no guarantee this will be updated every time. In fact, right now mkd64 doesn't take any advantage of 64bit on windows, it just gets bigger, so there's not much of a point, as long as WoW64 clobbers any windows installation anyways ;)</p>
+
+<h2>
+<a name="help" class="anchor" href="#help"><span class="octicon octicon-link"></span></a>help</h2>
+
+<p>type 'mkd64 -h' to get an overview of all core options.
+type 'mkd64 -h [module]' for help with module [module].</p>
+
+<h1>
+<a name="modules" class="anchor" href="#modules"><span class="octicon octicon-link"></span></a>modules</h1>
+
+<h2>
+<a name="cbmdos" class="anchor" href="#cbmdos"><span class="octicon octicon-link"></span></a>cbmdos</h2>
+
+<p>This module reserves track 18 and uses it to write the BAM and directory entries like an original floppy dos. Use 'mkd64 -h cbmdos' for details.</p>
+
+<h2>
+<a name="xtracks" class="anchor" href="#xtracks"><span class="octicon octicon-link"></span></a>xtracks</h2>
+
+<p>This module provides tracks 36-40 and an option to write BAM entries in DOLPHIN DOS and/or SPEED DOS format</p>
+
+<h2>
+<a name="separators" class="anchor" href="#separators"><span class="octicon octicon-link"></span></a>separators</h2>
+
+<p>This module provides an easy-to-use way to add separators and boxes to the
+directory, using PETSCII graphics. Use 'mkd64 -h separators' for details.</p>
+
+<h1>
+<a name="module-api" class="anchor" href="#module-api"><span class="octicon octicon-link"></span></a>module API</h1>
+
+<p>See modapi.txt. Documentation is still work in progress.</p>
+
+<h1>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>license</h1>
+
+<p>© Felix Palmen <a href="mailto:felix@palmen-it.de">felix@palmen-it.de</a></p>
+
+<p>This code is free software and may be used or modified for any purpose, as long as the following conditions are met:</p>
+
+<ul>
+<li>All source or binary distributions (read: any other way to get mkd64 than the original github site) MUST include this license info and the above copyright notice.</li>
+<li>Distributions of modified versions MUST include a notice about the modifications, or, better yet, use a different name and refer to the original mkd64.</li>
+</ul><h1>
+<a name="development" class="anchor" href="#development"><span class="octicon octicon-link"></span></a>development</h1>
+
+<p>Patches and comments are welcome and appreciated. Please have a look in
+coding.txt before you work on the source.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/Zirias">Zirias</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
