@@ -121,7 +121,7 @@ install: strip
 
 endif
 
-sdk: bin mkd64.a
+sdk: bin src$(PSEP)mkd64.a
 	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
 	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
 	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
@@ -137,9 +137,9 @@ outdir:
 
 $(BID): tools$(PSEP)buildid.c $(SOURCES) Makefile conf.mk
 	$(VCCLD)
-	$(VR)$(CC) -o$@ $(mkd64_DEFINES) $(CFLAGS) $<
+	$(VR)$(CC) -o$@ $(CFLAGS) $<
 
-.PHONY: outdir all bin modules strip clean distclean install
+.PHONY: outdir all bin modules strip clean distclean install sdk
 .SUFFIXES:
 
 # vim: noet:si:ts=8:sts=8:sw=8
