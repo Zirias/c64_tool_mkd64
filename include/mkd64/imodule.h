@@ -1,13 +1,18 @@
 #ifndef MKD64_IMODULE_H
 #define MKD64_IMODULE_H
 
+/** interface IModule.
+ * @file
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <mkd64/common.h>
 
-/** runtime interface for mkd64 modules
+/** Runtime interface for mkd64 modules.
+ * @interface IModule mkd64/imodule.h
  */
 typedef struct IModule IModule;
 
@@ -18,7 +23,7 @@ typedef struct IModule IModule;
 
 struct IModule
 {
-    /** Get id of the module, for runtime identification
+    /** Get id of the module, for runtime identification.
      * @return the module id
      */
     const char *(*id)(void);
@@ -28,14 +33,14 @@ struct IModule
      */
     void (*free)(IModule *self);
 
-    /** Initialize the module, called whenever the module is loaded
+    /** Initialize the module, called whenever the module is loaded.
      * May be left unimplemented.
      * @param self the module instance
      * @param image the image to work on
      */
     void (*initImage)(IModule *self, Image *image);
 
-    /** Handle a global cmdline option
+    /** Handle a global cmdline option.
      * May be left unimplemented.
      * @param self the module instance
      * @param opt the option
@@ -44,7 +49,7 @@ struct IModule
      */
     int (*globalOption)(IModule *self, char opt, const char *arg);
 
-    /** Handle a file cmdline option
+    /** Handle a file cmdline option.
      * May be left unimplemented.
      * @param self the module instance
      * @param file the file concerned by the option
@@ -55,18 +60,18 @@ struct IModule
     int (*fileOption)(IModule *self,
             DiskFile *file, char opt, const char *arg);
 
-    /** Get extra tracks, if provided by the module
+    /** Get extra tracks, if provided by the module.
      * May be left unimplemented.
      * @param self the module instance
      * @param track the number of the track to get
-     * @return the track to the given number, or 0 if self module doesn't
-     *  provide self track number
+     * @return the track to the given number, or 0 if this module doesn't
+     *  provide this track number
      */
     Track *(*getTrack)(IModule *self, int track);
 
-    /** Called after a file was written to the disk image
+    /** Called after a file was written to the disk image.
      * May be left unimplemented.
-     * Use self e.g. to write directory entries
+     * Use this e.g. to write directory entries
      * @param self the module instance
      * @param file the file that was just written
      * @param start the starting track/sector position where the file was
@@ -75,26 +80,26 @@ struct IModule
     void (*fileWritten)(IModule *self,
             DiskFile *file, const BlockPosition *start);
 
-    /** Called after the status of any block changed
+    /** Called after the status of any block changed.
      * May be left unimplemented.
-     * Use self e.g. to write allocation maps
+     * Use this e.g. to write allocation maps
      * @param self the module instance
      * @param pos the position of the block that changed its status
      */
     void (*statusChanged)(IModule *self, const BlockPosition *pos);
 
-    /** Called when someone else wants a block reserved by self module
-     * May be left unimplemented. self has the same result as always returning
+    /** Called when someone else wants a block reserved by this module.
+     * May be left unimplemented. This has the same result as always returning
      * 0, all requests will be rejected.
      * @param self the module instance
      * @param pos the position of the reserved block requested
-     * @return 1 if it is ok to give away self block, 0 otherwise.
+     * @return 1 if it is ok to give away this block, 0 otherwise.
      */
     int (*requestReservedBlock)(IModule *self, const BlockPosition *pos);
 
-    /** Called after all files were written to the image
+    /** Called after all files were written to the image.
      * May be left unimplemented.
-     * Use self e.g. to suggest better options or to print some stats to stdout.
+     * Use this e.g. to suggest better options or to print some stats to stdout.
      * @param self the module instance
      */
     void (*imageComplete)(IModule *self);

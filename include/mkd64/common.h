@@ -1,6 +1,18 @@
 #ifndef MKD64_COMMON_H
 #define MKD64_COMMON_H
 
+/** Common mkd64 defines and macros.
+ * Defines for exporting/importing symbols, helper macros for modules and
+ * object handling and some miscellaneous stuff. Should always be included.
+ * @file
+ */
+
+/** Example for a simple module skeleton.
+ * This demonstrates the minimal use of the API to create a module that can
+ * be loaded by mkd64. It does nothing.
+ * @example module.c
+ */
+
 #ifdef __cplusplus
 #define mkd64___cdecl extern "C"
 #else
@@ -43,6 +55,12 @@ typedef unsigned int uintptr_t;
 #define API_VER_BETA
 
 #ifndef BUILDING_MKD64
+/** Declare a module.
+ * This must be called once in every mkd64 module. Do NOT place a semicolon at
+ * the end.
+ * @see module.c
+ * @param modname the name (id) of the module
+ */
 #define MKD64_MODULE(modname) \
 static const int mkd64___module_apiver[] = \
     { API_VER_MAJOR, API_VER_MINOR }; \
@@ -61,6 +79,11 @@ SOEXPORT const char *id(void) \
 
 #include <mkd64/util.h>
 
+/** Create a new object instance
+ * There are variations OBJNEW1 to OBJNEW5 taking 1 to 5 additional parameters
+ * that are passed to the constructor.
+ * @param classname the name of the class for the new object
+ */
 #define OBJNEW(classname) classname##_init( \
         (classname *)mkd64Alloc(classname##_objectSize()))
 
@@ -79,6 +102,11 @@ SOEXPORT const char *id(void) \
 #define OBJNEW5(classname, p1, p2, p3, p4, p5) classname##_init( \
         (classname *)mkd64Alloc(classname##_objectSize()), p1, p2, p3, p4, p5)
 
+/** Delete an object instance
+ * This calls the destructor for the object and frees allocated memory.
+ * @param classname the class name of the object
+ * @param object the pointer to the object
+ */
 #define OBJDEL(classname, object) do { \
     classname##_done(object); \
     free(object); \
