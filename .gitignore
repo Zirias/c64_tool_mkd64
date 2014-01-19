@@ -14,6 +14,10 @@ buildid.h
 !include/mkd64/
 Debug/*
 Release/*
+*/Debug/*
+*/Release/*
+modules/*/Debug/*
+modules/*/Release/*
 ipch/*
 *.user
 *.suo

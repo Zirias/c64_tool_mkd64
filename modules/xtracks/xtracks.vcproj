@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="sepgen"
-	ProjectGUID="{F469FE88-2075-487C-99BB-F583330601AA}"
-	RootNamespace="sepgen"
+	Name="xtracks"
+	ProjectGUID="{A6C97852-5113-46A6-9F67-885CFD0D1332}"
+	RootNamespace="xtracks"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -24,7 +24,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\buildid.exe &gt;modules\buildid.h"
+				CommandLine="$(OutDir)\buildid.exe &gt;$(ProjectDir)buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="include"
+				AdditionalIncludeDirectories="$(SolutionDir)\include"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -96,7 +96,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\buildid.exe &gt;modules\buildid.h"
+				CommandLine="$(OutDir)\buildid.exe &gt;$(ProjectDir)buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="include"
+				AdditionalIncludeDirectories="$(SolutionDir)\include"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -170,7 +170,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\modules\sepgen.c"
+				RelativePath=".\module.c"
 				>
 			</File>
 		</Filter>

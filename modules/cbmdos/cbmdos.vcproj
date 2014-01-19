@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="mkd64"
-	ProjectGUID="{9B4684CA-A57D-4CA0-BF36-E0DD75B89409}"
+	Name="cbmdos"
+	ProjectGUID="{80CA593E-F3B2-4FE6-BFA6-EC7B63CC62BD}"
 	RootNamespace="mkd64"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="0"
@@ -18,13 +18,13 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
-			ConfigurationType="1"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\buildid.exe &gt;buildid.h"
+				CommandLine="$(OutDir)\buildid.exe &gt;$(ProjectDir)buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="include"
-				PreprocessorDefinitions="WIN32;BUILDING_MKD64;DEBUG;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="$(SolutionDir)\include"
+				PreprocessorDefinitions="WIN32;DEBUG;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib"
+				AdditionalDependencies="$(OutDir)\mkd64.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -92,13 +92,13 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
-			ConfigurationType="1"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\buildid.exe &gt;buildid.h"
+				CommandLine="$(OutDir)\buildid.exe &gt;$(ProjectDir)buildid.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -114,8 +114,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="include"
-				PreprocessorDefinitions="WIN32;BUILDING_MKD64;_CONSOLE"
+				AdditionalIncludeDirectories="$(SolutionDir)\include"
+				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -133,7 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib"
+				AdditionalDependencies="$(OutDir)\mkd64.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -173,39 +173,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\block.h"
-				>
-			</File>
-			<File
-				RelativePath=".\cmdline.h"
-				>
-			</File>
-			<File
-				RelativePath=".\platform\win32\defs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\diskfile.h"
-				>
-			</File>
-			<File
-				RelativePath=".\filemap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\image.h"
-				>
-			</File>
-			<File
-				RelativePath=".\mkd64.h"
-				>
-			</File>
-			<File
-				RelativePath=".\modrepo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\util.h"
+				RelativePath=".\alloc.h"
 				>
 			</File>
 		</Filter>
@@ -221,55 +189,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\block.c"
+				RelativePath=".\alloc.c"
 				>
 			</File>
 			<File
-				RelativePath=".\cmdline.c"
-				>
-			</File>
-			<File
-				RelativePath=".\defalloc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\diskfile.c"
-				>
-			</File>
-			<File
-				RelativePath=".\filemap.c"
-				>
-			</File>
-			<File
-				RelativePath=".\image.c"
-				>
-			</File>
-			<File
-				RelativePath=".\mkd64.c"
-				>
-			</File>
-			<File
-				RelativePath=".\modrepo.c"
-				>
-			</File>
-			<File
-				RelativePath=".\track.c"
-				>
-			</File>
-			<File
-				RelativePath=".\platform\win32\util.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\w32util.obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\util.c"
+				RelativePath=".\module.c"
 				>
 			</File>
 		</Filter>
