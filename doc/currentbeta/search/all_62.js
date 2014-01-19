@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['block',['Block',['../classBlock.html',1,'']]],
+  ['block_2eh',['block.h',['../block_8h.html',1,'']]],
+  ['block_5fallocate',['Block_allocate',['../classBlock.html#a7f71adb8e6f1a8dbd6a9f4b9acf13791',1,'Block']]],
+  ['block_5fdata',['Block_data',['../classBlock.html#a51f98e40bcda754f9005730ee7eaf4c8',1,'Block']]],
+  ['block_5ffree',['Block_free',['../classBlock.html#a658f7669447c4e4477705a29d0e1c93c',1,'Block']]],
+  ['block_5fnextposition',['Block_nextPosition',['../classBlock.html#ad35485003109c9872b97691ed0d88e53',1,'Block']]],
+  ['block_5fnextsector',['Block_nextSector',['../classBlock.html#a4e81256cc1685bab90bf406ddeea0d51',1,'Block']]],
+  ['block_5fnexttrack',['Block_nextTrack',['../classBlock.html#ae764fef1f65558f4d4c2757072929f05',1,'Block']]],
+  ['block_5fposition',['Block_position',['../classBlock.html#a2ed80c0fee56d34477cafa8f96b2e95b',1,'Block']]],
+  ['block_5frawdata',['Block_rawData',['../classBlock.html#a88f3fb538740303682db7c7389bc5368',1,'Block']]],
+  ['block_5frawsize',['BLOCK_RAWSIZE',['../block_8h.html#aaedd059949819539b01727ed40c0f450',1,'block.h']]],
+  ['block_5freserve',['Block_reserve',['../classBlock.html#a34e36a77da3cb2cdfa4f43aaa65d6729',1,'Block']]],
+  ['block_5freservedby',['Block_reservedBy',['../classBlock.html#a67273b6cb13bc0d1043e95b3e1de4bf8',1,'Block']]],
+  ['block_5fsetnextposition',['Block_setNextPosition',['../classBlock.html#a3f80aabe0f4dc0d02523a9dd40eb819e',1,'Block']]],
+  ['block_5fsetnextsector',['Block_setNextSector',['../classBlock.html#a55b722ddd7d4c0ac1581318231a9208c',1,'Block']]],
+  ['block_5fsetnexttrack',['Block_setNextTrack',['../classBlock.html#a654166335e48a7bc575d8425b30d897b',1,'Block']]],
+  ['block_5fsize',['BLOCK_SIZE',['../block_8h.html#ad51ded0bbd705f02f73fc60c0b721ced',1,'block.h']]],
+  ['block_5fstatus',['Block_status',['../classBlock.html#a6d6355ace252cad8bbda915420d3f233',1,'Block']]],
+  ['block_5funreserve',['Block_unReserve',['../classBlock.html#a584dd83cd95bec3933ca338b856749f8',1,'Block']]],
+  ['blockposition',['BlockPosition',['../structBlockPosition.html',1,'']]],
+  ['blockstatus',['BlockStatus',['../block_8h.html#a43adb063ba9e8b0f1143146d9c7929d9',1,'block.h']]],
+  ['bs_5fallocated',['BS_ALLOCATED',['../block_8h.html#a43adb063ba9e8b0f1143146d9c7929d9afb428bdbf9b058fc0ae1ce7660d03ad7',1,'block.h']]],
+  ['bs_5fnone',['BS_NONE',['../block_8h.html#a43adb063ba9e8b0f1143146d9c7929d9a2d12b87b8f786ee643522fd75a569ee9',1,'block.h']]],
+  ['bs_5freserved',['BS_RESERVED',['../block_8h.html#a43adb063ba9e8b0f1143146d9c7929d9aec08395356c3e45f07d4c7f91e6644da',1,'block.h']]]
+];
