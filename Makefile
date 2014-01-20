@@ -70,6 +70,8 @@ INCLUDES := -Iinclude
 
 all: bin modules
 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),distclean)
 conf.mk:
 	$(VGENT)
 	$(VR)echo $(EQT)C_DEBUG :=$(DEBUG)$(EQT) >conf.mk
@@ -81,6 +83,8 @@ conf.mk:
 ifneq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(libdir)))
 .PHONY: conf.mk
 endif
+endif
+endif
 
 include src$(PSEP)mkd64.mk
 include modules$(PSEP)modules.mk
@@ -91,14 +95,14 @@ modules: $(MODULES)
 
 clean:
 	$(RMF) $(SOURCES:.c=.o)
-	$(RMF) $(BID)
+	$(RMF) $(SOURCES:.c=.d)
 	$(RMF) $(CLEAN)
-	$(RMFR) $(OUT)
-	$(RMFR) mkd64sdk
+	$(RMF) $(BID)
 
 distclean: clean
 	$(RMF) conf.mk
-	$(RMF) $(SOURCES:.c=.d)
+	$(RMFR) mkd64sdk $(CMDQUIET)
+	$(RMFR) $(OUT) $(CMDQUIET)
 
 strip: all
 	strip --strip-all $(BINARIES)
@@ -133,7 +137,7 @@ sdk: bin src$(PSEP)mkd64.a
 	$(CPF) coding.txt mkd64sdk
 
 outdir:
-	$(VR)$(MDP) $(OUT)
+	$(VR)$(MDP) $(OUT) $(CMDQUIET)
 
 $(BID): tools$(PSEP)buildid.c $(SOURCES) Makefile conf.mk
 	$(VCCLD)

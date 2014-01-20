@@ -5,7 +5,8 @@ mkd64_OBJS := $(P)mkd64.o $(P)image.o $(P)track.o $(P)block.o $(P)defalloc.o \
 	$(P)filemap.o $(P)diskfile.o $(P)cmdline.o $(P)modrepo.o $(P)util.o \
 	$(PP)util.o
 
-mkd64_LDFLAGS := $(dl_LDFLAGS)
+mkd64_LDFLAGS := $(LDFLAGS) $(platform_LDFLAGS)
+mkd64_LIBS := $(platform_LIBS)
 mkd64_DEFINES := -DBUILDING_MKD64
 
 mkd64_SOURCES := $(mkd64_OBJS:.o=.c)
@@ -21,7 +22,7 @@ $(P)buildid.h: $(mkd64_SOURCES) Makefile conf.mk | $(BID)
 
 $(OUT)$(PSEP)mkd64$(EXE): $(mkd64_OBJS) | outdir
 	$(VLD)
-	$(VR)$(CC) -o$@ $(mkd64_LDFLAGS) $(LDFLAGS) $^
+	$(VR)$(CC) -o$@ $(mkd64_LDFLAGS) $^ $(mkd64_LIBS)
 
 $(P)mkd64.a: $(mkd64_OBJS)
 	$(VGEN)
@@ -32,7 +33,11 @@ $(P)%.d: $(P)%.c Makefile conf.mk | $(P)buildid.h
 	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
 		$(mkd64_DEFINES) $(CFLAGS) $(INCLUDES) $<
 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),distclean)
 -include $(mkd64_OBJS:.o=.d)
+endif
+endif
 
 $(P)%.o: $(P)%.c Makefile conf.mk
 	$(VCC)

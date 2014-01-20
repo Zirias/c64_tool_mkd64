@@ -22,7 +22,11 @@ $(P)%.d: $(P)%.c Makefile conf.mk | $(P)buildid.h
 	$(VR)$(CCDEP) -MT"$@ $(@:.d=.o)" -MF$@ \
 		$(mod_CFLAGS) $(CFLAGS) $(INCLUDES) $<
 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),distclean)
 -include $(xtracks_OBJS:.o=.d)
+endif
+endif
 
 $(P)%.o: $(P)%.c Makefile conf.mk
 	$(VCC)

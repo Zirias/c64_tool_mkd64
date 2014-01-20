@@ -15,9 +15,11 @@ CATIN := copy /b
 CATADD := +
 CATOUT :=
 EQT :=
+CMDQUIET := >nul 2>nul & verify >nul
 
 CFLAGS += -DWIN32
-dl_LDFLAGS := -lshlwapi 
+platform_LDFLAGS :=
+platform_LIBS := -lshlwapi
 mod_CFLAGS :=
 mod_LIBS := src$(PSEP)mkd64.a
 
@@ -41,8 +43,10 @@ CATADD :=
 CATOUT := >
 EQT := "
 #" make vim syntax highlight happy
+CMDQUIET := >/dev/null 2>&1
 
-dl_LDFLAGS := -ldl -Wl,-E
+platform_LDFLAGS := -Wl,-E
+platform_LIBS := -ldl
 mod_CFLAGS := -fPIC
 mod_LIBS :=
 
