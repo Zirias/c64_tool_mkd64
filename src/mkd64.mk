@@ -13,14 +13,14 @@ mkd64_SOURCES := $(mkd64_OBJS:.o=.c)
 mkd64_CLEAN := $(P)mkd64.a $(P)buildid.h
 
 SOURCES += $(mkd64_SOURCES)
-BINARIES += $(OUT)$(PSEP)mkd64$(EXE)
+BINARIES += $(OUTDIR)$(PSEP)mkd64$(EXE)
 CLEAN += $(mkd64_CLEAN)
 
 $(P)buildid.h: $(mkd64_SOURCES) Makefile conf.mk | $(BID)
 	$(VGEN)
 	$(VR)$(BID) > $@
 
-$(OUT)$(PSEP)mkd64$(EXE): $(mkd64_OBJS) | outdir
+$(OUTDIR)$(PSEP)mkd64$(EXE): $(mkd64_OBJS) | outdir
 	$(VLD)
 	$(VR)$(CC) -o$@ $(mkd64_LDFLAGS) $^ $(mkd64_LIBS)
 

@@ -6,14 +6,14 @@ cbmdos_SOURCES := $(cbmdos_OBJS:.o=.c)
 cbmdos_CLEAN := $(P)buildid.h
 
 SOURCES += $(cbmdos_SOURCES)
-MODULES += $(OUT)$(PSEP)cbmdos$(SO)
+MODULES += $(OUTDIR)$(PSEP)cbmdos$(SO)
 CLEAN += $(cbmdos_CLEAN)
 
 $(P)buildid.h: $(cbmdos_SOURCES) Makefile conf.mk | $(BID)
 	$(VGEN)
 	$(VR)$(BID) > $@
 
-$(OUT)$(PSEP)cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS) | outdir
+$(OUTDIR)$(PSEP)cbmdos$(SO): $(cbmdos_OBJS) $(mod_LIBS) | outdir
 	$(VLD)
 	$(VR)$(CC) -shared -o$@ $(LDFLAGS) $^
 

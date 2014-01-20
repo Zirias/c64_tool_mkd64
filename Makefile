@@ -7,7 +7,9 @@ CFLAGS += -fvisibility=hidden -std=c99 -Wall -Wextra -pedantic \
 
 LDFLAGS += -static-libgcc
 
-OUT := bin
+OUTDIR := bin
+SDKDIR := sdk
+DOCDIR := $(SDKDIR)$(PSEP)doc
 
 VTAGS :=
 V := 0
@@ -101,8 +103,8 @@ clean:
 
 distclean: clean
 	$(RMF) conf.mk
-	$(RMFR) mkd64sdk $(CMDQUIET)
-	$(RMFR) $(OUT) $(CMDQUIET)
+	$(RMFR) $(SDKDIR) $(CMDQUIET)
+	$(RMFR) $(OUTDIR) $(CMDQUIET)
 
 strip: all
 	strip --strip-all $(BINARIES)
@@ -125,25 +127,33 @@ install: strip
 
 endif
 
-sdk: bin src$(PSEP)mkd64.a
-	$(MDP) mkd64sdk$(PSEP)include$(PSEP)mkd64
-	$(MDP) mkd64sdk$(PSEP)lib$(PSEP)mkd64
-	$(MDP) mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) include$(PSEP)mkd64$(PSEP)*.h mkd64sdk$(PSEP)include$(PSEP)mkd64
-	-$(CPF) src/mkd64.a mkd64sdk$(PSEP)lib$(PSEP)mkd64
-	$(CPF) examples$(PSEP)module$(PSEP)Makefile mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) examples$(PSEP)module$(PSEP)module.c mkd64sdk$(PSEP)examples$(PSEP)module
-	$(CPF) modapi.txt mkd64sdk
-	$(CPF) coding.txt mkd64sdk
+export DOCDIR
+sdkdoc:
+	$(MDP) $(DOCDIR) $(CMDQUIET)
+	-doxygen api.dox
+
+sdk: bin src$(PSEP)mkd64.a sdkdoc
+	$(MDP) $(SDKDIR)$(PSEP)include$(PSEP)mkd64 $(CMDQUIET)
+	$(MDP) $(SDKDIR)$(PSEP)lib$(PSEP)mkd64 $(CMDQUIET)
+	$(MDP) $(SDKDIR)$(PSEP)examples$(PSEP)module $(CMDQUIET)
+	$(CPF) include$(PSEP)mkd64$(PSEP)*.h \
+		$(SDKDIR)$(PSEP)include$(PSEP)mkd64
+	-$(CPF) src$(PSEP)mkd64.a mkd64sdk$(PSEP)lib$(PSEP)mkd64
+	$(CPF) examples$(PSEP)module$(PSEP)Makefile \
+		$(SDKDIR)$(PSEP)examples$(PSEP)module
+	$(CPF) examples$(PSEP)module$(PSEP)module.c \
+		$(SDKDIR)$(PSEP)examples$(PSEP)module
+	$(CPF) modapi.txt $(DOCDIR)
+	$(CPF) coding.txt $(DOCDIR)
 
 outdir:
-	$(VR)$(MDP) $(OUT) $(CMDQUIET)
+	$(VR)$(MDP) $(OUTDIR) $(CMDQUIET)
 
 $(BID): tools$(PSEP)buildid.c $(SOURCES) Makefile conf.mk
 	$(VCCLD)
 	$(VR)$(CC) -o$@ $(CFLAGS) $<
 
-.PHONY: outdir all bin modules strip clean distclean install sdk
+.PHONY: outdir all bin modules strip clean distclean install sdk sdkdoc
 .SUFFIXES:
 
 # vim: noet:si:ts=8:sts=8:sw=8

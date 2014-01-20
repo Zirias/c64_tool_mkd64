@@ -24,7 +24,7 @@ ipch/*
 *.sdf
 *.ncb
 *.opensdf
-mkd64sdk/
+sdk/
 debian/*.log
 debian/*.substvars
 debian/files

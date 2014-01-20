@@ -6,14 +6,14 @@ xtracks_SOURCES := $(xtracks_OBJS:.o=.c)
 xtracks_CLEAN := $(P)buildid.h
 
 SOURCES += $(xtracks_SOURCES)
-MODULES += $(OUT)$(PSEP)xtracks$(SO)
+MODULES += $(OUTDIR)$(PSEP)xtracks$(SO)
 CLEAN += $(xtracks_CLEAN)
 
 $(P)buildid.h: $(xtracks_SOURCES) Makefile conf.mk | $(BID)
 	$(VGEN)
 	$(VR)$(BID) > $@
 
-$(OUT)$(PSEP)xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS) | outdir
+$(OUTDIR)$(PSEP)xtracks$(SO): $(xtracks_OBJS) $(mod_LIBS) | outdir
 	$(VLD)
 	$(VR)$(CC) -shared -o$@ $(LDFLAGS) $^
 
