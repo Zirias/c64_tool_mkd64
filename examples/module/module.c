@@ -1,5 +1,7 @@
 #include <mkd64/common.h>
 #include <mkd64/imodule.h>
+#include <mkd64/util.h>
+#include <string.h>
 
 MKD64_MODULE("example")
 
@@ -24,7 +26,9 @@ delete(IModule *self)
 SOEXPORT IModule *
 instance(void)
 {
-    Module *mod = calloc(1, sizeof(Module));
+    Module *mod = mkd64Alloc(sizeof(Module));
+    memset(mod, 0, sizeof(Module));
+
     mod->mod.id = &id;
     mod->mod.free = &delete;
 
