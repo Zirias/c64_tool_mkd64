@@ -23,6 +23,9 @@ typedef struct
     int doDolphinDosBam;
 } Xtracks;
 
+/* allow only one instance */
+static Xtracks *singleInstance = 0;
+
 static void
 delete(IModule *self)
 {
@@ -176,15 +179,24 @@ statusChanged(IModule *self, const BlockPosition *pos)
 SOEXPORT IModule *
 instance(void)
 {
-    Xtracks *self = calloc(1, sizeof(Xtracks));
-    self->mod.id = &id;
-    self->mod.free = &delete;
-    self->mod.initImage = &initImage;
-    self->mod.globalOption = &globalOption;
-    self->mod.getTrack = &getTrack;
-    self->mod.statusChanged = &statusChanged;
+    if (singleInstance)
+    {
+        fputs("[xtracks] ERROR: refusing to create a second instance.\n",
+                stderr);
+        return 0;
+    }
 
-    return (IModule *) self;
+    singleInstance = mkd64Alloc(sizeof(Xtracks));
+    memset(singleInstance, 0, sizeof(Xtracks));
+
+    singleInstance->mod.id = &id;
+    singleInstance->mod.free = &delete;
+    singleInstance->mod.initImage = &initImage;
+    singleInstance->mod.globalOption = &globalOption;
+    singleInstance->mod.getTrack = &getTrack;
+    singleInstance->mod.statusChanged = &statusChanged;
+
+    return (IModule *) singleInstance;
 }
 
 SOEXPORT const char *

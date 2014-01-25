@@ -664,7 +664,7 @@ Mkd64_run(Mkd64 *self)
                         stderr);
                 Image_done(self->image);
                 Image_init(self->image);
-                ModRepo_reloadModules(self->modrepo);
+                ModRepo_allInitImage(self->modrepo, self->image);
                 Cmdline_moveNext(self->cmdline);
                 self->currentSuggestions = self->suggestions;
                 self->suggestions = 0;

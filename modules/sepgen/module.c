@@ -31,6 +31,9 @@ typedef struct
     IModule *cbmdos;
 } Separators;
 
+/* allow only one instance */
+static Separators *singleInstance = 0;
+
 static const SeparatorEntry _seps[] = {
     { "simple",
         { 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d,
@@ -141,14 +144,24 @@ fileOption(IModule *self, DiskFile *file, char opt, const char *arg)
 SOEXPORT IModule *
 instance(void)
 {
-    Separators *mod = calloc(1, sizeof(Separators));
-    mod->mod.id = &id;
-    mod->mod.free = &delete;
-    mod->mod.fileOption = &fileOption;
+    if (singleInstance)
+    {
+        fputs("[separators] ERROR: refusing to create a second instance.\n",
+                stderr);
+        return 0;
+    }
 
-    mod->cbmdos = ModRepo_moduleInstance(Mkd64_modRepo(MKD64), "cbmdos");
+    singleInstance = mkd64Alloc(sizeof(Separators));
+    memset(singleInstance, 0, sizeof(Separators));
 
-    return (IModule *) mod;
+    singleInstance->mod.id = &id;
+    singleInstance->mod.free = &delete;
+    singleInstance->mod.fileOption = &fileOption;
+
+    singleInstance->cbmdos = ModRepo_firstInstance(
+            Mkd64_modRepo(MKD64), "cbmdos");
+
+    return (IModule *) singleInstance;
 }
 
 SOEXPORT const char *

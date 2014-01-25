@@ -21,17 +21,17 @@ typedef struct ModRepo ModRepo;
 
 #include <mkd64/imodule.h>
 
-/** Get instance of a module.
- * if the module is not currently instantiated, Modrepo tries to instantiate
- * it first.
+/** Get first instance of a module.
+ * May be useful for getting the instance of a module that is known to have
+ * only one instance.
  * @relates ModRepo
  * @param self the modrepo
  * @param id the id of the module
  * @return the module instance or 0 if not found and/or not loadable
  */
-DECLEXPORT IModule *ModRepo_moduleInstance(ModRepo *self, const char *id);
+DECLEXPORT IModule *ModRepo_firstInstance(const ModRepo *self, const char *id);
 
-/** Check wheter a given module is instantiated.
+/** Check wheter a given module is instantiated at least once.
  * @relates ModRepo
  * @param self the modrepo
  * @param id the id of the module

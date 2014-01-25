@@ -69,6 +69,9 @@ typedef struct
     int forceBlocks;
 } CbmdosFileData;
 
+/* allow only one instance */
+static Cbmdos *singleInstance = 0;
+
 static const uint8_t _initialBam[256] = {
     0x12, 0x01, 0x41, 0x00, 0x15, 0xff, 0xff, 0x1f,
     0x15, 0xff, 0xff, 0x1f, 0x15, 0xff, 0xff, 0x1f,
@@ -619,24 +622,33 @@ imageComplete(IModule *self)
 SOEXPORT IModule *
 instance(void)
 {
-    Cbmdos *self = calloc(1, sizeof(Cbmdos));
-    self->mod.id = &id;
-    self->mod.free = &delete;
-    self->mod.initImage = &initImage;
-    self->mod.globalOption = &globalOption;
-    self->mod.fileOption = &fileOption;
-    self->mod.fileWritten = &fileWritten;
-    self->mod.statusChanged = &statusChanged;
-    self->mod.requestReservedBlock = &requestReservedBlock;
-    self->mod.imageComplete = &imageComplete;
+    if (singleInstance)
+    {
+        fputs("[cbmdos] ERROR: refusing to create a second instance.\n",
+                stderr);
+        return 0;
+    }
 
-    self->reservedDirBlocks = 18;
-    self->dirInterleave = 3;
-    self->currentDirSlot = 7; /* force new dir block allocation */
+    singleInstance = mkd64Alloc(sizeof(Cbmdos));
+    memset(singleInstance, 0, sizeof(Cbmdos));
 
-    self->alloc = cbmdosAllocator_new();
+    singleInstance->mod.id = &id;
+    singleInstance->mod.free = &delete;
+    singleInstance->mod.initImage = &initImage;
+    singleInstance->mod.globalOption = &globalOption;
+    singleInstance->mod.fileOption = &fileOption;
+    singleInstance->mod.fileWritten = &fileWritten;
+    singleInstance->mod.statusChanged = &statusChanged;
+    singleInstance->mod.requestReservedBlock = &requestReservedBlock;
+    singleInstance->mod.imageComplete = &imageComplete;
+
+    singleInstance->reservedDirBlocks = 18;
+    singleInstance->dirInterleave = 3;
+    singleInstance->currentDirSlot = 7; /* force new dir block allocation */
+
+    singleInstance->alloc = cbmdosAllocator_new();
     
-    return (IModule *) self;
+    return (IModule *) singleInstance;
 }
 
 SOEXPORT const char *

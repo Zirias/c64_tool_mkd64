@@ -17,10 +17,7 @@ ModRepo *ModRepo_init(ModRepo *self, void *owner, ModInstanceCreated callback);
 
 void ModRepo_done(ModRepo *self);
 
-void ModRepo_reloadModules(ModRepo *self);
-
-int ModRepo_createInstance(ModRepo *self, const char *id);
-int ModRepo_deleteInstance(ModRepo *self, const char *id);
+IModule *ModRepo_createInstance(ModRepo *self, const char *id);
 
 char *ModRepo_getHelp(const ModRepo *self, const char *id);
 char *ModRepo_getVersionInfo(const ModRepo *self, const char *id);
