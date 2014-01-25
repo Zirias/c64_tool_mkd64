@@ -748,7 +748,7 @@ SOEXPORT void
 Mkd64_suggestOption(Mkd64 *self, IModule *mod, int fileNo,
         char opt, const char *arg, const char *reason)
 {
-    SuggestedOption *sopt = malloc(sizeof(SuggestedOption));
+    SuggestedOption *sopt = mkd64Alloc(sizeof(SuggestedOption));
     SuggestedOption *parent;
 
     sopt->next = 0;

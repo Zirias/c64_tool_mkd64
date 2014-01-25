@@ -177,7 +177,7 @@ _reserveDirBlocks(Cbmdos *self)
     for (i = 0; i < self->reservedDirBlocks; ++i)
     {
         if (!nextDirBlock(self, &pos, 0)) return;
-        current = malloc(sizeof(DirBlock));
+        current = mkd64Alloc(sizeof(DirBlock));
         current->next = 0;
         current->pos.track = pos.track;
         current->pos.sector = pos.sector;
@@ -414,7 +414,7 @@ fileOption(IModule *self, DiskFile *file, char opt, const char *arg)
                 _reserveDirBlocks(dos);
             }
             DiskFile_setInterleave(file, 10);
-            data = malloc(sizeof(CbmdosFileData));
+            data = mkd64Alloc(sizeof(CbmdosFileData));
             data->fileType = FT_PRG;
             data->writeDirEntry = 0;
             data->forceBlocks = -1;

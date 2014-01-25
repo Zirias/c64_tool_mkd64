@@ -126,7 +126,7 @@ SOEXPORT char *
 copyString(const char *s)
 {
     size_t bytes = strlen(s)+1;
-    char *copy = malloc(bytes);
+    char *copy = mkd64Alloc(bytes);
     memcpy(copy, s, bytes);
     return copy;
 }

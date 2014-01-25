@@ -56,19 +56,19 @@ FileMap_add(FileMap *self, DiskFile *file, const BlockPosition *pos)
 
     if (!self->first)
     {
-        current = malloc(sizeof(FileMapEntry));
+        current = mkd64Alloc(sizeof(FileMapEntry));
         self->first = current;
     }
     else
     {
         current = self->first;
         while (current->next) current = current->next;
-        current->next = malloc(sizeof(FileMapEntry));
+        current->next = mkd64Alloc(sizeof(FileMapEntry));
         current = current->next;
     }
     current->next = 0;
     current->file = file;
-    current->startPosition = malloc(sizeof(BlockPosition));
+    current->startPosition = mkd64Alloc(sizeof(BlockPosition));
     current->startPosition->track = pos->track;
     current->startPosition->sector = pos->sector;
 }

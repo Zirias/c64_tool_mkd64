@@ -76,8 +76,8 @@ Cmdline_parse(Cmdline *self, int argc, char **argv)
     clear(self);
 
     self->exe = *argv;
-    self->opts = malloc(argc * sizeof(char));
-    self->args = malloc(argc * sizeof(char *));
+    self->opts = mkd64Alloc(argc * sizeof(char));
+    self->args = mkd64Alloc(argc * sizeof(char *));
 
     for (argvp = argv+1; *argvp; ++argvp)
     {
@@ -189,7 +189,7 @@ Cmdline_parseFile(Cmdline *self, const char *cmdfile)
     if (st.st_size < 1) return 0;
     if (!(f = fopen(cmdfile, "rb"))) return 0;
 
-    buf = malloc(st.st_size);
+    buf = mkd64Alloc(st.st_size);
 
     if (fread(buf, 1, st.st_size, f) != (size_t) st.st_size)
     {
@@ -198,8 +198,8 @@ Cmdline_parseFile(Cmdline *self, const char *cmdfile)
         return 0;
     }
 
-    self->opts = malloc(optSize);
-    self->args = malloc(argSize);
+    self->opts = mkd64Alloc(optSize);
+    self->args = mkd64Alloc(argSize);
 
     tok = _cmdtok(buf, delim, quote);
     while (tok)

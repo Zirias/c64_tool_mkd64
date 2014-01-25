@@ -6,6 +6,7 @@
 #include <mkd64/util.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "buildid.h"
 

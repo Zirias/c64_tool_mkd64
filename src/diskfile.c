@@ -74,7 +74,7 @@ DiskFile_done(DiskFile *self)
 static DiskFileData *
 _createData(const void *owner, void *data, DataDelete deleter)
 {
-    DiskFileData *d = malloc(sizeof(DiskFileData));
+    DiskFileData *d = mkd64Alloc(sizeof(DiskFileData));
     d->next = 0;
     d->owner = owner;
     d->data = data;
@@ -137,7 +137,7 @@ DiskFile_readFromHost(DiskFile *self, const char *hostfile)
     free(self->content);
     self->content = 0;
 
-    ptr = malloc(self->size);
+    ptr = mkd64Alloc(self->size);
     
     if (fread(ptr, 1, self->size, f) != self->size)
     {

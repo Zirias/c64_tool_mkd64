@@ -3,6 +3,7 @@
 #include <mkd64/image.h>
 #include <mkd64/track.h>
 #include <mkd64/block.h>
+#include <mkd64/util.h>
 
 #include "alloc.h"
 
@@ -132,7 +133,7 @@ allocNextBlock(IBlockAllocator *self, const BlockPosition *pos)
 SOLOCAL IBlockAllocator *
 cbmdosAllocator_new(void)
 {
-    IBlockAllocator *self = malloc(sizeof(CbmdosAllocator));
+    IBlockAllocator *self = mkd64Alloc(sizeof(CbmdosAllocator));
 
     self->setImage = &setImage;
     self->setInterleave = &setInterleave;
