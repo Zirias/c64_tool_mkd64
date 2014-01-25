@@ -277,18 +277,24 @@ _setZeroFree(Cbmdos *self)
 }
 
 static void
+cleanupDirBlocks(Cbmdos *self)
+{
+    DirBlock *tmp;
+
+    while (self->directory)
+    {
+        tmp = self->directory;
+        self->directory = tmp->next;
+        free(tmp);
+    }
+}
+
+static void
 delete(IModule *self)
 {
     Cbmdos *dos = (Cbmdos *)self;
-    DirBlock *tmp;
 
-    while (dos->directory)
-    {
-        tmp = dos->directory;
-        dos->directory = tmp->next;
-        free(tmp);
-    }
-
+    cleanupDirBlocks(dos);
     cbmdosAllocator_delete(dos->alloc);
 
     free(self);
@@ -300,6 +306,19 @@ initImage(IModule *self, Image *image)
     Cbmdos *dos = (Cbmdos *)self;
     BlockPosition pos = { 18, 0 };
     uint8_t *data;
+
+    /* for multi-pass, clean up data from last pass */
+    cleanupDirBlocks(dos);
+
+    /* initialize fields */
+    dos->flags = CDFL_NONE;
+    dos->reservedDirBlocks = 18;
+    dos->dirInterleave = 3;
+    dos->usedDirBlocks = 0;
+    dos->currentDirBlock = 0;
+    dos->currentDirSlot = 7; /* force new dir block allocation */
+    dos->extraDirBlocks = 0;
+    dos->reclaimedDirBlocks = 0;
 
     dos->image = image;
     dos->bam = Image_block(image, &pos);
@@ -641,10 +660,6 @@ instance(void)
     singleInstance->mod.statusChanged = &statusChanged;
     singleInstance->mod.requestReservedBlock = &requestReservedBlock;
     singleInstance->mod.imageComplete = &imageComplete;
-
-    singleInstance->reservedDirBlocks = 18;
-    singleInstance->dirInterleave = 3;
-    singleInstance->currentDirSlot = 7; /* force new dir block allocation */
 
     singleInstance->alloc = cbmdosAllocator_new();
     

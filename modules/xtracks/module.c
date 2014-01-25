@@ -52,6 +52,7 @@ initImage(IModule *self, Image *image)
     {
         if (!Image_track(image, i+36))
         {
+            if (dos->extraTracks[i]) OBJDEL(Track, dos->extraTracks[i]);
             dos->extraTracks[i] = OBJNEW2(Track, i+36, 17);
         }
     }
