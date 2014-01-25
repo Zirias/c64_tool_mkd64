@@ -3,15 +3,12 @@
 *.o
 *.d
 *.a
-*.so
-*.dll
 conf.mk
-mkd64
-mkd64.exe
 buildid
 buildid.exe
 buildid.h
-!include/mkd64/
+bin/*
+sdk/*
 Debug/*
 Release/*
 */Debug/*
@@ -24,7 +21,6 @@ ipch/*
 *.sdf
 *.ncb
 *.opensdf
-sdk/
 debian/*.log
 debian/*.substvars
 debian/files
