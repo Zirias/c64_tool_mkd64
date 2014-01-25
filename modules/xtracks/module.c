@@ -75,7 +75,7 @@ getBam(Xtracks *self)
 }
 
 static int
-globalOption(IModule *self, char opt, const char *arg)
+option(IModule *self, char opt, const char *arg)
 {
     Xtracks *dos = (Xtracks *)self;
     const char *argopt;
@@ -194,7 +194,7 @@ instance(void)
     singleInstance->mod.id = &id;
     singleInstance->mod.free = &delete;
     singleInstance->mod.initImage = &initImage;
-    singleInstance->mod.globalOption = &globalOption;
+    singleInstance->mod.option = &option;
     singleInstance->mod.getTrack = &getTrack;
     singleInstance->mod.statusChanged = &statusChanged;
 

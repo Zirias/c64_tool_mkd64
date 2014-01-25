@@ -9,6 +9,8 @@
 #include <mkd64/track.h>
 #include <mkd64/block.h>
 
+typedef struct ModInstIterator ModInstIterator;
+
 typedef void (*ModInstanceCreated)(void *owner, IModule *instance);
 
 size_t ModRepo_objectSize(void);
@@ -34,6 +36,11 @@ void ModRepo_allImageComplete(const ModRepo *self);
 
 const char *ModRepo_nextAvailableModule(const ModRepo *self, const char *id);
 const char *ModRepo_nextLoadedModule(const ModRepo *self, const char *id);
+
+ModInstIterator *ModRepo_createIterator(const ModRepo *self);
+int ModInstIterator_moveNext(ModInstIterator *self);
+IModule *ModInstIterator_current(const ModInstIterator *self);
+void ModInstIterator_free(ModInstIterator *self);
 
 #endif
 /* vim: et:si:ts=8:sts=4:sw=4

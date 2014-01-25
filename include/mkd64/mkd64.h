@@ -35,7 +35,7 @@ DECLEXPORT ModRepo *Mkd64_modRepo(Mkd64 *self);
  * @relates Mkd64
  * @param self the Mkd64 instance
  * @param mod the module suggesting the option
- * @param fileNo the number of the concerned file, or 0 if it is a global
+ * @param fileNo the number of the concerned file, or 0 if it is a module
  *  option
  * @param opt the option suggested to use
  * @param arg the option argument suggested to use (may be 0).

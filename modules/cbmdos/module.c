@@ -338,7 +338,7 @@ initImage(IModule *self, Image *image)
 }
 
 static int
-globalOption(IModule *self, char opt, const char *arg)
+option(IModule *self, char opt, const char *arg)
 {
     Cbmdos *dos = (Cbmdos *)self;
     int intarg, arglen;
@@ -654,7 +654,7 @@ instance(void)
     singleInstance->mod.id = &id;
     singleInstance->mod.free = &delete;
     singleInstance->mod.initImage = &initImage;
-    singleInstance->mod.globalOption = &globalOption;
+    singleInstance->mod.option = &option;
     singleInstance->mod.fileOption = &fileOption;
     singleInstance->mod.fileWritten = &fileWritten;
     singleInstance->mod.statusChanged = &statusChanged;

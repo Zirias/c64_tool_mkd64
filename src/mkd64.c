@@ -379,7 +379,7 @@ processSuggestions(Mkd64 *self)
     {
         if (sopt->fileNo == 0)
         {
-            ModRepo_allGlobalOption(self->modrepo, sopt->opt, sopt->arg);
+            sopt->suggestedBy->option(sopt->suggestedBy, sopt->opt, sopt->arg);
         }
         sopt = sopt->next;
     }
@@ -510,14 +510,56 @@ processSingleOptions(Mkd64 *self)
 }
 
 static int
+processModule(Mkd64 *self, ModInstIterator *iter)
+{
+    IModule *mod;
+    char opt;
+    const char *arg = Cmdline_arg(self->cmdline);
+
+    if (iter)
+    {
+        mod = ModInstIterator_current(iter);
+    }
+    else
+    {
+        mod = ModRepo_createInstance(self->modrepo, arg);
+    }
+
+    if (!mod)
+    {
+        fprintf(stderr, "Error: module `%s' not found.\n", arg);
+        return 0;
+    }
+
+    while (Cmdline_moveNext(self->cmdline))
+    {
+        opt = Cmdline_opt(self->cmdline);
+        arg = Cmdline_arg(self->cmdline);
+
+        if (opt == 'g') Cmdline_moveNext(self->cmdline);
+        if (opt == 'g' || opt == 'm' || opt == 'f') break;
+
+        if (!mod->option || !mod->option(mod, opt, arg))
+        {
+            fprintf(stderr, "Warning: module `%s' did not understand option "
+                    "-%c.\n", mod->id(), opt);
+        }
+    }
+    return 1;
+}
+
+static int
 processGlobalOptions(Mkd64 *self)
 {
+    ModInstIterator *iter = 0;
     char opt;
     const char *arg;
     int intarg, handled;
 
     do
     {
+processGlobalOptions_restart:
+
         opt = Cmdline_opt(self->cmdline);
         arg = Cmdline_arg(self->cmdline);
         handled = 0;
@@ -525,47 +567,49 @@ processGlobalOptions(Mkd64 *self)
         switch (opt)
         {
             case 'm':
-                handled = 1;
-                if (self->currentPass > 1) break;
-                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
-                if (!ModRepo_createInstance(self->modrepo, arg))
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0))
+                    goto processGlobalOptions_error;
+                if (self->currentPass > 1)
                 {
-                    fprintf(stderr, "Error: module `%s' not found.\n", arg);
-                    return 0;
+                    if (!iter) iter = ModRepo_createIterator(self->modrepo);
+                    ModInstIterator_moveNext(iter);
                 }
-                break;
+                if (!processModule(self, iter)) goto processGlobalOptions_error;
+                goto processGlobalOptions_restart;
             case 'o':
                 handled = 1;
                 if (self->currentPass > 1) break;
-                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0))
+                    goto processGlobalOptions_error;
                 if (self->d64)
                 {
                     fputs("Error: D64 output file specified twice.\n", stderr);
-                    return 0;
+                    goto processGlobalOptions_error;
                 }
                 self->d64 = fopen(arg, "wb");
                 if (!self->d64)
                 {
                     perror("Error opening D64 output file");
-                    return 0;
+                    goto processGlobalOptions_error;
                 }
                 self->d64name = arg;
                 break;
             case 'M':
                 handled = 1;
                 if (self->currentPass > 1) break;
-                if (!checkArgAndWarn(opt, arg, 1, 1, 0)) return 0;
+                if (!checkArgAndWarn(opt, arg, 1, 1, 0))
+                    goto processGlobalOptions_error;
                 if (self->map)
                 {
                     fputs("Error: file map output file specified twice.\n",
                             stderr);
-                    return 0;
+                    goto processGlobalOptions_error;
                 }
                 self->map = fopen(arg, "w");
                 if (!self->map)
                 {
                     perror("Error opening file map output file");
-                    return 0;
+                    goto processGlobalOptions_error;
                 }
                 self->mapname = arg;
                 break;
@@ -578,7 +622,7 @@ processGlobalOptions(Mkd64 *self)
                     {
                         fprintf(stderr, "Error: invalid maximum passes `%s' "
                                 "given.\n", arg);
-                        return 0;
+                        goto processGlobalOptions_error;
                     }
                     self->maxPasses = intarg;
                 }
@@ -588,7 +632,7 @@ processGlobalOptions(Mkd64 *self)
                 }
                 break;
             case 'f':
-                return 1;
+                goto processGlobalOptions_success;
         }
         if (!(ModRepo_allGlobalOption(self->modrepo, opt, arg) || handled))
         {
@@ -596,7 +640,14 @@ processGlobalOptions(Mkd64 *self)
                    "         Maybe you forgot to load a module?\n", opt);
         }
     } while (Cmdline_moveNext(self->cmdline));
+
+processGlobalOptions_success:
+    if (iter) ModInstIterator_free(iter);
     return 1;
+
+processGlobalOptions_error:
+    if (iter) ModInstIterator_free(iter);
+    return 0;
 }
 
 static void
@@ -639,7 +690,7 @@ Mkd64_run(Mkd64 *self)
         /* the first occurence of '-f' switches to handling files */
         if (Cmdline_opt(self->cmdline) == 'f')
         {
-            /* if there are suggestions for global options from the previous
+            /* if there are suggestions for private options from the previous
              * pass, apply them before handling the files */
             processSuggestions(self);
             if (!processFiles(self)) goto Mkd64_run_error;

@@ -40,12 +40,22 @@ struct IModule
      */
     void (*initImage)(IModule *self, Image *image);
 
+    /** Handle an option
+     * Options specifically given for the module are passed here.
+     * May be left unimplemented.
+     * @param self the module instance
+     * @param opt the option
+     * @param arg the option argument
+     * @return 1 if the option is recognized by the module, 0 otherwise
+     */
+    int (*option)(IModule *self, char opt, const char *arg);
+
     /** Handle a global cmdline option.
      * May be left unimplemented.
      * @param self the module instance
      * @param opt the option
      * @param arg the option argument
-     * @return 1 if the options is recognized by the module, 0 otherwise
+     * @return 1 if the option is recognized by the module, 0 otherwise
      */
     int (*globalOption)(IModule *self, char opt, const char *arg);
 
@@ -55,7 +65,7 @@ struct IModule
      * @param file the file concerned by the option
      * @param opt the option
      * @param arg the option argument
-     * @return 1 if the options is recognized by the module, 0 otherwise
+     * @return 1 if the option is recognized by the module, 0 otherwise
      */
     int (*fileOption)(IModule *self,
             DiskFile *file, char opt, const char *arg);

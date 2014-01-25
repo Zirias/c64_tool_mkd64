@@ -44,6 +44,13 @@ struct ModRepo
     ModInstContainer *instances;
 };
 
+struct ModInstIterator
+{
+    const ModRepo *repo;
+    ModInstContainer *container;
+    int index;
+};
+
 static ModEntry *
 findModule(const ModRepo *self, const char *id)
 {
@@ -651,6 +658,51 @@ ModRepo_nextLoadedModule(const ModRepo *self, const char *id)
     while (found && !strcmp(id, found->id)) found = found->next;
     if (!found) return 0;
     return found->id;
+}
+
+SOLOCAL ModInstIterator *
+ModRepo_createIterator(const ModRepo *self)
+{
+    ModInstIterator *iter = mkd64Alloc(sizeof(ModInstIterator));
+    iter->repo = self;
+    iter->container = 0;
+    iter->index = 0;
+    return iter;
+}
+
+int
+ModInstIterator_moveNext(ModInstIterator *self)
+{
+    if (!self->container)
+    {
+        if (!self->repo->instances) return 0;
+        self->container = self->repo->instances;
+        return 1;
+    }
+
+    if (self->index < self->container->numInsts - 1)
+    {
+        ++self->index;
+        return 1;
+    }
+
+    self->index = 0;
+    self->container = self->container->next;
+
+    return (self->container) ? 1 : 0;
+}
+
+IModule *
+ModInstIterator_current(const ModInstIterator *self)
+{
+    if (!self->container) return 0;
+    return self->container->mod[self->index];
+}
+
+void
+ModInstIterator_free(ModInstIterator *self)
+{
+    free(self);
 }
 
 /* vim: et:si:ts=4:sts=4:sw=4
