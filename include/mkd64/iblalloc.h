@@ -1,61 +1,72 @@
 #ifndef MKD64_IBLALLOC_H
 #define MKD64_IBLALLOC_H
 
+/** interface IBlockAllocator
+ * @file
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mkd64/common.h>
 
-struct iBlockAllocator;
-/** interface for custom block allocation schemes
+/** Interface for custom block allocation schemes.
+ * @interface IBlockAllocator mkd64/iblalloc.h
  */
-typedef struct iBlockAllocator IBlockAllocator;
+typedef struct IBlockAllocator IBlockAllocator;
 
 #include <mkd64/image.h>
 #include <mkd64/track.h>
 #include <mkd64/block.h>
 
-struct iBlockAllocator
+struct IBlockAllocator
 {
-    /** Set the image the allocator should operate on
+    /** Set the image the allocator should operate on.
      * This is always called when the allocator is attached to an image, so
      * do all your initialization here.
-     * @param this the IBlockAllocator
+     * @param self the IBlockAllocator
      * @param image the image to work on
      */
-    void (*setImage)(IBlockAllocator *this, Image *image);
+    void (*setImage)(IBlockAllocator *self, Image *image);
 
-    /** Set the requested interleave for all following operations
-     * @param this the IBlockAllocator
+    /** Set the requested interleave for all following operations.
+     * @param self the IBlockAllocator
      * @param interleave the requested interleave value
      */
-    void (*setInterleave)(IBlockAllocator *this, int interleave);
+    void (*setInterleave)(IBlockAllocator *self, int interleave);
 
-    /** Set whether the allocator should consider allocating reserved blocks
+    /** Set whether the allocator should consider allocating reserved blocks.
      * If this was called with a 1, the allocator should try to get hold of
      * reserved blocks and allocate them if possible.
-     * @param this the IBlockAllocator
+     * @param self the IBlockAllocator
      * @param considerReserved 1 or 0, 1 means try to allocate reserved blocks
      */
-    void (*setConsiderReserved)(IBlockAllocator *this, int considerReserved);
+    void (*setConsiderReserved)(IBlockAllocator *self, int considerReserved);
 
-    /** Try allocating a first block for a new file
+    /** Try allocating a first block for a new file.
      * This should locate a free block, allocate it and return it.
-     * @param this the IBlockAllocator
+     * @param self the IBlockAllocator
      * @return a newly-allocated block or 0 if no available block was found
      */
-    Block *(*allocFirstBlock)(IBlockAllocator *this);
+    Block *(*allocFirstBlock)(IBlockAllocator *self);
 
-    /** Try allocating a new block for a file
+    /** Try allocating a new block for a file.
      * This should locate the best available block for chaining to the
      * position given in pos, honouring the current interleave value. It should
      * NOT actively chain the blocks, this is left to the caller -- just find
      * a suitable block, allocate it and return it.
-     * @param this the IBlockAllocator
+     * @param self the IBlockAllocator
      * @param pos the position of the previous block in the chain
      * @return a newly-allocated block or 0 if no available block was found
      */
-    Block *(*allocNextBlock)(IBlockAllocator *this, const BlockPosition *pos);
+    Block *(*allocNextBlock)(IBlockAllocator *self, const BlockPosition *pos);
 };
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif
 /* vim: et:si:ts=8:sts=4:sw=4
 */

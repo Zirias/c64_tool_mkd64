@@ -1,0 +1,176 @@
+mkd64 coding conventions
+------------------------
+
+To keep a good maintainability, all mkd64 code should follow some common rules
+described here. If you're only interested in developing mkd64 modules, these
+rules are of course optional, but recommended. Modules included in the mkd64
+tree should follow them.
+
+1. = code formatting =
+
+- line endings for all files should be unix style (only \n). If you are
+  working on windows, make sure to use an editor supporting this (e.g. vim)
+
+- do not use tabs in C code and header files, only spaces. Indent by a
+  default shift of 4 spaces
+
+- do not write lines exceeding 80 characters
+
+- braces for blocks get a separate line and an indentation level of the outer
+  code
+
+- definitions of functions should have the return type in a separate line,
+  declarations shouldn't.
+
+- example:
+
+  > void *foo(void);
+  >
+  > void *
+  > foo(void)
+  > {
+  >     return 0;
+  > }
+
+2. = project structure =
+
+- Public API goes to include/mkd64/. public declarations should use the
+  DECLEXPORT macro.
+
+- Internal API as well as mkd64 implementation goes to the src/ directory.
+  Implementations should use the SOEXPORT macro for public definitions, the
+  SOLOCAL macro for internal definitions and the static keyword for private
+  definitions. Internal declarations don't need a macro.
+
+- If you have an implementation exposing both public and internal definitions,
+  create two header files with the same name, the internal one in the src/ dir,
+  the public one in include/mkd64/. Let the internal one include the public
+  one.
+
+- Public API headers should use a guard macro named MKD64_{FILENAME}_H,
+  internal API headers just {FILENAME}_H.
+
+- In-tree modules go to the modules/{moduleName}/ directory.
+
+- Platform-specific code goes to the src/platform/{name}/ directory. The
+  Makefile has to select which implementation to build and link. There's also a
+  defs.h in each platform-dir for defines depending on the platform.
+  "platform/defs.h" should select and include the correct one.
+
+3. = C language =
+
+- the code should conform to ISO C99. Additionally, it should compile using
+  MSVC on windows, which only supports a subset of C99. The Makefile uses
+  CFLAGS for gcc that fail on some of the common things MSVC does not support,
+  please do not change them.
+
+- as a consequence of MSVC compatibility, do not mix declarations and
+  statements in functions. All declarations must stay at the top of a
+  function.
+
+- keep functions small. This also helps with the "declarations first" rule. If
+  you have some complex functionality, split it in a reasonable set of
+  functions. Leave inlining to the compiler/optimizer.
+
+- keep code to the left where applicable. For example, instead of
+  > if (condition)
+  > {
+  >     [many lines]
+  > }
+  better write
+  > if (!condition) return;
+  > [many lines]
+  This avoids excessive nesting for better readability.
+
+- declarations of functions taking no arguments should make this explicit
+  using "void" for the argument list, see example in section 1.
+
+- use explicit casts where it helps understanding the code. Use implicit casts
+  for pointers to and from "void *". Exception: in public API macros, use
+  explicit casts for "void *", too, to keep it compatible with C++.
+
+- avoid definition of reserved identifiers, e.g. any identifier starting with
+  an underscore. In public API files, avoid C++ reserved identifiers, too.
+
+- avoid usage of any extended functions (e.g. POSIX strdup()) that are not
+  part of the C99 specification. Replacements can go to utils.c/utils.h, there
+  are already some.
+
+- platform-specific code outside of the platform-subdirectories is only
+  allowed in include/mkd64/common.h.
+
+4. = mkd64 classes and objects =
+
+- most code in mkd64 should use some basic object-orientation described here.
+
+- a class in mkd64 is a typedef'd struct named in PascalCase, e.g.
+  > typedef struct MyClassName MyClassName;
+
+- normally, keep the full struct declaration in the source file. for very
+  simple classes that most certainly won't change their members, the full
+  declaration may be given in the header, making all fields accessible to
+  callers.
+
+- methods follow the naming scheme {classname}_{methodname} with a methodname
+  in camelCase, e.g.
+  > void *MyClassName_doSomethingGreat(MyClassName *self, void *foo);
+
+- every method takes a pointer to the class struct as its first argument,
+  named "self" by convention.
+
+- every class must expose three standard methods:
+
+  * size_t {classname}_objectSize(void) -- return sizeof({classname}), so a
+    caller can allocate memory for an object of this class.
+
+  * {classname} *{classname}_init({classname} *self, ...) -- initialize a new
+    object of the class (think: constructor). This MUST return the self
+    pointer. If initialization may fail, do NOT return null but mark the
+    instance as invalid somehow and provide a method for calling code to check
+    this.
+
+  * void {classname}_done({classname} *self) -- free all resources hold by the
+    object (think: destructor). Do not release the object memory itself.
+
+- some macros are provided for simple creation and destruction of objects:
+
+  * OBJNEW({classname}): create and initialize a new object of {classname}.
+    Example usage:
+    > MyClassName *instance = OBJNEW(MyClassName);
+
+  * OBJNEW1({classname}, {p1})
+    [...]
+    OBJNEW5({classname}, {p1}, {p2} , .. , {p5})
+    like OBJNEW for classes with {classname}_init() taking more parameters.
+
+  * OBJDEL({classname}, {object}): delete the object by first calling
+    {classname}_done() on it and then releasing the memory.
+
+- getter methods should not be prefixed, setter methods should be prefixed
+  with `set'. Example:
+
+  > int MyClassName_value(const MyClassName *self);
+  > void MyClassName_setValue(MyClassName *self, int value);
+
+- simple functions not belonging to a particular class should go to util.c
+
+- to avoid problems when classes call methods of each other or in some
+  circular fashion, always put the
+  > typedef struct MyClassName MyClassName;
+  in the header BEFORE any #includes of other mkd64 headers except common.h.
+
+5. = miscellaneous practices =
+
+- It's a good idea sometimes to replace direct calls by some callback function
+  pointers (typedef the signature of the callback function to give it a good
+  name) for looser coupling of the classes.
+
+- to avoid dangling pointers, use-after-free bugs and the like, always think a
+  little about ownership of the objects created. If the ownership is taken
+  over by a method, this should be documented.
+
+- if you need to allocate memory manually, use the mkd64Allocate() function
+  instead of calling malloc() directly. It will fail instantly on out of
+  memory conditions, and that's probably the best thing a simple tool like
+  mkd64 can do.
+

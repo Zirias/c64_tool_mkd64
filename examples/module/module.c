@@ -1,5 +1,7 @@
 #include <mkd64/common.h>
 #include <mkd64/imodule.h>
+#include <mkd64/util.h>
+#include <string.h>
 
 MKD64_MODULE("example")
 
@@ -12,9 +14,9 @@ typedef struct
 } Module;
 
 static void
-delete(IModule *this)
+delete(IModule *self)
 {
-    Module *mod = (Module *)this;
+    Module *mod = (Module *)self;
 
     /* add destructor code here, free all memory allocated in instance() */
 
@@ -24,9 +26,11 @@ delete(IModule *this)
 SOEXPORT IModule *
 instance(void)
 {
-    Module *mod = calloc(1, sizeof(Module));
+    Module *mod = mkd64Alloc(sizeof(Module));
+    memset(mod, 0, sizeof(Module));
+
     mod->mod.id = &id;
-    mod->mod.delete = &delete;
+    mod->mod.free = &delete;
 
     /* add more runtime methods as needed, see imodule.h and modapi.txt */
 
@@ -48,7 +52,7 @@ SOEXPORT const char *
 helpFile(void)
 {
     return
-"  -o [ARGNAME]  This option does something with {ARGNAME}\n";
+"  -o [ARGNAME]  this option does something with {ARGNAME}\n";
 }
 */
 
