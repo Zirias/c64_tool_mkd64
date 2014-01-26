@@ -540,7 +540,7 @@ processModule(Mkd64 *self, ModInstIterator *iter)
     if (!mod)
     {
         fprintf(stderr, "Error: module `%s' not found.\n", arg);
-        return 0;
+        return -1;
     }
 
     while (Cmdline_moveNext(self->cmdline))
@@ -548,8 +548,7 @@ processModule(Mkd64 *self, ModInstIterator *iter)
         opt = Cmdline_opt(self->cmdline);
         arg = Cmdline_arg(self->cmdline);
 
-        if (opt == 'g') Cmdline_moveNext(self->cmdline);
-        if (opt == 'g' || opt == 'm' || opt == 'f') break;
+        if (opt == 'g' || opt == 'm' || opt == 'f') return 0;
 
         if (!mod->option || !mod->option(mod, opt, arg))
         {
@@ -586,8 +585,14 @@ processGlobalOptions_restart:
                     if (!iter) iter = ModRepo_createIterator(self->modrepo);
                     ModInstIterator_moveNext(iter);
                 }
-                if (!processModule(self, iter)) goto processGlobalOptions_error;
+                handled = processModule(self, iter);
+                if (handled < 0) goto processGlobalOptions_error;
+                if (handled > 0) goto processGlobalOptions_success;
                 goto processGlobalOptions_restart;
+            case 'g':
+                /* ignored, used to come back here from processModule() */
+                handled = 1;
+                break;
             case 'o':
                 handled = 1;
                 if (self->currentPass > 1) break;
