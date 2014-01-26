@@ -13,7 +13,7 @@ extern "C" {
 
 #include <mkd64/modrepo.h>
 
-#define MKD64_VERSION "1.3b"
+#define MKD64_VERSION "1.4b"
 
 /** Class representing the mkd64 application.
  * This is a singleton allowing only one instance at a time.

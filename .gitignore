@@ -26,4 +26,5 @@ debian/*.substvars
 debian/files
 debian/mkd64/
 debian/mkd64-dev/
+debian/tmp/
 

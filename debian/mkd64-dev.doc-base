@@ -1,0 +1,8 @@
+Document: mkd64-API
+Title: Documentation of the mkd64 API
+Author: Felix Palmen
+Abstract: This documents the mkd64 API usable for mkd64 modules.
+Section: Development
+Format: HTML
+Index: /usr/share/doc/mkd64-dev/html/index.html
+Files: /usr/share/doc/mkd64-dev/html/*.html

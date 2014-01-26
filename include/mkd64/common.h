@@ -50,7 +50,7 @@ typedef unsigned int uintptr_t;
 #endif
 
 #define API_VER_MAJOR 1
-#define API_VER_MINOR 3
+#define API_VER_MINOR 4
 
 #define API_VER_BETA
 

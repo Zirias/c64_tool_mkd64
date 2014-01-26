@@ -14,7 +14,7 @@
 
 MKD64_MODULE("cbmdos")
 
-#define MODVERSION "1.3b"
+#define MODVERSION "1.4b"
 
 struct dirBlock;
 typedef struct dirBlock DirBlock;
