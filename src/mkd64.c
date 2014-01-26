@@ -156,10 +156,12 @@ printHelp(Mkd64 *self, const char *modId)
     else
     {
         fputs(
-"mkd64 supports three types of options. Single options trigger some immediate\n"
+"mkd64 supports four types of options. Single options trigger some immediate\n"
 "action, see below. Global options affect the whole disk image generation,\n"
-"and file options control single files written to the image.\n"
-"Global options must come before all file options on the command line.\n\n"
+"module options are passed just to the last loaded module and file options \n"
+"control single files written to the image.\n"
+"Global and module options must come before file options on the command line."
+"\n\n"
 "Modules can provide their own global and file options, check their help\n"
 "messages (-h MODULE) for reference.\n\n"
 "SINGLE options (must be the only option to mkd64):\n"
@@ -177,7 +179,14 @@ printHelp(Mkd64 *self, const char *modId)
 "  -M             Display all available modules and exit.\n\n"
 "GLOBAL options:\n"
 "  -m MODULE      Activate module {MODULE}. Modules are searched for in the\n"
-"                 directory of the mkd64 executable.\n"
+"                 directory of the mkd64 executable for a portable build of\n"
+"                 mkd64, or in the dedicated module directory (typically\n"
+"                 /usr/lib/mkd64) for an installable build. Any options\n"
+"                 following -m are treated as module options to this module,\n"
+"                 as long as there is no other -m option or a -g option to\n"
+"                 get back to global scope or a -f option to switch to file\n"
+"                 scope.\n"
+"  -g             Go back to global scope after loading a module.\n"
 "  -o D64FILE     Write generated disk image to {D64FILE}. This option must\n"
 "                 be given to actually write something.\n"
 "  -M MAPFILE     Write file map of the generated disk image to MAPFILE. The\n"
@@ -187,6 +196,9 @@ printHelp(Mkd64 *self, const char *modId)
 "                 options suggested by modules. The default is only one pass\n"
 "                 if this option is not given or up to 5 passes if it is\n"
 "                 given without an argument.\n\n"
+"MODULE options:\n"
+"                 Please see the module documentation or help text\n"
+"                 (-h MODULE) for these.\n\n"
 "FILE options:\n"
 "  -f [FILENAME]  Start a new file. {FILENAME} is the name on your PC. It\n"
 "                 can be omitted for special emtpy files.\n"
@@ -402,7 +414,7 @@ printSuggestions(SuggestedOption *suggestions)
         }
         else
         {
-            fprintf(stderr, "[Hint] %s suggests global option -%c%s: %s\n",
+            fprintf(stderr, "[Hint] %s suggests option -%c%s: %s\n",
                     suggestions->suggestedBy->id(), suggestions->opt,
                     suggestions->arg ? suggestions->arg : empty,
                     suggestions->reason);
