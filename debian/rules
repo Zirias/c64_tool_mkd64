@@ -20,5 +20,7 @@ endif
 %:
 	dh $@ 
 
-override_dh_auto_test:
+override_dh_installdocs:
+	$(MAKE) sdkdoc
+	dh_installdocs
 
