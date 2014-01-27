@@ -670,7 +670,7 @@ ModRepo_createIterator(const ModRepo *self)
     return iter;
 }
 
-int
+SOLOCAL int
 ModInstIterator_moveNext(ModInstIterator *self)
 {
     if (!self->container)
@@ -692,14 +692,14 @@ ModInstIterator_moveNext(ModInstIterator *self)
     return (self->container) ? 1 : 0;
 }
 
-IModule *
+SOLOCAL IModule *
 ModInstIterator_current(const ModInstIterator *self)
 {
     if (!self->container) return 0;
     return self->container->mod[self->index];
 }
 
-void
+SOLOCAL void
 ModInstIterator_free(ModInstIterator *self)
 {
     free(self);
