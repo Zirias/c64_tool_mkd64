@@ -41,9 +41,11 @@
 #if defined (__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
 #include <stdint.h>
 #else
+/* rough estimations, provide at least the required size */
 typedef unsigned char uint8_t;
 typedef unsigned int uintptr_t;
 typedef long long int64_t;
+typedef unsigned long long uint64_t;
 #endif
 
 #ifndef SIZE_MAX

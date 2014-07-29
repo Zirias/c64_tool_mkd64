@@ -127,7 +127,7 @@ DiskFile_readFromHost(DiskFile *self, const char *hostfile)
     if(!(f = fopen(hostfile, "rb"))) return 0;
 
     size = getFileSize(f);
-    if (size < 1 || size > (int64_t)SIZE_MAX)
+    if (size < 1 || (uint64_t)size > (uint64_t)SIZE_MAX)
     {
         fclose(f);
         return 0;
