@@ -122,17 +122,18 @@ DiskFile_readFromHost(DiskFile *self, const char *hostfile)
 {
     void *ptr;
     FILE *f;
+    int64_t size;
 
     if(!(f = fopen(hostfile, "rb"))) return 0;
-    fseek(f, 0L, SEEK_END);
-    self->size = (size_t) ftell(f);
-    if (self->size == 0)
+
+    size = getFileSize(f);
+    if (size < 1 || size > (int64_t)SIZE_MAX)
     {
         fclose(f);
         return 0;
     }
+    self->size = (size_t)size;
 
-    fseek(f, 0L, SEEK_SET);
     free(self->content);
     self->content = 0;
 

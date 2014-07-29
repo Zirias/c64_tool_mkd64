@@ -43,6 +43,11 @@
 #else
 typedef unsigned char uint8_t;
 typedef unsigned int uintptr_t;
+typedef long long int64_t;
+#endif
+
+#ifndef SIZE_MAX
+#define SIZE_MAX (~(size_t)0)
 #endif
 
 #if defined(_MSC_VER)

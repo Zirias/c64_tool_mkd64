@@ -1,13 +1,15 @@
+#undef __STRICT_ANSI__
 #include <mkd64/common.h>
 #include <mkd64/debug.h>
 
 #include "../../util.h"
 
+#define _WIN32_WINNT 0x0501
+
 #include <windows.h>
 #include <shlwapi.h>
+#include <io.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 
@@ -36,6 +38,18 @@ findFilesInDir(const char *dir, const char *pattern, void *caller,
 
     FindClose(findHdl);
     free(pat);
+}
+
+SOEXPORT int64_t
+getFileSize(const FILE *file)
+{
+    HANDLE fileHdl;
+    LARGE_INTEGER size;
+
+    fileHdl = (HANDLE) _get_osfhandle(_fileno(file));
+    if (fileHdl == INVALID_HANDLE_VALUE) return -1;
+    if (!GetFileSizeEx(fileHdl, &size)) return -1;
+    return (int64_t) size.QuadPart;
 }
 
 SOLOCAL char *

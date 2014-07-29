@@ -9,6 +9,7 @@
 
 #include <mkd64/common.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /** Callback for the findFilesInDir() function.
  * This is called by findFilesInDir() function for every file found.
@@ -99,6 +100,12 @@ DECLEXPORT void *mkd64Alloc(size_t size);
  */
 DECLEXPORT void findFilesInDir(const char *dir, const char *pattern,
         void *caller, FileFoundCallback found);
+
+/** get the size of a file
+ * @param the file
+ * @return the size of the file, -1 on error
+ */
+DECLEXPORT int64_t getFileSize(const FILE *file);
 
 #endif
 /* vim: et:si:ts=4:sts=4:sw=4
