@@ -9,11 +9,6 @@
 #include "mkd64.h"
 
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifndef WIN32
-#include <unistd.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -125,15 +120,19 @@ DiskFile_data(const DiskFile *self, const void *owner)
 SOLOCAL int
 DiskFile_readFromHost(DiskFile *self, const char *hostfile)
 {
-    static struct stat st;
     void *ptr;
     FILE *f;
 
-    if (stat(hostfile, &st) < 0) return 0;
-    if (st.st_size < 1) return 0;
     if(!(f = fopen(hostfile, "rb"))) return 0;
+    fseek(f, 0L, SEEK_END);
+    self->size = (size_t) ftell(f);
+    if (self->size == 0)
+    {
+        fclose(f);
+        return 0;
+    }
 
-    self->size = (size_t) st.st_size;
+    fseek(f, 0L, SEEK_SET);
     free(self->content);
     self->content = 0;
 
