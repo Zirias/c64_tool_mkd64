@@ -444,10 +444,11 @@ fileOption(IModule *self, DiskFile *file, char opt, const char *arg)
             data->writeDirEntry = 1;
             if (arg)
             {
-				if(0 == DiskFile_setName(file, arg)) {
+                if(0 == DiskFile_setName(file, arg)) 
+                {
                     fprintf(stderr, "[cbmdos] Warning: could not parse file name %s.\n", arg);
-					DiskFile_setName(file, "");
-				}
+                    DiskFile_setName(file, "");
+                }
             }
             reserveDirSlot(dos);
             return 1;
