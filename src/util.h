@@ -44,4 +44,3 @@ void *getDsoFunction(void *dso, const char *name);
 void unloadDso(void *dso);
 
 #endif
-
