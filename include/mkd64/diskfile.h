@@ -92,8 +92,9 @@ DECLEXPORT int DiskFile_interleave(const DiskFile *self);
  * @relates DiskFile
  * @param self the diskfile
  * @param name the name to set for the file
+ * @return 1, if the name was sucessfully parsed, 0 otherwise
  */
-DECLEXPORT void DiskFile_setName(DiskFile *self, const char *name);
+DECLEXPORT int DiskFile_setName(DiskFile *self, const char *name);
 
 /** Get the name of this file.
  * @relates DiskFile
