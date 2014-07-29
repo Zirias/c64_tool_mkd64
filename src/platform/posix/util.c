@@ -71,7 +71,7 @@ SOLOCAL int64_t
 getFileSize(const FILE *file)
 {
     struct stat st;
-    if (fstat(file, &st) < 0) return -1;
+    if (fstat(fileno((FILE *)file), &st) < 0) return -1;
     return (int64_t) st.st_size;
 }
 
