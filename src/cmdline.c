@@ -6,11 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
 #define FILEOPT_CHUNKSIZE 256
 
@@ -177,21 +172,27 @@ Cmdline_parseFile(Cmdline *self, const char *cmdfile)
 {
     static const char *delim = " \t\r\n";
     static const char *quote = "\"'";
-    static struct stat st;
     size_t optSize = FILEOPT_CHUNKSIZE * sizeof(char);
     size_t argSize = FILEOPT_CHUNKSIZE * sizeof(char *);
     char *buf, *tok;
     FILE *f;
+    int64_t fSize;
+    size_t bufSize;
 
     clear(self);
 
-    if (stat(cmdfile, &st) < 0) return 0;
-    if (st.st_size < 1) return 0;
     if (!(f = fopen(cmdfile, "rb"))) return 0;
+    fSize = getFileSize(f);
+    if (fSize < 1 || (uint64_t)fSize > (uint64_t)SIZE_MAX)
+    {
+        fclose(f);
+        return 0;
+    }
+    bufSize = (size_t) fSize;
 
-    buf = mkd64Alloc(st.st_size);
+    buf = mkd64Alloc(bufSize);
 
-    if (fread(buf, 1, st.st_size, f) != (size_t) st.st_size)
+    if (fread(buf, 1, bufSize, f) != bufSize)
     {
         fclose(f);
         free(buf);
