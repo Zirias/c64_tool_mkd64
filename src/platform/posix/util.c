@@ -14,6 +14,9 @@
 #include <glob.h>
 #include <libgen.h>
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 SOEXPORT void
 findFilesInDir(const char *dir, const char *pattern, void *caller,
@@ -62,6 +65,14 @@ getAppDir(const char *expectedAppNameEnd, void *caller,
 
     free(exefullpath);
     return dir;
+}
+
+SOLOCAL int64_t
+getFileSize(const FILE *file)
+{
+    struct stat st;
+    if (fstat(fileno((FILE *)file), &st) < 0) return -1;
+    return (int64_t) st.st_size;
 }
 
 SOLOCAL void *
