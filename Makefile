@@ -38,12 +38,16 @@ else
 CC := gcc
 endif
 
+USELTO := 1
 ifdef DEBUG
 CFLAGS += -DDEBUG -g3 -O0
 VTAGS += [debug]
 else
-CFLAGS += -g0 -O3 -flto
+CFLAGS += -g0 -O3
+ifeq ($(USELTO),1)
+CFLAGS += -flto
 LDFLAGS += -flto
+endif
 endif
 
 CCDEP := $(CC) -MM
