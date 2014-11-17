@@ -80,13 +80,15 @@ ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
 conf.mk:
 	$(VGENT)
-	$(VR)echo $(EQT)C_DEBUG :=$(DEBUG)$(EQT) >conf.mk
+	$(VR)echo $(EQT)C_CC :=$(CC)$(EQT) >conf.mk
+	$(VR)echo $(EQT)C_DEBUG :=$(DEBUG)$(EQT) >>conf.mk
 	$(VR)echo $(EQT)C_GCC32 :=$(GCC32)$(EQT) >>conf.mk
+	$(VR)echo $(EQT)C_USELTO :=$(USELTO)$(EQT) >>conf.mk
 	$(VR)echo $(EQT)C_libdir :=$(libdir)$(EQT) >>conf.mk
 
 -include conf.mk
 
-ifneq ($(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_libdir)),$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(libdir)))
+ifneq ($(strip $(C_CC))_$(strip $(C_DEBUG))_$(strip $(C_GCC32))_$(strip $(C_USELTO))_$(strip $(C_libdir)),$(strip $(CC))_$(strip $(DEBUG))_$(strip $(GCC32))_$(strip $(USELTO))_$(strip $(libdir)))
 .PHONY: conf.mk
 endif
 endif
