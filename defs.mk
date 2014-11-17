@@ -27,6 +27,8 @@ PLATFORM := win32
 
 else
 
+SYSNAME := $(shell uname)
+
 EXE :=
 SO := .so
 CMDSEP := ;
@@ -46,11 +48,15 @@ EQT := "
 CMDQUIET := >/dev/null 2>&1
 
 platform_LDFLAGS := -Wl,-E
-platform_LIBS := -ldl
+platform_LIBS :=
 mod_CFLAGS := -fPIC
 mod_LIBS :=
 
 PLATFORM := posix
+
+ifeq ($(SYSNAME),Linux)
+platform_LIBS := -ldl
+endif
 
 endif
 
