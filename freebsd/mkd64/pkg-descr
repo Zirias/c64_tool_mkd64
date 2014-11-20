@@ -1,0 +1,7 @@
+mkd64 is a modular tool for creating .D64 images (disk images for a C64
+floppy drive). The core program is responsible for writing tracks and
+sectors, while loadable modules do everything else, for example writing
+a directory. It is suitable for use in cross-developlment projects.
+
+WWW: http://zirias.github.io/c64_tool_mkd64/
+
