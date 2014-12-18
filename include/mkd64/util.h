@@ -70,6 +70,13 @@ DECLEXPORT int checkArgAndWarn(char opt, const char *arg, int isFileOpt,
  */
 DECLEXPORT char *copyString(const char *s);
 
+/** Parse Escapes for hex numbers in a string.
+ * This function works in-place.
+ * @arg s the string to parse the escape values from
+ * @return 1 (true) if parsed correctly, 0 (false) otherwise
+ */
+DECLEXPORT int parseHexEscapes(char *s);
+
 /** Check whether a string ends with an expected content.
  * @param s the string to check
  * @param expectedEnd the content to check for at the end of the string

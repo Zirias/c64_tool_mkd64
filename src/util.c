@@ -131,6 +131,54 @@ copyString(const char *s)
     return copy;
 }
 
+/* Helper function for conversion from hex character to number */
+/* Returns -1 for illegal character input */
+static int
+hex2int(char hex) 
+{
+    if((hex < '0' || hex > '9') && (hex < 'a' || hex > 'f')) 
+    {
+        return -1;
+    }
+    if(hex <= '9') 
+    {
+        hex -= '0';
+    } 
+    else 
+    {
+        hex -= 'a'-10;
+    }
+    return (int)hex;
+}
+
+SOEXPORT int
+parseHexEscapes(char *s)
+{
+    int read = 0, write = 0;
+
+    while (s[read] != '\0') 
+    {
+        if(s[read] == '$') 
+        {
+            int hi = hex2int(s[++read]);
+            int lo = hex2int(s[++read]);
+            if(hi == -1 || lo == -1) 
+            {
+                return 0;
+            }
+            s[write] = (unsigned char)(16 * hi + lo); 
+        } 
+        else 
+        {
+            s[write] = s[read];
+        }
+        read++;
+        write++;
+    }
+    s[write] = s[read]; /* copy final \0 */
+    return 1;
+}
+
 SOEXPORT int
 stringEndsWith(const char *s, const char *expectedEnd, int ignoreCase)
 {

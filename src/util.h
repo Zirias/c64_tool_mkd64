@@ -44,5 +44,3 @@ void *getDsoFunction(void *dso, const char *name);
 void unloadDso(void *dso);
 
 #endif
-/* vim: et:si:ts=8:sts=4:sw=4
-*/

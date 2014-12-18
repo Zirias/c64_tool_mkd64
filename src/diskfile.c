@@ -176,11 +176,12 @@ DiskFile_interleave(const DiskFile *self)
     return self->interleave;
 }
 
-SOEXPORT void
+SOEXPORT int
 DiskFile_setName(DiskFile *self, const char *name)
 {
     if (self->name) free(self->name);
     self->name = copyString(name);
+    return parseHexEscapes(self->name);
 }
 
 SOEXPORT const char *
