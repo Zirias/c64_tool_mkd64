@@ -1,4 +1,4 @@
-#ifdef WIN32
+#ifdef _WIN32
 #include "win32/defs.h"
 #else
 #include "posix/defs.h"

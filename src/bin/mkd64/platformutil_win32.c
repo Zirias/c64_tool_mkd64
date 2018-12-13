@@ -2,8 +2,9 @@
 #include <mkd64/common.h>
 #include <mkd64/debug.h>
 
-#include "../../util.h"
+#include "util.h"
 
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
 #include <windows.h>
@@ -46,7 +47,7 @@ getFileSize(const FILE *file)
     HANDLE fileHdl;
     LARGE_INTEGER size;
 
-    fileHdl = (HANDLE) _get_osfhandle(_fileno(file));
+    fileHdl = (HANDLE) _get_osfhandle(_fileno((FILE *)file));
     if (fileHdl == INVALID_HANDLE_VALUE) return -1;
     if (!GetFileSizeEx(fileHdl, &size)) return -1;
     return (int64_t) size.QuadPart;

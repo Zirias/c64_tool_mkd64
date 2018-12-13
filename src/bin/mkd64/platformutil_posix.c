@@ -6,9 +6,9 @@
 #include <mkd64/common.h>
 #include <mkd64/debug.h>
 
-#include "../../util.h"
-#include "../../mkd64.h"
-#include "../../cmdline.h"
+#include "util.h"
+#include "mkd64.h"
+#include "cmdline.h"
 
 #include <string.h>
 #include <glob.h>

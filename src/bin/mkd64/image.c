@@ -139,13 +139,13 @@ Image_dump(const Image *self, FILE *out)
     int tracknum = 0;
     Track *track;
     Block *block;
-    size_t num_sectors;
+    size_t nsectors;
     unsigned int i;
 
     while ((track = Image_track(self, ++tracknum)))
     {
-        num_sectors = Track_numSectors(track);
-        for (i = 0; i < num_sectors; ++i)
+        nsectors = Track_numSectors(track);
+        for (i = 0; i < nsectors; ++i)
         {
             block = Track_block(track, i);
             if (fwrite(Block_rawData(block), BLOCK_RAWSIZE, 1, out) != 1)

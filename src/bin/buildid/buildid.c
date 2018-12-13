@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <time.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #ifndef KEY_WOW64_64KEY
 #define KEY_WOW64_64KEY 0x100
@@ -14,7 +14,7 @@
 
 const char *unknown = "<UNKNOWN>";
 
-#ifdef WIN32
+#ifdef _WIN32
 const wchar_t *regCurrentVersionName =
     L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
 
@@ -165,7 +165,7 @@ getHostArchitecture(void)
 {
     const char *procArch;
 
-#ifdef WIN32
+#ifdef _WIN32
     if (!haveRegEnvironment) return unknown;
     procArch = getRegValue(regEnvironment, L"PROCESSOR_ARCHITECTURE");
     if (!procArch || strlen(procArch) == 0) return unknown;
@@ -186,13 +186,10 @@ getHostArchitecture(void)
 static const char *
 getBuildArchitecture(void)
 {
-#ifdef GCC32BIT
-    return "x86";
-#else
     const char *buildArch;
 
     buildArch = getHostArchitecture();
-#ifdef WIN32
+#ifdef _WIN32
     if (buildArch != unknown && strcmp(buildArch, "x86") != 0)
     {
         if (onWow64()) buildArch = "x86";
@@ -200,7 +197,6 @@ getBuildArchitecture(void)
 #endif
 
     return buildArch;
-#endif
 }
 
 static const char *
@@ -223,7 +219,7 @@ main(int argc, char **argv)
     (void) argc; /* unused */
     (void) argv; /* unused */
 
-#ifdef WIN32
+#ifdef _WIN32
     openRegKeys();
 #endif
 
@@ -254,7 +250,7 @@ main(int argc, char **argv)
          "                    \"Build time: \" BUILDID_TIME\n\n"
          "#endif");
 
-#ifdef WIN32
+#ifdef _WIN32
     closeRegKeys();
 #endif
     return EXIT_SUCCESS;
