@@ -1,4 +1,11 @@
+BUILD_release_CFLAGS:= -g0 -O3
+BUILD_release_LDFLAGS:=
+
 include zimk/zimk.mk
+
+ifneq ($(libdir),)
+plugindir:= $(libdir)/mkd64
+endif
 
 INCLUDES += -I.$(PSEP)include
 

@@ -3,8 +3,8 @@ mkd64_MODULES:= mkd64 image track block defalloc filemap diskfile cmdline \
 mkd64_PLATFORMMODULES:= platformutil
 mkd64_DEFINES:= -DBUILDING_MKD64
 mkd64_win32_LIBS:= shlwapi
-ifeq ($(filter-out 0 false FALSE no NO,$(PORTABLE)),)
-mkd64_CFLAGS:= -DMODDIR="\"$(libdir)/mkd64\""
+ifneq ($(plugindir),)
+mkd64_CFLAGS:= -DMODDIR="\"$(plugindir)\""
 endif
 mkd64_posix_LDFLAGS:= -Wl,-E
 ifneq ($(findstring linux,$(TARGETARCH)),)
