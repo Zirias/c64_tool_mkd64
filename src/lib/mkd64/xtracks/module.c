@@ -68,7 +68,7 @@ getBam(Xtracks *self)
         self->bam = Image_block(self->image, &pos);
     }
 
-    if (!Block_status(self->bam) & BS_ALLOCATED)
+    if (!(Block_status(self->bam) & BS_ALLOCATED))
     {
         Block_allocate(self->bam);
     }
