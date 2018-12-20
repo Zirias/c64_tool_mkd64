@@ -19,7 +19,7 @@
 #define mkd64___cdecl
 #endif
 
-#ifdef _WIN32
+#if defined (_WIN32) || defined (__CYGWIN__)
 #define SOEXPORT mkd64___cdecl __declspec(dllexport)
 #ifdef BUILDING_MKD64
 #define DECLEXPORT __declspec(dllexport)

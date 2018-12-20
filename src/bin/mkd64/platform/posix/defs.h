@@ -1,7 +1,11 @@
 #ifndef PLATFORM_DEFS_H
 #define PLATFORM_DEFS_H
 
+#ifdef __CYGWIN__
+#define FINDPAT_MODULES "/*.dll"
+#else
 #define FINDPAT_MODULES "/*.so"
+#endif
 #undef APP_FILENAME
 #define PATH_SEP "/"
 
